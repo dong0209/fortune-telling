@@ -8,157 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;900&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<style>
-/* Layout: 左側固定「命盤輸入」欄，右側為綜合判讀 → 時機曲線 → 公司類型 → 五術分頁 → 奇門擇日 */
-:root{
-  --paper:#EDF0EA; --surface:#F8F9F5; --sunk:#E3E8E0; --ink:#1A2420; --muted:#56625C; --line:#CDD4CA;
-  --accent:#2C4783; --accent-soft:#DCE3F1; --gold:#8E6A1F; --gold-soft:#F1E6CC;
-  --good:#1F7A4D; --warn:#A35A00; --bad:#B23A3A;
-  --s-stay:#2a78d6; --s-move:#eb6834;
-  --f-display:"Noto Serif TC","Songti TC","PMingLiU",serif;
-  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
-  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
-}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --paper:#10141C; --surface:#171D28; --sunk:#1F2633; --ink:#E6E8E2; --muted:#9BA4AE; --line:#2B3343;
-  --accent:#93ABE8; --accent-soft:#25304A; --gold:#D4B064; --gold-soft:#3A3220;
-  --good:#5BC28E; --warn:#E3A04A; --bad:#E77B7B; --s-stay:#3987e5; --s-move:#d95926; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --paper:#10141C; --surface:#171D28; --sunk:#1F2633; --ink:#E6E8E2; --muted:#9BA4AE; --line:#2B3343;
-  --accent:#93ABE8; --accent-soft:#25304A; --gold:#D4B064; --gold-soft:#3A3220;
-  --good:#5BC28E; --warn:#E3A04A; --bad:#E77B7B; --s-stay:#3987e5; --s-move:#d95926; color-scheme:dark}
-*{box-sizing:border-box}
-[hidden]{display:none!important}
-html{-webkit-text-size-adjust:100%}
-img{max-width:100%}
-body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.7;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
-h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.3}
-.wrap{max-width:1180px;margin:0 auto}
-header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-block:28px 20px;border-bottom:1px solid var(--line)}
-.brand{display:flex;align-items:center;gap:14px}
-.seal{width:46px;height:46px;border:2px solid var(--gold);color:var(--gold);display:grid;place-items:center;text-align:center;font-family:var(--f-display);font-weight:900;font-size:16px;line-height:1.05;border-radius:4px}
-.brand h1{font-size:28px;font-weight:900;letter-spacing:.06em}
-.brand p{margin:0;color:var(--muted);font-size:13px}
-.five{display:flex;gap:6px;flex-wrap:wrap}
-.five span{font-size:12px;padding:2px 10px;border:1px solid var(--line);border-radius:99px;color:var(--muted);letter-spacing:.05em}
-.layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:28px;margin-top:24px;align-items:start}
-@media (max-width:880px){.layout{grid-template-columns:minmax(0,1fr)}}
-aside.form{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:20px}
-@media (max-width:880px){aside.form{position:static}}
-aside h2{font-size:17px;margin-bottom:4px}
-aside .hint{font-size:12.5px;color:var(--muted);margin:0 0 14px}
-.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
-.field label,.lab{font-size:12px;letter-spacing:.08em;color:var(--muted);font-weight:500}
-input,select{font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:var(--paper);color:var(--ink);width:100%}
-input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.seg{display:flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
-.seg label{flex:1;text-align:center;padding:7px 0;cursor:pointer;font-size:14px;color:var(--ink);letter-spacing:0}
-.seg input{position:absolute;opacity:0;width:1px;height:1px}
-.seg label:has(input:checked){background:var(--accent);color:var(--surface)}
-.seg label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:-2px}
-.check{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);margin:-4px 0 12px}
-.check input{width:auto}
-button.go{width:100%;font:inherit;font-weight:700;letter-spacing:.2em;padding:11px;border:0;border-radius:4px;background:var(--accent);color:var(--surface);cursor:pointer}
-button.go:hover{filter:brightness(1.08)}
-.sample{font-size:12px;color:var(--gold);background:var(--gold-soft);padding:6px 10px;border-radius:4px;margin-bottom:14px}
-main{display:flex;flex-direction:column;gap:28px;min-width:0}
-section.block{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:22px 24px;min-width:0}
-@media (max-width:520px){section.block{padding:18px 16px}}
-.eyebrow{font-size:11.5px;letter-spacing:.18em;color:var(--gold);font-weight:700;margin-bottom:6px}
-.block h2{font-size:21px;margin-bottom:12px}
-.muted{color:var(--muted)}
-.small{font-size:13px}
-/* verdict */
-.verdict{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:24px}
-@media (max-width:720px){.verdict{grid-template-columns:minmax(0,1fr)}}
-.verdict-call{font-family:var(--f-display);font-size:30px;font-weight:900;line-height:1.25;margin:4px 0 10px}
-.verdict-call em{font-style:normal;color:var(--accent)}
-.pillars{display:flex;gap:10px;margin:14px 0 4px}
-.pillar{flex:1;min-width:0;text-align:center;border:1px solid var(--line);border-radius:4px;padding:8px 0 6px;background:var(--paper)}
-.pillar .pos{font-size:11px;color:var(--muted);letter-spacing:.1em}
-.pillar .gz{font-family:var(--f-display);font-size:24px;font-weight:900;line-height:1.2;margin:4px 0}
-.pillar .god{font-size:11.5px;color:var(--gold)}
-.pillar.day{border-color:var(--accent)}
-.pillar.day .gz{color:var(--accent)}
-.meter{margin-top:6px}
-.meter-row{display:grid;grid-template-columns:64px 1fr 40px;gap:10px;align-items:center;font-size:13px;margin-bottom:8px}
-.bar{height:8px;background:var(--sunk);border-radius:4px;overflow:hidden}
-.bar i{display:block;height:100%;border-radius:4px}
-.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
-.windows{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
-.win{border:1px solid var(--line);border-radius:4px;padding:10px 12px;background:var(--paper)}
-.win b{font-family:var(--f-mono);font-weight:500}
-.win .k{font-size:12px;letter-spacing:.08em;display:flex;align-items:center;gap:6px}
-.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
-.tags{display:flex;flex-wrap:wrap;gap:6px}
-.tag{font-size:12.5px;padding:2px 10px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
-.tag.gold{background:var(--gold-soft);color:var(--gold)}
-/* chart */
-.chart-wrap{position:relative;margin-top:6px}
-.chart-wrap svg{display:block;width:100%;height:auto;overflow:visible}
-.legend{display:flex;gap:18px;font-size:13px;margin-bottom:6px;flex-wrap:wrap}
-.legend span{display:flex;align-items:center;gap:6px}
-.legend i{width:16px;height:2px;display:inline-block;border-radius:2px}
-.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:8px 10px;font-size:12.5px;line-height:1.55;box-shadow:0 4px 14px rgb(0 0 0 / .12);min-width:180px;max-width:260px;z-index:2}
-.tip h4{margin:0 0 4px;font-family:var(--f-mono);font-size:12.5px;font-weight:500}
-.tip ul{margin:4px 0 0;padding-left:16px;color:var(--muted)}
-details.table{margin-top:10px;font-size:13px}
-details.table summary{cursor:pointer;color:var(--accent)}
-.tscroll{overflow-x:auto;margin-top:8px}
-table{border-collapse:collapse;width:100%;font-size:13px}
-th,td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
-th{font-weight:500;color:var(--muted);font-size:12px;letter-spacing:.05em}
-td.num{text-align:right}
-/* company fit */
-.fit{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
-.fit-item{border:1px solid var(--line);border-radius:4px;padding:12px 14px;background:var(--paper);display:flex;flex-direction:column;gap:6px}
-.fit-item.top{border-color:var(--accent)}
-.fit-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-.fit-head h3{font-size:16px}
-.fit-item .bar i{background:var(--accent)}
-.fit-item p{margin:0;font-size:13px;color:var(--muted)}
-.badge{font-size:11px;letter-spacing:.1em;padding:1px 8px;border-radius:3px;background:var(--accent);color:var(--surface)}
-/* tabs */
-.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:18px;overflow-x:auto}
-.tabs button{font:inherit;font-size:14.5px;background:none;border:0;padding:9px 14px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;font-family:var(--f-display);font-weight:600}
-.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--gold)}
-.panel h3{font-size:16px;margin:18px 0 8px}
-.panel h3:first-child{margin-top:0}
-.panel p{margin:0 0 10px;max-width:68ch}
-.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:8px}
-.kv div{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:8px 12px}
-.kv .lab{display:block}
-.kv b{font-family:var(--f-display);font-size:17px}
-.split{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:24px;align-items:start}
-@media (max-width:640px){.split{grid-template-columns:minmax(0,1fr)}}
-.yun{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
-.yun div{flex:0 0 auto;text-align:center;border:1px solid var(--line);border-radius:4px;padding:6px 10px;background:var(--paper);font-size:12px}
-.yun div b{display:block;font-family:var(--f-display);font-size:18px}
-.yun div.now{border-color:var(--gold);background:var(--gold-soft)}
-.palaces{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
-.pal{border:1px solid var(--line);border-radius:3px;padding:6px 8px;background:var(--paper);min-height:76px;font-size:12px;min-width:0}
-.pal .pn{font-size:11.5px;color:var(--muted);display:flex;justify-content:space-between;gap:4px}
-.pal .st{font-family:var(--f-display);font-size:14px;font-weight:600;line-height:1.35;margin-top:2px}
-.pal.hl{border-color:var(--accent);background:var(--accent-soft)}
-.pal.center{grid-column:2 / span 2;grid-row:2 / span 2;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:var(--surface);gap:2px}
-.mu{font-size:10.5px;padding:0 4px;border-radius:2px;margin-left:2px;font-family:var(--f-body);font-weight:700;vertical-align:1px}
-.mu.祿{background:var(--good);color:var(--surface)} .mu.權{background:var(--accent);color:var(--surface)}
-.mu.科{background:var(--gold);color:var(--surface)} .mu.忌{background:var(--bad);color:var(--surface)}
-.hd svg{width:100%;max-width:220px;height:auto;display:block;margin:0 auto}
-.qm{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;max-width:330px}
-.qm div{border:1px solid var(--line);border-radius:3px;padding:6px;text-align:center;background:var(--paper);font-size:12px}
-.qm div b{display:block;font-family:var(--f-display);font-size:16px}
-.qm div.open{border-color:var(--gold);background:var(--gold-soft)}
-.daylist td:first-child{font-family:var(--f-mono)}
-.pill{font-size:11.5px;padding:1px 8px;border-radius:99px;border:1px solid currentColor}
-.pill.good{color:var(--good)} .pill.mid{color:var(--warn)} .pill.bad{color:var(--bad)}
-.note{font-size:12.5px;color:var(--muted);border-left:2px solid var(--line);padding-left:12px;margin-top:14px}
-footer{max-width:1180px;margin:32px auto 0;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
-.err{color:var(--bad);font-size:13px}
-@media (prefers-reduced-motion:no-preference){.bar i{transition:width .5s ease}}
-</style>
+<link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
 
@@ -202,17 +52,26 @@ footer{max-width:1180px;margin:32px auto 0;font-size:12.5px;color:var(--muted);b
         </div>
         <button class="go" type="submit">排盤分析</button>
         <p class="err" id="err" hidden></p>
+        <div class="share-row"><button type="button" class="ghost" id="btnShare">複製分享連結</button><button type="button" class="ghost" id="btnCard">產生 IG 圖卡</button></div>
+        <p class="small muted" id="shareMsg" role="status"></p>
       </form>
     </aside>
 
     <main id="out">
       <section class="block" id="verdictBlock"></section>
       <section class="block">
+        <div class="eyebrow">每日職場運勢</div>
+        <h2 id="todayTitle">今天適合做什麼</h2>
+        <div id="today"></div>
+      </section>
+      <section class="block">
         <div class="eyebrow">未來 36 個月</div>
         <h2>轉職與升遷的時機曲線</h2>
         <p class="muted small" style="margin:0 0 12px">兩條線用同一把尺：八字流年流月、紫微流年四化、星盤木土天冥行運，三者加權後換算成 0–100 的相對動能。曲線高點是窗口，不是保證。</p>
         <div class="legend"><span><i style="background:var(--s-move)"></i>轉職動能</span><span><i style="background:var(--s-stay)"></i>升遷動能（留任）</span></div>
         <div class="chart-wrap" id="chart"></div>
+        <p class="muted small" style="margin:6px 0 0">點選曲線上任一個月份，下方會展開那個月的詳解。</p>
+        <div class="month-detail" id="monthDetail" aria-live="polite"></div>
         <details class="table"><summary>以表格檢視逐月數值</summary><div class="tscroll" id="chartTable"></div></details>
       </section>
       <section class="block">
@@ -221,6 +80,65 @@ footer{max-width:1180px;margin:32px auto 0;font-size:12.5px;color:var(--muted);b
         <div class="fit" id="fit"></div>
         <h3 style="font-size:15px;margin:18px 0 8px">建議產業（依八字喜用五行）</h3>
         <div class="tags" id="industries"></div>
+      </section>
+      <section class="block" id="toolbox">
+        <div class="eyebrow">職涯工具箱</div>
+        <h2>把命盤用在真實的選擇上</h2>
+        <div class="tabs" role="tablist" id="ttabs">
+          <button role="tab" aria-selected="true" data-p="offer" id="t-offer">兩家 offer 比較</button>
+          <button role="tab" aria-selected="false" data-p="fitnow" id="t-fitnow">現職適配度</button>
+          <button role="tab" aria-selected="false" data-p="syn" id="t-syn">主管／同事合盤</button>
+        </div>
+        <div class="panel" role="tabpanel" id="p-offer">
+          <form id="offerForm">
+            <div class="offer-cols">
+            <fieldset class="offer-col"><legend>公司 A</legend>
+              <div class="field"><label for="oA-name">公司名稱（選填）</label><input type="text" id="oA-name" maxlength="20" placeholder="公司 A"></div>
+              <div class="field"><label for="oA-type">公司類型</label><select id="oA-type" class="sel-type"></select></div>
+              <div class="field"><label for="oA-ind">產業</label><select id="oA-ind" class="sel-ind"></select></div>
+              <div class="field"><label for="oA-role">職能</label><select id="oA-role" class="sel-role"></select></div>
+              <div class="row2"><div class="field"><label for="oA-dir">在住家的哪個方位</label><select id="oA-dir" class="sel-dir"></select></div>
+              <div class="field"><label for="oA-date">預計報到日</label><input type="date" id="oA-date"></div></div>
+            </fieldset>
+            <fieldset class="offer-col"><legend>公司 B</legend>
+              <div class="field"><label for="oB-name">公司名稱（選填）</label><input type="text" id="oB-name" maxlength="20" placeholder="公司 B"></div>
+              <div class="field"><label for="oB-type">公司類型</label><select id="oB-type" class="sel-type"></select></div>
+              <div class="field"><label for="oB-ind">產業</label><select id="oB-ind" class="sel-ind"></select></div>
+              <div class="field"><label for="oB-role">職能</label><select id="oB-role" class="sel-role"></select></div>
+              <div class="row2"><div class="field"><label for="oB-dir">在住家的哪個方位</label><select id="oB-dir" class="sel-dir"></select></div>
+              <div class="field"><label for="oB-date">預計報到日</label><input type="date" id="oB-date"></div></div>
+            </fieldset>
+            </div>
+            <button class="go go-inline" type="submit">比較兩家公司</button>
+          </form>
+          <div id="offerOut" class="tool-out"></div>
+        </div>
+        <div class="panel" role="tabpanel" id="p-fitnow" hidden>
+          <form id="fitForm">
+            <div class="tool-grid">
+              <div class="field"><label for="fn-type">公司類型</label><select id="fn-type" class="sel-type"></select></div>
+              <div class="field"><label for="fn-ind">產業</label><select id="fn-ind" class="sel-ind"></select></div>
+              <div class="field"><label for="fn-role">你的職能</label><select id="fn-role" class="sel-role"></select></div>
+              <div class="field"><label for="fn-founded">公司成立年（選填）</label><input type="number" id="fn-founded" min="1850" max="2026" placeholder="例如 1987" inputmode="numeric"></div>
+            </div>
+            <button class="go go-inline" type="submit">檢查適配度</button>
+          </form>
+          <div id="fitOut" class="tool-out"></div>
+        </div>
+        <div class="panel" role="tabpanel" id="p-syn" hidden>
+          <form id="synForm">
+            <div class="tool-grid">
+              <div class="field"><label for="sy-rel">對方是你的</label><select id="sy-rel"><option>主管</option><option>老闆</option><option>同事</option><option>下屬</option></select></div>
+              <div class="field"><label for="sy-name">稱呼（選填）</label><input type="text" id="sy-name" maxlength="12" placeholder="例如 王經理"></div>
+              <div class="field"><label for="sy-bd">對方出生日期</label><input type="date" id="sy-bd" min="1920-01-01" value="1978-03-21"></div>
+              <div class="field"><label for="sy-bt">對方出生時間</label><input type="time" id="sy-bt" disabled></div>
+              <div class="field"><span class="lab">對方性別</span><div class="seg"><label><input type="radio" name="sy-g" id="sy-gF" value="女">女</label><label><input type="radio" name="sy-g" id="sy-gM" value="男" checked>男</label></div></div>
+            </div>
+            <label class="check" style="margin-top:4px"><input type="checkbox" id="sy-notime" checked>不知道對方出生時間</label>
+            <button class="go go-inline" type="submit">分析合盤</button>
+          </form>
+          <div id="synOut" class="tool-out"></div>
+        </div>
       </section>
       <section class="block">
         <div class="eyebrow">五術詳盤</div>
@@ -241,6 +159,11 @@ footer{max-width:1180px;margin:32px auto 0;font-size:12.5px;color:var(--muted);b
     </main>
   </div>
 </div>
+<dialog id="cardDlg" aria-labelledby="cardTitle">
+  <div class="dlg-head"><h3 id="cardTitle">IG 限動圖卡</h3><button type="button" class="ghost" id="cardClose">關閉</button></div>
+  <img id="cardImg" alt="職運羅盤結果圖卡">
+  <div class="dlg-actions"><a id="cardDl" class="go go-inline" download="職運羅盤.png" href="#">下載圖片</a><span class="small muted" id="cardMsg"></span></div>
+</dialog>
 <footer>
   職運羅盤以傳統命理與占星規則做程式化推算，屬於自我探索與決策參考，不構成職涯、法律或財務建議。八字採國曆輸入、未做真太陽時校正；紫微斗數依 iztro 排盤；人類圖與星盤行星位置由 astronomy-engine 計算，月交點採平均交點；奇門遁甲採時家轉盤拆補法的簡化版，只取八門。出生地時區不含夏令時間，1945–1979 年間在台灣出生且遇夏令時者，請將時間減 1 小時再輸入。
 </footer>
@@ -249,526 +172,9 @@ footer{max-width:1180px;margin:32px auto 0;font-size:12.5px;color:var(--muted);b
 <script src="https://cdn.jsdelivr.net/npm/iztro@2.5.8/dist/iztro.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
 
-<script id="engine">
-/* ============ 共用 ============ */
-var CITIES=[
-  ["台北",25.03,121.56,8],["新北",25.01,121.46,8],["桃園",24.99,121.30,8],["新竹",24.80,120.97,8],["台中",24.15,120.67,8],
-  ["彰化",24.08,120.54,8],["嘉義",23.48,120.45,8],["台南",22.99,120.21,8],["高雄",22.63,120.30,8],["屏東",22.67,120.49,8],
-  ["宜蘭",24.75,121.75,8],["花蓮",23.99,121.60,8],["台東",22.76,121.14,8],["澎湖",23.57,119.58,8],["金門",24.43,118.32,8],
-  ["香港",22.32,114.17,8],["澳門",22.20,113.55,8],["上海",31.23,121.47,8],["北京",39.90,116.40,8],["新加坡",1.35,103.82,8],
-  ["吉隆坡",3.14,101.69,8],["東京",35.68,139.69,9],["首爾",37.57,126.98,9],["雪梨",-33.87,151.21,10],["倫敦",51.51,-0.13,0],
-  ["紐約",40.71,-74.01,-5],["洛杉磯",34.05,-118.24,-8],["溫哥華",49.28,-123.12,-8]];
-var GAN="甲乙丙丁戊己庚辛壬癸", ZHI="子丑寅卯辰巳午未申酉戌亥";
-var WX=["木","火","土","金","水"];
-var GAN_WX={甲:0,乙:0,丙:1,丁:1,戊:2,己:2,庚:3,辛:3,壬:4,癸:4};
-var ZHI_WX={子:4,丑:2,寅:0,卯:0,辰:2,巳:1,午:1,未:2,申:3,酉:3,戌:2,亥:4};
-var HIDE={子:"癸",丑:"己癸辛",寅:"甲丙戊",卯:"乙",辰:"戊乙癸",巳:"丙戊庚",午:"丁己",未:"己丁乙",申:"庚壬戊",酉:"辛",戌:"戊辛丁",亥:"壬甲"};
-var HW=[0.6,0.3,0.1];
-var YIMA={申:"寅",子:"寅",辰:"寅",寅:"申",午:"申",戌:"申",巳:"亥",酉:"亥",丑:"亥",亥:"巳",卯:"巳",未:"巳"};
-var LIUHE={子:"丑",丑:"子",寅:"亥",亥:"寅",卯:"戌",戌:"卯",辰:"酉",酉:"辰",巳:"申",申:"巳",午:"未",未:"午"};
-function chong(a,b){return Math.abs(ZHI.indexOf(a)-ZHI.indexOf(b))===6}
-function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
-function norm360(x){return ((x%360)+360)%360}
-function norm180(x){x=norm360(x);return x>180?x-360:x}
+<script src="assets/engine.js"></script>
 
-/* 五類十神：以日主五行為我 */
-function rel(dm,el){var d=(el-dm+5)%5;return ["比劫","食傷","財","官殺","印"][d]}
-function tenGod(dmGan,g){
-  var r=rel(GAN_WX[dmGan],GAN_WX[g]);var same=(GAN.indexOf(dmGan)%2)===(GAN.indexOf(g)%2);
-  return {比劫:same?"比肩":"劫財",食傷:same?"食神":"傷官",財:same?"偏財":"正財",官殺:same?"七殺":"正官",印:same?"偏印":"正印"}[r];
-}
-function elemOfCat(dm,cat){return (dm+["比劫","食傷","財","官殺","印"].indexOf(cat))%5}
-
-/* ============ 八字 ============ */
-function calcBazi(inp){
-  var s=Solar.fromYmdHms(inp.y,inp.m,inp.d,inp.noTime?12:inp.hh,inp.noTime?0:inp.mm,0);
-  var ec=s.getLunar().getEightChar();
-  var p=[ec.getYear(),ec.getMonth(),ec.getDay(),ec.getTime()];
-  var dmG=p[2][0], dm=GAN_WX[dmG];
-  var cats={比劫:0,食傷:0,財:0,官殺:0,印:0}, elem=[0,0,0,0,0];
-  function addG(g,w){cats[rel(dm,GAN_WX[g])]+=w;elem[GAN_WX[g]]+=w}
-  var used=inp.noTime?3:4;
-  for(var i=0;i<used;i++){
-    if(i!==2) addG(p[i][0],1);
-    var w=i===1?2.5:(i===2?1.5:1), hs=HIDE[p[i][1]];
-    var tot=0;for(var k=0;k<hs.length;k++)tot+=HW[k];
-    for(var k2=0;k2<hs.length;k2++) addG(hs[k2],w*HW[k2]/tot);
-  }
-  var total=0;for(var c in cats)total+=cats[c];
-  var support=(cats.比劫+cats.印)/total;
-  var strong=support>=0.42;
-  var fav=strong?["食傷","財","官殺"]:["印","比劫"];
-  var favEl=fav.map(function(c){return elemOfCat(dm,c)});
-  var useCat;
-  if(strong){var arr=["食傷","財","官殺"].sort(function(a,b){return cats[a]-cats[b]});useCat=cats.比劫>cats.印?"官殺":"財";if(cats[useCat]>total*0.3)useCat=arr[0]}
-  else useCat=cats.官殺+cats.財>cats.食傷?"印":"比劫";
-  var yun=ec.getYun(inp.gender==="男"?1:0), dys=yun.getDaYun().slice(1,9).map(function(d){
-    var gz=d.getGanZhi();return {gz:gz,startYear:d.getStartYear(),endYear:d.getEndYear(),startAge:d.getStartAge(),endAge:d.getEndAge(),god:tenGod(dmG,gz[0]),cat:rel(dm,GAN_WX[gz[0]]),zcat:rel(dm,ZHI_WX[gz[1]])}});
-  var gods=[tenGod(dmG,p[0][0]),tenGod(dmG,p[1][0]),"日主",inp.noTime?"":tenGod(dmG,p[3][0])];
-  var yimaNatal=[YIMA[p[0][1]],YIMA[p[2][1]]];
-  var hasYima=p.slice(0,used).some(function(x,i){return yimaNatal.indexOf(x[1])>=0});
-  return {pillars:p,gods:gods,dmG:dmG,dm:dm,cats:cats,total:total,elem:elem,support:support,strong:strong,fav:fav,favEl:favEl,useCat:useCat,useEl:elemOfCat(dm,useCat),dayun:dys,hasYima:hasYima,dayZhi:p[2][1],monthZhi:p[1][1]};
-}
-/* 某一干支對職涯的作用（流年或流月） */
-function baziEffect(B,gz,label){
-  var r={move:0,stay:0,notes:[]};
-  var cg=rel(B.dm,GAN_WX[gz[0]]), cz=rel(B.dm,ZHI_WX[gz[1]]);
-  [[cg,1],[cz,0.7]].forEach(function(x){
-    var c=x[0],w=x[1];
-    if(c==="官殺"){r.stay+=2*w}
-    else if(c==="印"){r.stay+=1*w}
-    else if(c==="財"){r.stay+=1*w;r.move+=0.5*w}
-    else if(c==="食傷"){r.move+=2*w}
-    else {r.move+=1*w}
-  });
-  var favHit=(B.favEl.indexOf(GAN_WX[gz[0]])>=0?1:-1)+(B.favEl.indexOf(ZHI_WX[gz[1]])>=0?0.6:-0.6);
-  r.move+=favHit*0.5;r.stay+=favHit*0.5;r.fav=favHit;
-  if(cg==="官殺")r.notes.push(label+"天干逢"+tenGod(B.dmG,gz[0])+"，主管注意到你、責任加重");
-  if(cg==="食傷")r.notes.push(label+"天干逢"+tenGod(B.dmG,gz[0])+"，想表現、想改變的念頭強");
-  if(cg==="財")r.notes.push(label+"天干逢財星，談薪與業績的機會");
-  if(cg==="印")r.notes.push(label+"天干逢印星，進修、證照、貴人提攜");
-  if(gz[1]===YIMA[B.dayZhi]){r.move+=2;r.notes.push(label+"驛馬動，易有調動、外派或換環境")}
-  if(chong(gz[1],B.dayZhi)){r.move+=1.5;r.notes.push(label+"沖日支，個人狀態與工作節奏被打破")}
-  if(chong(gz[1],B.monthZhi)){r.move+=1;r.notes.push(label+"沖月令，組織或部門變動")}
-  if(LIUHE[gz[1]]===B.dayZhi){r.stay+=1;r.notes.push(label+"合日支，人和穩定")}
-  return r;
-}
-
-/* ============ 紫微斗數 ============ */
-var ZW_STAR={
-  紫微:{t:"領導與決策型。需要舞台與位階，適合管理職或能掌握資源分配的位置。",fit:{corp:3,public:2,foreign:1}},
-  天機:{t:"策劃、分析、技術型。腦袋快、喜歡變化，適合企劃、顧問、工程與研究。",fit:{startup:2,foreign:2,freelance:1}},
-  太陽:{t:"公眾與付出型。適合面向人群、有社會影響力的工作，公職、教育、業務、品牌。",fit:{public:3,corp:2,foreign:1}},
-  武曲:{t:"財務與執行型。重結果、能扛數字，適合金融、財務、營運與業績導向職位。",fit:{corp:2,sme:2,foreign:1}},
-  天同:{t:"協調與服務型。重視氛圍與福利，適合制度完善、步調穩定的環境。",fit:{public:3,corp:2}},
-  廉貞:{t:"制度與公關型。懂規則也懂人際，適合法務、公關、政府關係與管理。",fit:{public:2,corp:2,foreign:1}},
-  天府:{t:"守成與管理型。擅長守住資源與團隊，適合大型組織的中高階管理。",fit:{corp:3,public:2,sme:1}},
-  太陰:{t:"幕後與細膩型。擅長規劃與照顧細節，適合財會、房地產、設計、內容與後勤。",fit:{corp:2,sme:1,freelance:2}},
-  貪狼:{t:"多才與交際型。點子多、人脈廣，適合業務、行銷、娛樂與斜槓發展。",fit:{startup:2,freelance:2,sme:1}},
-  巨門:{t:"口才與專業型。靠說服與專業吃飯，適合法律、教學、諮詢、客服與媒體。",fit:{freelance:2,corp:1,foreign:1,public:1}},
-  天相:{t:"輔佐與協調型。是最好的二把手，適合行政、專案管理、秘書與人資。",fit:{corp:3,public:2}},
-  天梁:{t:"監察與照顧型。重原則、愛照顧人，適合醫療、保險、稽核、社福與顧問。",fit:{public:2,corp:1,freelance:1}},
-  七殺:{t:"開創與衝鋒型。不怕硬仗，適合業務開拓、新事業部、軍警或需要突破的職位。",fit:{startup:3,foreign:1,sme:1}},
-  破軍:{t:"變革與重建型。先破後立，適合新創、轉型專案、跨域與高變動產業。",fit:{startup:3,freelance:2}}
-};
-var MU={祿:"祿",權:"權",科:"科",忌:"忌"};
-function hourIndex(hh,noTime){if(noTime)return 6;return hh===23?12:Math.floor((hh+1)/2)}
-function calcZiwei(inp){
-  var a=iztro.astro.bySolar(inp.y+"-"+inp.m+"-"+inp.d,hourIndex(inp.hh,inp.noTime),inp.gender,true,"zh-TW");
-  var pal=a.palaces;
-  function idxOf(name){for(var i=0;i<12;i++)if(pal[i].name===name)return i;return -1}
-  var career=idxOf("官祿"), soul=idxOf("命宮"), travel=idxOf("遷移");
-  var careerStars=pal[career].majorStars.map(function(s){return s.name}), borrowed=false;
-  if(!careerStars.length){careerStars=pal[(career+6)%12].majorStars.map(function(s){return s.name});borrowed=true}
-  function starNames(i){var p=pal[i];return [].concat(p.majorStars,p.minorStars,p.adjectiveStars||[]).map(function(s){return s.name})}
-  return {a:a,pal:pal,career:career,soul:soul,travel:travel,careerStars:careerStars,borrowed:borrowed,starNames:starNames};
-}
-function ziweiYear(Z,year){
-  var h=Z.a.horoscope(year+"-7-1");
-  var y=h.yearly, names=y.palaceNames, mut=y.mutagen, keys=["祿","權","科","忌"];
-  var r={move:0,stay:0,notes:[],gz:y.heavenlyStem+y.earthlyBranch};
-  var ci=names.indexOf("官祿"), ti=names.indexOf("遷移"), si=names.indexOf("命宮");
-  r.careerIdx=ci;
-  keys.forEach(function(k,j){
-    var star=mut[j];
-    if(Z.starNames(ci).indexOf(star)>=0){
-      if(k==="祿"){r.stay+=2;r.move+=0.5;r.notes.push("流年官祿逢"+star+"化祿，工作有實質收穫")}
-      if(k==="權"){r.stay+=2;r.notes.push("流年官祿逢"+star+"化權，掌權、升職、被授權")}
-      if(k==="科"){r.stay+=1;r.notes.push("流年官祿逢"+star+"化科，名聲與專業被看見")}
-      if(k==="忌"){r.move+=2;r.stay-=1;r.notes.push("流年官祿逢"+star+"化忌，工作不順心、易萌生去意")}
-    }
-    if(Z.starNames(ti).indexOf(star)>=0&&(k==="祿"||k==="權")){r.move+=1.5;r.notes.push("流年遷移逢化"+k+"，外面的機會比內部好")}
-    if(Z.starNames(si).indexOf(star)>=0&&k==="忌"){r.notes.push("流年命宮化忌，重大決定宜多想一步")}
-  });
-  var d=h.decadal;r.decadal={gz:d.heavenlyStem+d.earthlyBranch,careerIdx:d.palaceNames.indexOf("官祿"),soulIdx:d.palaceNames.indexOf("命宮"),mutagen:d.mutagen};
-  return r;
-}
-
-/* ============ 星盤 ============ */
-var SIGNS=["牡羊","金牛","雙子","巨蟹","獅子","處女","天秤","天蠍","射手","摩羯","水瓶","雙魚"];
-var SIGN_EL=[1,2,3,4,1,2,3,4,1,2,3,4]; /* 1火 2土 3風 4水 */
-var MC_TEXT={
-  牡羊:"天頂牡羊：要能衝、能拿主導權。被綁手綁腳會很快想走，適合開拓型角色。",
-  金牛:"天頂金牛：重視穩定累積與實際報酬。適合金融、設計、品牌與能看到資產成長的工作。",
-  雙子:"天頂雙子：靠資訊與溝通建立名聲。適合媒體、行銷、業務、教學，常同時身兼多職。",
-  巨蟹:"天頂巨蟹：在有歸屬感的團隊裡發揮最好。適合照顧型產業、家族企業、消費品與餐飲。",
-  獅子:"天頂獅子：需要被看見、被肯定。適合品牌、娛樂、管理與任何能站上台前的位置。",
-  處女:"天頂處女：以專業精準贏得信任。適合研究、品管、醫療、數據分析與流程改善。",
-  天秤:"天頂天秤：擅長協調與美感。適合設計、法律、公關、人資與合作型業務。",
-  天蠍:"天頂天蠍：適合深入、掌握核心資源的工作。財務、研究、心理、資安、危機處理。",
-  射手:"天頂射手：要有遠方與成長空間。適合外商、國際業務、教育、出版與旅遊。",
-  摩羯:"天頂摩羯：典型的爬梯型職涯。適合結構完整的大企業或公部門，越晚越吃香。",
-  水瓶:"天頂水瓶：適合創新、科技與打破常規的組織。新創、社會企業、科技產品。",
-  雙魚:"天頂雙魚：靠直覺與共感工作。適合藝術、療癒、影視、非營利與創意產業。"
-};
-var PL_10={太陽:"想在事業上被看見",月亮:"工作情緒決定去留",水星:"靠腦力與溝通成名",金星:"人緣帶來職位",火星:"事業企圖心強",木星:"事業運天生有貴人",土星:"晚成但根基穩",天王星:"職涯常有突變",海王星:"理想與創意導向",冥王星:"追求權力與深度影響"};
-var BODIES=[["太陽","Sun"],["月亮","Moon"],["水星","Mercury"],["金星","Venus"],["火星","Mars"],["木星","Jupiter"],["土星","Saturn"],["天王星","Uranus"],["海王星","Neptune"],["冥王星","Pluto"]];
-function lonOf(body,date){
-  if(body==="Sun")return Astronomy.SunPosition(date).elon;
-  if(body==="Moon")return Astronomy.EclipticGeoMoon(date).lon;
-  return Astronomy.Ecliptic(Astronomy.GeoVector(Astronomy.Body[body],date,true)).elon;
-}
-function meanNode(date){var T=Astronomy.MakeTime(date).tt/36525;return norm360(125.04452-1934.136261*T)}
-function utcDate(inp){var hh=inp.noTime?12:inp.hh,mm=inp.noTime?0:inp.mm;return new Date(Date.UTC(inp.y,inp.m-1,inp.d,hh,mm)-inp.tz*3600000)}
-function calcAstro(inp){
-  var dt=utcDate(inp), pl={};
-  BODIES.forEach(function(b){pl[b[0]]=lonOf(b[1],dt)});
-  var r={pl:pl,hasTime:!inp.noTime};
-  if(!inp.noTime){
-    var T=Astronomy.MakeTime(dt).tt/36525, eps=(23.4393-0.0130*T)*Math.PI/180;
-    var ramc=norm360(Astronomy.SiderealTime(dt)*15+inp.lon)*Math.PI/180, phi=inp.lat*Math.PI/180;
-    var asc=norm360(Math.atan2(Math.cos(ramc),-(Math.sin(ramc)*Math.cos(eps)+Math.tan(phi)*Math.sin(eps)))*180/Math.PI);
-    var mc=norm360(Math.atan2(Math.sin(ramc),Math.cos(ramc)*Math.cos(eps))*180/Math.PI);
-    r.asc=asc;r.mc=mc;r.ascSign=Math.floor(asc/30);
-  } else { r.ascSign=Math.floor(pl.太陽/30); }
-  r.house=function(lon){return ((Math.floor(lon/30)-r.ascSign+12)%12)+1};
-  return r;
-}
-function astroMonth(A,date){
-  var r={move:0,stay:0,notes:[]};
-  var ju=lonOf("Jupiter",date), sa=lonOf("Saturn",date), ur=lonOf("Uranus",date), pu=lonOf("Pluto",date);
-  var hj=A.house(ju), hs=A.house(sa);
-  if(hj===10){r.stay+=2.5;r.notes.push("木星行經第 10 宮：升遷與名聲的大年")}
-  if(hj===6){r.move+=1.5;r.notes.push("木星行經第 6 宮：換到更好的工作環境")}
-  if(hj===2){r.stay+=1;r.notes.push("木星行經第 2 宮：加薪談判有利")}
-  if(hj===1){r.move+=1;r.notes.push("木星行經第 1 宮：新開始、個人品牌擴張")}
-  if(hj===9){r.move+=1;r.notes.push("木星行經第 9 宮：外派、進修、跨國機會")}
-  if(hs===10){r.stay+=1;r.notes.push("土星行經第 10 宮：責任加重，撐住就升")}
-  if(hs===6){r.stay+=0.5;r.move-=0.5;r.notes.push("土星行經第 6 宮：工作量大，先別裸辭")}
-  if(A.mc!=null){
-    function hard(x,orb){var d=Math.abs(norm180(x-A.mc));return d<orb||Math.abs(d-90)<orb||Math.abs(d-180)<orb}
-    if(hard(ur,3)){r.move+=3;r.notes.push("天王星刑沖天頂：職涯突變，跳槽或轉行的強訊號")}
-    if(hard(pu,2)){r.move+=2;r.notes.push("冥王星刑沖天頂：職涯徹底重組")}
-    if(Math.abs(norm180(sa-A.mc))<4){r.stay+=1.5;r.notes.push("土星合天頂：職涯考核點")}
-    if(Math.abs(norm180(ju-A.mc))<6){r.stay+=2;r.notes.push("木星合天頂：曝光與晉升")}
-  }
-  return r;
-}
-
-/* ============ 人類圖 ============ */
-var HD_GATES=[41,19,13,49,30,55,37,63,22,36,25,17,21,51,42,3,27,24,2,23,8,20,16,35,45,12,15,52,39,53,62,56,31,33,7,4,29,59,40,64,47,6,46,18,48,57,32,50,28,44,1,43,14,34,9,5,26,11,10,58,38,54,61,60];
-var HD_CENTERS={頭頂:[64,61,63],邏輯:[47,24,4,17,43,11],喉嚨:[62,23,56,35,12,45,33,8,31,20,16],G中心:[1,13,25,46,2,15,10,7],意志力:[21,40,26,51],直覺:[48,57,44,50,32,28,18],情緒:[6,37,22,36,30,55,49],薦骨:[34,5,14,29,59,9,3,42,27],根部:[53,60,52,19,39,41,58,38,54]};
-var HD_CH=[[1,8],[2,14],[3,60],[4,63],[5,15],[6,59],[7,31],[9,52],[10,20],[10,34],[10,57],[11,56],[12,22],[13,33],[16,48],[17,62],[18,58],[19,49],[20,34],[20,57],[21,45],[23,43],[24,61],[25,51],[26,44],[27,50],[28,38],[29,46],[30,41],[32,54],[34,57],[35,36],[37,40],[39,55],[42,53],[47,64]];
-function gateCenter(g){for(var c in HD_CENTERS)if(HD_CENTERS[c].indexOf(g)>=0)return c}
-function gateOf(lon){var d=norm360(lon-302),i=Math.floor(d/5.625);return {gate:HD_GATES[i],line:Math.floor((d-i*5.625)/0.9375)+1}}
-function hdActivations(date){
-  var out=[], sun=lonOf("Sun",date), node=meanNode(date);
-  out.push(["太陽",sun],["地球",norm360(sun+180)],["月亮",lonOf("Moon",date)],["北交",node],["南交",norm360(node+180)]);
-  ["Mercury","Venus","Mars","Jupiter","Saturn","Uranus","Neptune","Pluto"].forEach(function(b){out.push([b,lonOf(b,date)])});
-  return out.map(function(x){var g=gateOf(x[1]);return {p:x[0],gate:g.gate,line:g.line}});
-}
-function calcHD(inp){
-  var birth=utcDate(inp), sun=lonOf("Sun",birth), target=norm360(sun-88);
-  var t=new Date(birth.getTime()-89*86400000);
-  for(var i=0;i<8;i++){var diff=norm180(target-lonOf("Sun",t));t=new Date(t.getTime()+diff/0.9856*86400000)}
-  var pers=hdActivations(birth), des=hdActivations(t);
-  var gates={};pers.concat(des).forEach(function(a){gates[a.gate]=1});
-  var chans=HD_CH.filter(function(c){return gates[c[0]]&&gates[c[1]]});
-  var defined={};chans.forEach(function(c){defined[gateCenter(c[0])]=1;defined[gateCenter(c[1])]=1});
-  var adj={};chans.forEach(function(c){var a=gateCenter(c[0]),b=gateCenter(c[1]);(adj[a]=adj[a]||[]).push(b);(adj[b]=adj[b]||[]).push(a)});
-  function reach(from,to){var seen={},st=[from];while(st.length){var x=st.pop();if(x===to)return true;if(seen[x])continue;seen[x]=1;(adj[x]||[]).forEach(function(y){st.push(y)})}return false}
-  var type, motorsToThroat=["意志力","情緒","根部"].some(function(m){return defined[m]&&reach(m,"喉嚨")});
-  if(!Object.keys(defined).length)type="反映者";
-  else if(defined.薦骨)type=(reach("薦骨","喉嚨")||motorsToThroat)?"顯示生產者":"生產者";
-  else type=motorsToThroat?"顯示者":"投射者";
-  var auth=type==="反映者"?"月亮週期":defined.情緒?"情緒中心":defined.薦骨?"薦骨中心":defined.直覺?"直覺中心":defined.意志力?"意志力中心":defined.G中心?"自我投射":"環境（心智投射）";
-  var profile=pers[0].line+"/"+des[0].line;
-  return {pers:pers,des:des,chans:chans,defined:defined,type:type,auth:auth,profile:profile};
-}
-var HD_TYPE={
-  生產者:{strat:"等待回應",sig:"挫敗感",t:"你的薦骨是持續運轉的發電機，做喜歡的事能做很久。最適合有明確任務、能長期累積專精的位置。轉職訊號不是「腦袋覺得該走」，而是每天上班時身體都沒反應、持續挫敗。換工作時，從「別人來找你」的機會中挑讓你有「嗯！」反應的。",fit:{corp:2,sme:2}},
-  顯示生產者:{strat:"等待回應，再告知",sig:"挫敗與憤怒",t:"你是多工、快速、會跳步的生產者。重複且節奏慢的工作會讓你耗竭。適合產品開發、新創、多專案並行的環境。轉職前先回應一個具體機會，再告知身邊的人，可以減少阻力。",fit:{startup:3,freelance:1}},
-  投射者:{strat:"等待邀請",sig:"苦澀感",t:"你天生看得懂人與系統，是引導者與顧問。不被認可的地方再努力也只會累。最好的工作是被邀請的工作：主管點名、獵頭找上門、朋友推薦。適合管理、顧問、人資、策略與教練型職位，工時不宜過長。",fit:{foreign:2,corp:1,freelance:2}},
-  顯示者:{strat:"告知後行動",sig:"憤怒",t:"你是發起者，不需要等別人點頭。被層層簽核卡住時最痛苦。適合創業、開拓新市場、獨立負責一條線。重要決定前先告知主管與家人，阻力會小很多。",fit:{startup:3,freelance:2}},
-  反映者:{strat:"等待 28 天月亮週期",sig:"失望",t:"你是環境的鏡子，團隊健不健康會直接反映在你身上。選公司時「人與地方」比職稱更重要。重大職涯決定給自己一個月，跟不同的人談過再定。",fit:{sme:2,corp:1,public:1}}
-};
-var PROFILE_NAME={1:"研究者",2:"隱士",3:"實驗者",4:"人脈者",5:"解決者",6:"典範"};
-
-/* ============ 奇門遁甲（時家轉盤拆補，簡化取八門） ============ */
-var JU={冬至:[1,7,4],小寒:[2,8,5],大寒:[3,9,6],立春:[8,5,2],雨水:[9,6,3],惊蛰:[1,7,4],春分:[3,9,6],清明:[4,1,7],谷雨:[5,2,8],立夏:[4,1,7],小满:[5,2,8],芒种:[6,3,9],
-  夏至:[9,3,6],小暑:[8,2,5],大暑:[7,1,4],立秋:[2,5,8],处暑:[1,4,7],白露:[9,3,6],秋分:[7,1,4],寒露:[6,9,3],霜降:[5,8,2],立冬:[6,9,3],小雪:[5,8,2],大雪:[4,7,1]};
-var YANG=["冬至","小寒","大寒","立春","雨水","惊蛰","春分","清明","谷雨","立夏","小满","芒种"];
-var ORIG_DOOR={1:"休",8:"生",3:"傷",4:"杜",9:"景",2:"死",7:"驚",6:"開",5:"死"};
-var RING=[1,8,3,4,9,2,7,6], DIR={1:"北",8:"東北",3:"東",4:"東南",9:"南",2:"西南",7:"西",6:"西北"};
-var DOOR_Q={開:2,休:2,生:2,景:0.5,杜:-0.5,傷:-1,驚:-1,死:-1.5};
-function qimen(y,m,d,hh){
-  var l=Solar.fromYmdHms(y,m,d,hh,0,0).getLunar();
-  var term=l.getPrevJieQi(true).getName(), yang=YANG.indexOf(term)>=0;
-  var di=LunarUtil.getJiaZiIndex(l.getDayInGanZhi()), yuan=Math.floor(((di-di%5)%15)/5);
-  var ju=JU[term][yuan];
-  var yi="戊己庚辛壬癸丁丙乙", pos={};
-  for(var k=0;k<9;k++){var p=yang?((ju-1+k)%9)+1:(((ju-1-k)%9)+9)%9+1;pos[yi[k]]=p}
-  var hgz=l.getTimeInGanZhi(), hi=LunarUtil.getJiaZiIndex(hgz), steps=hi%10, xunYi="戊己庚辛壬癸"[Math.floor(hi/10)];
-  var P0=pos[xunYi], P=yang?((P0-1+steps)%9)+1:(((P0-1-steps)%9)+9)%9+1;
-  if(P===5)P=2; var P0r=P0===5?2:P0;
-  var kk=RING.indexOf(P)-RING.indexOf(P0r), doors={};
-  for(var i=0;i<8;i++)doors[RING[((i+kk)%8+8)%8]]=ORIG_DOOR[RING[i]];
-  var openAt=+Object.keys(doors).filter(function(x){return doors[x]==="開"})[0];
-  return {term:term,yang:yang,ju:ju,yuan:"上中下"[yuan],hgz:hgz,dgz:l.getDayInGanZhi(),zhiShi:ORIG_DOOR[P0r],zhiShiAt:P,doors:doors,openAt:openAt,openDir:DIR[openAt],yi:l.getDayYi(),ji:l.getDayJi()};
-}
-var YI_MAP={开市:"開市",交易:"交易",立券:"立券",出行:"出行",会亲友:"會親友",求职:"求職",上任:"上任",入学:"入學",纳财:"納財",移徙:"移徙"};
-function qimenDays(B,start,n){
-  var res=[];
-  for(var i=1;i<=n;i++){
-    var dt=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i);
-    var q=qimen(dt.getFullYear(),dt.getMonth()+1,dt.getDate(),10);
-    var s=DOOR_Q[q.doors[q.zhiShiAt]]||0;
-    var hits=q.yi.filter(function(x){return YI_MAP[x]});
-    s+=hits.length*0.6; q.ji.forEach(function(x){if(YI_MAP[x])s-=0.8});
-    if(chong(q.dgz[1],B.dayZhi))s-=2;
-    var wd=dt.getDay(); if(wd===0||wd===6)s-=1.2;
-    var act=hits.indexOf("立券")>=0||hits.indexOf("交易")>=0?"簽約／談薪":hits.indexOf("出行")>=0||hits.indexOf("会亲友")>=0?"面試／拜訪":hits.indexOf("开市")>=0?"報到／開工":"遞交履歷";
-    res.push({date:dt,q:q,score:s,act:act,door:q.doors[q.zhiShiAt],hits:hits.map(function(x){return YI_MAP[x]})});
-  }
-  return res;
-}
-
-/* ============ 綜合 ============ */
-function compute(inp,now){
-  var B=calcBazi(inp), Z=calcZiwei(inp), A=calcAstro(inp), H=calcHD(inp);
-  var months=[], zy={}, by={};
-  for(var i=1;i<=36;i++){
-    var dt=new Date(now.getFullYear(),now.getMonth()+i,15);
-    var Y=dt.getFullYear(), M=dt.getMonth()+1;
-    var l=Solar.fromYmd(Y,M,15).getLunar();
-    var ygz=l.getYearInGanZhiExact(), mgz=l.getMonthInGanZhiExact();
-    if(!by[ygz])by[ygz]=baziEffect(B,ygz,ygz+"年");
-    if(!zy[Y])zy[Y]=ziweiYear(Z,Y);
-    var bm=baziEffect(B,mgz,mgz+"月"), am=astroMonth(A,new Date(Date.UTC(Y,M-1,15)));
-    var mv=by[ygz].move*0.6+bm.move*0.8+zy[Y].move*0.7+am.move;
-    var st=by[ygz].stay*0.6+bm.stay*0.8+zy[Y].stay*0.7+am.stay;
-    months.push({y:Y,m:M,ygz:ygz,mgz:mgz,mvRaw:mv,stRaw:st,notes:[].concat(bm.notes.slice(0,2),am.notes)});
-  }
-  var all=[];months.forEach(function(x){all.push(x.mvRaw,x.stRaw)});
-  var lo=Math.min.apply(null,all),hi=Math.max.apply(null,all);
-  months.forEach(function(x){x.move=Math.round(15+75*(x.mvRaw-lo)/(hi-lo||1));x.stay=Math.round(15+75*(x.stRaw-lo)/(hi-lo||1))});
-  /* 公司類型 */
-  var fit={corp:0,startup:0,foreign:0,public:0,freelance:0,sme:0}, why={corp:[],startup:[],foreign:[],public:[],freelance:[],sme:[]};
-  function add(k,v,w){fit[k]+=v;if(w&&v>=1.2&&why[k].indexOf(w)<0)why[k].push(w)}
-  var sh=function(c){return B.cats[c]/B.total*5};
-  add("corp",sh("官殺")*3,"八字官殺有力");add("public",sh("官殺")*3,"八字官殺有力");
-  add("public",sh("印")*2,"印星重");add("corp",sh("印"),"");add("foreign",sh("印"),"");
-  add("startup",sh("食傷")*2,"食傷旺");add("freelance",sh("食傷")*3,"食傷旺");
-  add("sme",sh("財")*2,"財星顯");add("startup",sh("財"),"");add("foreign",sh("財"),"");
-  add("startup",sh("比劫")*2,"比劫強");add("freelance",sh("比劫"),"");add("sme",sh("比劫"),"");
-  if(B.hasYima)add("foreign",2,"八字帶驛馬");
-  Z.careerStars.forEach(function(s){var f=(ZW_STAR[s]||{}).fit||{};for(var k in f)add(k,f[k]*1.2,"官祿宮"+s)});
-  var hf=HD_TYPE[H.type].fit;for(var k in hf)add(k,hf[k]*1.2,"人類圖"+H.type);
-  if(A.mc!=null){var ms=Math.floor(A.mc/30),el=SIGN_EL[ms],sn="天頂"+SIGNS[ms];
-    if(el===1){add("startup",1.5,sn);add("freelance",1,sn)} if(el===2){add("corp",1.5,sn);add("public",1,sn)}
-    if(el===3){add("foreign",1.5,sn);add("startup",1,sn)} if(el===4){add("sme",1.5,sn);add("freelance",1,sn)}
-    if(ms===9)add("corp",1.5,sn); if(ms===10)add("startup",1.5,sn); if(ms===8)add("foreign",1.5,sn);}
-  var fmax=Math.max.apply(null,Object.values(fit));
-  var fitList=Object.keys(fit).map(function(k){return {k:k,v:Math.round(100*fit[k]/fmax),why:why[k]}}).sort(function(a,b){return b.v-a.v});
-  var nxt=months.slice(0,12), mvAvg=nxt.reduce(function(s,x){return s+x.move},0)/12, stAvg=nxt.reduce(function(s,x){return s+x.stay},0)/12;
-  return {B:B,Z:Z,A:A,H:H,months:months,fitList:fitList,mvAvg:mvAvg,stAvg:stAvg,zy:zy,by:by,qdays:qimenDays(B,now,60)};
-}
-</script>
-
-<script>
-var FIT_NAME={corp:"大型企業／集團",startup:"新創／成長期公司",foreign:"外商／跨國企業",public:"公部門／國營事業",freelance:"自由接案／個人品牌",sme:"中小企業／家族企業"};
-var FIT_DESC={corp:"制度清楚、升遷有階梯，適合穩定累積職級與資源。",startup:"變動快、角色彈性大，能用成果換取速度與股權。",foreign:"跨文化、重專業與績效，有外派與國際視野。",public:"穩定、重程序與公共價值，適合長期耕耘。",freelance:"自己掌握時間與作品，收入與品牌綁在一起。",sme:"老闆近、決策快，人和決定一切，容易成為核心。"};
-var IND={0:["教育培訓","出版文創","設計","醫療生技","環保農林"],1:["半導體與電子","網路媒體","能源","餐飲","美業與娛樂"],2:["不動產","營建","顧問管理","保險","物流倉儲"],3:["金融投資","法律","機械製造","汽車","資安"],4:["國際貿易","航運旅遊","行銷傳播","軟體與資訊流通","飲品水產"]};
-var CAT_CAREER={官殺:"在組織裡被賦予權責時最有力量",印:"靠專業、學歷與貴人提攜前進",食傷:"靠創意與表達被看見，討厭被框住",財:"對數字與資源敏感，重實質報酬",比劫:"獨立、好勝，適合合夥或自己當家"};
-var $=function(id){return document.getElementById(id)};
-function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
-function ym(x){return x.y+"/"+String(x.m).padStart(2,"0")}
-
-CITIES.forEach(function(c,i){var o=document.createElement("option");o.value=i;o.textContent=c[0];$("city").appendChild(o)});
-$("noTime").addEventListener("change",function(){$("bt").disabled=this.checked});
-
-function readInput(){
-  var d=$("bd").value.split("-").map(Number), t=($("bt").value||"12:00").split(":").map(Number), c=CITIES[+$("city").value];
-  return {y:d[0],m:d[1],d:d[2],hh:t[0],mm:t[1],noTime:$("noTime").checked,gender:$("gM").checked?"男":"女",lat:c[1],lon:c[2],tz:c[3],city:c[0],q:$("q").value,yrs:+$("yrs").value};
-}
-
-function bestWindows(ms,key,n){
-  var sorted=ms.map(function(x,i){return {i:i,v:x[key]}}).sort(function(a,b){return b.v-a.v}), pick=[];
-  for(var j=0;j<sorted.length&&pick.length<n;j++){if(pick.every(function(p){return Math.abs(p.i-sorted[j].i)>2}))pick.push(sorted[j])}
-  return pick.sort(function(a,b){return a.i-b.i}).map(function(p){return ms[p.i]});
-}
-
-function renderVerdict(R,inp){
-  var B=R.B, diff=R.mvAvg-R.stAvg, call, sub;
-  if(inp.yrs===-1){call="未來一年，<em>主動出擊</em>找下一份工作";sub="你目前待業，曲線看的是哪幾個月出手命中率最高。"}
-  else if(diff>6){call="未來一年偏向<em>轉職</em>";sub="外部機會的動能明顯高於內部升遷，與其等升，不如準備換。"}
-  else if(diff<-6){call="未來一年偏向<em>留任升遷</em>";sub="組織內的晉升與授權訊號較強，先把這一階拿到手再談跳槽。"}
-  else {call="未來一年<em>邊做邊看</em>";sub="內外動能接近，建議爭取內部轉調或新專案，同時低調接觸外部機會。"}
-  if(inp.q==="biz"){sub+=(B.cats.食傷+B.cats.比劫)/B.total>0.38?" 你的八字食傷與比劫有力，接案或創業的體質是有的，先從副業試水溫。":" 你的八字偏重官印，比較適合在組織裡當專家，創業建議先找合夥人互補。"}
-  if(inp.yrs===0&&diff>6)sub+=" 你年資未滿一年，若要走，最好等到下方標示的窗口期。";
-  var mvW=bestWindows(R.months,"move",3), stW=bestWindows(R.months,"stay",3);
-  var pos=["年柱","月柱","日柱","時柱"];
-  var pill=B.pillars.map(function(p,i){
-    if(i===3&&inp.noTime)return '<div class="pillar"><div class="pos">時柱</div><div class="gz muted">？<br>？</div><div class="god">—</div></div>';
-    return '<div class="pillar'+(i===2?" day":"")+'"><div class="pos">'+pos[i]+'</div><div class="gz">'+p[0]+'<br>'+p[1]+'</div><div class="god">'+B.gods[i]+'</div></div>'}).join("");
-  var top=R.fitList[0];
-  $("verdictBlock").innerHTML=
-   '<div class="eyebrow">綜合判讀・'+esc(inp.y+"/"+inp.m+"/"+inp.d)+(inp.noTime?"":" "+$("bt").value)+"・"+esc(inp.city)+"・"+inp.gender+'</div>'+
-   '<div class="verdict"><div style="min-width:0">'+
-     '<div class="verdict-call">'+call+'</div><p style="margin:0 0 6px">'+sub+'</p>'+
-     '<p class="muted small" style="margin:0">日主 <b>'+B.dmG+WX[B.dm]+'</b>，'+(B.strong?"身強":"身弱")+'，喜用 '+B.favEl.map(function(e){return WX[e]}).join("、")+'。紫微官祿宮 '+R.Z.careerStars.join("、")+(R.Z.borrowed?"（借對宮）":"")+'；人類圖 '+R.H.type+' '+R.H.profile+'；'+(R.A.mc!=null?"天頂"+SIGNS[Math.floor(R.A.mc/30)]:"太陽"+SIGNS[Math.floor(R.A.pl.太陽/30)])+'。最適合的環境是<b>'+FIT_NAME[top.k]+'</b>。</p>'+
-     '<div class="windows">'+
-       '<div class="win"><div class="k"><span class="dot" style="background:var(--s-move)"></span>轉職窗口</div>'+mvW.map(function(x){return '<div><b>'+ym(x)+'</b> <span class="muted small">'+x.move+'</span></div>'}).join("")+'</div>'+
-       '<div class="win"><div class="k"><span class="dot" style="background:var(--s-stay)"></span>升遷窗口</div>'+stW.map(function(x){return '<div><b>'+ym(x)+'</b> <span class="muted small">'+x.stay+'</span></div>'}).join("")+'</div>'+
-     '</div>'+
-   '</div><div style="min-width:0">'+
-     '<div class="pillars">'+pill+'</div>'+
-     '<div class="meter" style="margin-top:16px"><div class="lab" style="margin-bottom:6px">未來 12 個月平均動能</div>'+
-       '<div class="meter-row"><span>轉職</span><div class="bar"><i style="width:'+R.mvAvg.toFixed(0)+'%;background:var(--s-move)"></i></div><span class="num">'+R.mvAvg.toFixed(0)+'</span></div>'+
-       '<div class="meter-row"><span>升遷</span><div class="bar"><i style="width:'+R.stAvg.toFixed(0)+'%;background:var(--s-stay)"></i></div><span class="num">'+R.stAvg.toFixed(0)+'</span></div>'+
-     '</div>'+
-     '<div class="tags" style="margin-top:10px"><span class="tag gold">'+B.useCat+'為用</span><span class="tag">'+CAT_CAREER[B.useCat]+'</span></div>'+
-   '</div></div>';
-}
-
-var chartData=null;
-function renderChart(){
-  if(!chartData)return;
-  var ms=chartData, box=$("chart"), W=Math.max(300,box.clientWidth), H=W<500?220:260, L=30, Rr=W<500?14:60, T=12, Bt=28;
-  var iw=W-L-Rr, ih=H-T-Bt, n=ms.length;
-  function x(i){return L+iw*i/(n-1)} function y(v){return T+ih*(1-v/100)}
-  var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="未來 36 個月轉職與升遷動能折線圖">';
-  [0,25,50,75,100].forEach(function(v){s+='<line x1="'+L+'" x2="'+(L+iw)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="var(--line)" stroke-width="1"/><text x="'+(L-6)+'" y="'+(y(v)+4)+'" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--f-mono)">'+v+'</text>'});
-  ms.forEach(function(m,i){if((m.m===1&&i>2)||i===0){s+='<line x1="'+x(i)+'" x2="'+x(i)+'" y1="'+T+'" y2="'+(T+ih)+'" stroke="var(--line)" stroke-dasharray="2 3"/><text x="'+x(i)+'" y="'+(H-8)+'" font-size="11" fill="var(--muted)" font-family="var(--f-mono)" text-anchor="'+(i===0?"start":"middle")+'">'+(i===0?ym(m):m.y)+'</text>'}});
-  function path(key){return ms.map(function(m,i){return (i?"L":"M")+x(i).toFixed(1)+" "+y(m[key]).toFixed(1)}).join("")}
-  function area(key){return path(key)+"L"+x(n-1)+" "+(T+ih)+"L"+x(0)+" "+(T+ih)+"Z"}
-  s+='<path d="'+area("move")+'" fill="var(--s-move)" fill-opacity=".07"/><path d="'+area("stay")+'" fill="var(--s-stay)" fill-opacity=".07"/>';
-  s+='<path d="'+path("stay")+'" fill="none" stroke="var(--s-stay)" stroke-width="2" stroke-linejoin="round"/>';
-  s+='<path d="'+path("move")+'" fill="none" stroke="var(--s-move)" stroke-width="2" stroke-linejoin="round"/>';
-  if(W>=500){var lm=ms[n-1];var ya=y(lm.move),yb=y(lm.stay);if(Math.abs(ya-yb)<14){if(ya<yb){ya-=7;yb+=7}else{ya+=7;yb-=7}}
-    s+='<text x="'+(x(n-1)+8)+'" y="'+(ya+4)+'" font-size="12" fill="var(--ink)">轉職</text><text x="'+(x(n-1)+8)+'" y="'+(yb+4)+'" font-size="12" fill="var(--ink)">升遷</text>'}
-  s+='<line id="xh" x1="0" x2="0" y1="'+T+'" y2="'+(T+ih)+'" stroke="var(--muted)" stroke-width="1" visibility="hidden"/>';
-  s+='<circle id="cm" r="4.5" fill="var(--s-move)" stroke="var(--surface)" stroke-width="2" visibility="hidden"/><circle id="cs" r="4.5" fill="var(--s-stay)" stroke="var(--surface)" stroke-width="2" visibility="hidden"/>';
-  s+='<rect x="'+L+'" y="0" width="'+iw+'" height="'+H+'" fill="transparent" id="hit"/></svg><div class="tip" id="tip" hidden></div>';
-  box.innerHTML=s;
-  var svg=box.querySelector("svg"), tip=$("tip");
-  function show(ev){
-    var r=svg.getBoundingClientRect(), px=(ev.clientX-r.left)*W/r.width, i=clamp(Math.round((px-L)/iw*(n-1)),0,n-1), m=ms[i];
-    var xh=$("xh");xh.setAttribute("x1",x(i));xh.setAttribute("x2",x(i));xh.setAttribute("visibility","visible");
-    [["cm","move"],["cs","stay"]].forEach(function(c){var el=$(c[0]);el.setAttribute("cx",x(i));el.setAttribute("cy",y(m[c[1]]));el.setAttribute("visibility","visible")});
-    tip.innerHTML='<h4>'+ym(m)+'　'+m.mgz+'月</h4><div><span class="dot" style="background:var(--s-move)"></span> 轉職 <b class="num">'+m.move+'</b>　<span class="dot" style="background:var(--s-stay)"></span> 升遷 <b class="num">'+m.stay+'</b></div>'+(m.notes.length?'<ul>'+m.notes.slice(0,3).map(function(t){return "<li>"+esc(t)+"</li>"}).join("")+'</ul>':"");
-    tip.hidden=false;var tx=x(i)*r.width/W;tip.style.left=clamp(tx+12,0,r.width-tip.offsetWidth)+"px";if(tx+12+tip.offsetWidth>r.width)tip.style.left=Math.max(0,tx-12-tip.offsetWidth)+"px";tip.style.top="10px";
-  }
-  $("hit").addEventListener("pointermove",show);$("hit").addEventListener("pointerdown",show);
-  $("hit").addEventListener("pointerleave",function(){tip.hidden=true;["xh","cm","cs"].forEach(function(id){$(id).setAttribute("visibility","hidden")})});
-}
-var rzT;window.addEventListener("resize",function(){clearTimeout(rzT);rzT=setTimeout(renderChart,120)});
-
-function renderTable(ms){
-  $("chartTable").innerHTML='<table><thead><tr><th>月份</th><th>流年</th><th>流月</th><th style="text-align:right">轉職</th><th style="text-align:right">升遷</th><th>主要訊號</th></tr></thead><tbody>'+
-   ms.map(function(m){return '<tr><td class="num" style="text-align:left">'+ym(m)+'</td><td>'+m.ygz+'</td><td>'+m.mgz+'</td><td class="num">'+m.move+'</td><td class="num">'+m.stay+'</td><td style="white-space:normal;min-width:220px">'+esc(m.notes.slice(0,2).join("；")||"—")+'</td></tr>'}).join("")+'</tbody></table>';
-}
-
-function renderFit(R){
-  $("fit").innerHTML=R.fitList.map(function(f,i){
-    return '<div class="fit-item'+(i===0?" top":"")+'"><div class="fit-head"><h3>'+FIT_NAME[f.k]+'</h3>'+(i===0?'<span class="badge">最適合</span>':'<span class="num muted small">'+f.v+'</span>')+'</div>'+
-      '<div class="bar"><i style="width:'+f.v+'%"></i></div><p>'+FIT_DESC[f.k]+'</p>'+(f.why.length?'<p>依據：'+f.why.slice(0,3).map(esc).join("、")+'</p>':"")+'</div>'}).join("");
-  var B=R.B, els=[B.useEl].concat(B.favEl.filter(function(e){return e!==B.useEl}));
-  $("industries").innerHTML=els.map(function(e,i){return IND[e].slice(0,i?3:5).map(function(t){return '<span class="tag'+(i?"":" gold")+'">'+WX[e]+"・"+t+'</span>'}).join("")}).join("");
-}
-
-function renderBazi(R,inp){
-  var B=R.B, nowY=new Date().getFullYear();
-  var catRows=["官殺","印","比劫","食傷","財"].map(function(c){var v=B.cats[c]/B.total*100;return '<div class="meter-row"><span>'+c+'</span><div class="bar"><i style="width:'+v.toFixed(0)+'%;background:var(--accent)"></i></div><span class="num">'+v.toFixed(0)+'%</span></div>'}).join("");
-  var yrs=Object.keys(R.by).map(function(k){var e=R.by[k];return '<tr><td>'+k+'</td><td>'+tenGod(B.dmG,k[0])+'</td><td><span class="pill '+(e.fav>0?"good":e.fav<-0.5?"bad":"mid")+'">'+(e.fav>0?"喜":e.fav<-0.5?"忌":"平")+'</span></td><td style="white-space:normal">'+esc(e.notes.join("；")||"平穩之年")+'</td></tr>'}).join("");
-  $("p-bazi").innerHTML=
-   '<div class="split"><div style="min-width:0"><h3>日主與格局</h3><p>日主 <b>'+B.dmG+'（'+WX[B.dm]+'）</b>，同類與生扶力量約佔 '+(B.support*100).toFixed(0)+'%，判為<b>'+(B.strong?"身強":"身弱")+'</b>。'+(B.strong?"能量足、扛得住壓力，需要舞台與輸出口，職涯上要找能讓你發揮、承擔責任的位置。":"需要資源與團隊支撐，職涯上先找好平台與貴人，再求表現。")+'</p>'+
-   '<p>以<b>'+B.useCat+'</b>為用神（'+WX[B.useEl]+'）：'+CAT_CAREER[B.useCat]+'。'+(B.hasYima?"命帶驛馬，換城市、外派、跨國工作對你是加分。":"")+'</p>'+
-   '<h3>十神職場能量分布</h3>'+catRows+'<p class="muted small">官殺＝組織與權責；印＝學習與靠山；比劫＝自主與競爭；食傷＝創意與表達；財＝資源與業績。</p></div>'+
-   '<div><h3>五行</h3>'+WX.map(function(w,i){var t=B.elem.reduce(function(a,b){return a+b},0)+1;var v=(i===B.dm?(B.elem[i]+1):B.elem[i])/t*100;return '<div class="meter-row"><span>'+w+(B.favEl.indexOf(i)>=0?" ・喜":"")+'</span><div class="bar"><i style="width:'+v.toFixed(0)+'%;background:var(--gold)"></i></div><span class="num">'+v.toFixed(0)+'%</span></div>'}).join("")+'</div></div>'+
-   '<h3>大運（十年一運）</h3><div class="yun">'+B.dayun.map(function(d){return '<div class="'+(nowY>=d.startYear&&nowY<=d.endYear?"now":"")+'"><b>'+d.gz+'</b>'+d.startAge+'–'+d.endAge+'歲<br>'+d.startYear+'<br><span style="color:var(--gold)">'+d.god+'</span></div>'}).join("")+'</div>'+
-   (function(){var c=B.dayun.filter(function(d){return nowY>=d.startYear&&nowY<=d.endYear})[0];if(!c)return"";var good=B.fav.indexOf(c.cat)>=0;return '<p style="margin-top:10px">目前走 <b>'+c.gz+'</b> 運（'+c.startYear+'–'+c.endYear+'），天干為'+c.god+'，屬'+(good?"喜用":"忌神")+'運。'+(good?"這十年的大方向對事業有利，適合積極布局。":"這十年做事較費力，重大轉換要挑流年好的時機。")+'</p>'})()+
-   '<h3>流年重點</h3><div class="tscroll"><table><thead><tr><th>流年</th><th>十神</th><th>喜忌</th><th>職場訊號</th></tr></thead><tbody>'+yrs+'</tbody></table></div>';
-}
-
-function renderZiwei(R){
-  var Z=R.Z, pal=Z.pal, yearNow=new Date().getFullYear(), zy=R.zy[Object.keys(R.zy)[0]];
-  /* 盤面依地支擺放：巳午未申 在上，亥子丑寅 在下 */
-  var layout={巳:[1,1],午:[1,2],未:[1,3],申:[1,4],辰:[2,1],酉:[2,4],卯:[3,1],戌:[3,4],寅:[4,1],丑:[4,2],子:[4,3],亥:[4,4]};
-  var cells=pal.map(function(p,i){var g=layout[p.earthlyBranch];
-    var stars=p.majorStars.map(function(s){return esc(s.name)+(s.mutagen?'<span class="mu '+s.mutagen+'">'+s.mutagen+'</span>':"")}).join(" ")||'<span class="muted" style="font-size:12px">空宮</span>';
-    var hl=(i===Z.career||i===Z.soul||i===Z.travel)?" hl":"";
-    return '<div class="pal'+hl+'" style="grid-row:'+g[0]+';grid-column:'+g[1]+'"><div class="pn"><span>'+p.name+'</span><span>'+p.heavenlyStem+p.earthlyBranch+'</span></div><div class="st">'+stars+'</div><div class="muted" style="font-size:11px">'+p.decadal.range.join("–")+'歲</div></div>'}).join("");
-  var a=Z.a;
-  cells+='<div class="pal center"><b style="font-family:var(--f-display);font-size:16px">'+a.fiveElementsClass+'</b><span class="muted">命主 '+a.soul+'・身主 '+a.body+'</span><span class="muted">'+a.lunarDate+'</span></div>';
-  var careerTxt=Z.careerStars.map(function(s){return ZW_STAR[s]?'<p><b>'+s+'</b>：'+ZW_STAR[s].t+'</p>':""}).join("");
-  var yrs=Object.keys(R.zy).map(function(y){var e=R.zy[y];return '<tr><td>'+y+'（'+e.gz+'）</td><td style="white-space:normal">'+esc(e.notes.join("；")||"官祿宮無四化引動，維持現狀")+'</td></tr>'}).join("");
-  var soulStars=pal[Z.soul].majorStars.map(function(s){return s.name});
-  $("p-ziwei").innerHTML='<div class="split" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)"><div style="min-width:0"><h3>官祿宮：你的工作樣貌</h3>'+(Z.borrowed?'<p class="muted small">官祿宮無主星，借對宮（夫妻宮）主星來看。</p>':"")+careerTxt+
-   '<h3>命宮</h3><p>命宮'+(soulStars.length?"主星 "+soulStars.join("、")+"。"+(ZW_STAR[soulStars[0]]?ZW_STAR[soulStars[0]].t:""):"為空宮，個性受對宮遷移宮影響大，適應力強、容易隨環境調整。")+'</p>'+
-   '<h3>流年四化與事業</h3><div class="tscroll"><table><thead><tr><th>年份</th><th>四化對官祿、遷移的影響</th></tr></thead><tbody>'+yrs+'</tbody></table></div></div>'+
-   '<div style="min-width:0"><h3>命盤</h3><div class="palaces">'+cells+'</div><p class="muted small" style="margin-top:6px">藍底為命宮、官祿、遷移三宮。</p></div></div>';
-}
-
-function renderQimen(R){
-  var now=new Date(), q=qimen(now.getFullYear(),now.getMonth()+1,now.getDate(),10);
-  var grid=[4,9,2,3,5,7,8,1,6].map(function(p){
-    if(p===5)return '<div><span class="muted">中五</span><b>'+q.ju+'局</b>'+(q.yang?"陽遁":"陰遁")+'</div>';
-    return '<div class="'+(q.doors[p]==="開"?"open":"")+'"><span class="muted">'+DIR[p]+'</span><b>'+q.doors[p]+'門</b>'+(p===q.zhiShiAt?"值使":"")+'</div>'}).join("");
-  var days=R.qdays.filter(function(d){return DOOR_Q[d.door]>=0.5}).sort(function(a,b){return b.score-a.score}).slice(0,8).sort(function(a,b){return a.date-b.date});
-  var wk="日一二三四五六";
-  $("p-qimen").innerHTML='<div class="split" style="grid-template-columns:minmax(0,1fr) 330px"><div style="min-width:0"><h3>開門：事業之門</h3><p>奇門遁甲以八門判斷行事吉凶，<b>開門</b>主事業、開創與求職，<b>休門</b>主貴人與休養，<b>生門</b>主財利。面試、談薪、遞辭呈時，挑值使落在開、休、生三吉門的時辰，並朝開門所在方位出發或就座。</p>'+
-   '<p>今天（'+q.dgz+'日）巳時 9–11 點：'+q.term.replace("惊蛰","驚蟄").replace("谷雨","穀雨").replace("小满","小滿").replace("芒种","芒種").replace("处暑","處暑")+q.yuan+'元，'+(q.yang?"陽":"陰")+'遁'+q.ju+'局，值使<b>'+q.zhiShi+'門</b>，開門在<b>'+q.openDir+'方</b>。</p></div>'+
-   '<div><h3>今日巳時八門</h3><div class="qm">'+grid+'</div></div></div>'+
-   '<h3>未來 60 天職場吉日（巳時）</h3><div class="tscroll"><table class="daylist"><thead><tr><th>日期</th><th>日干支</th><th>巳時值使</th><th>開門方位</th><th>適合</th><th>黃曆宜</th></tr></thead><tbody>'+
-   days.map(function(d){var g=DOOR_Q[d.door]>=2?"good":DOOR_Q[d.door]>0?"mid":"bad";return '<tr><td>'+(d.date.getMonth()+1)+'/'+d.date.getDate()+'（'+wk[d.date.getDay()]+'）</td><td>'+d.q.dgz+'</td><td><span class="pill '+g+'">'+d.door+'門</span></td><td>'+d.q.openDir+'</td><td>'+d.act+'</td><td style="white-space:normal">'+(d.hits.join("、")||"—")+'</td></tr>'}).join("")+'</tbody></table></div>'+
-   '<p class="note">已排除與你日支相沖的日子與週末。奇門在此採時家轉盤拆補法，只排地盤三奇六儀與八門，不含九星、八神與天盤格局。</p>';
-}
-
-function hdSvg(H){
-  var C={頭頂:[100,22,"tri"],邏輯:[100,68,"tri-d"],喉嚨:[100,118,"sq"],G中心:[100,178,"dia"],意志力:[146,198,"tri"],薦骨:[100,258,"sq"],直覺:[36,236,"tri"],情緒:[164,236,"tri"],根部:[100,312,"sq"]};
-  var s='<svg viewBox="0 0 200 340" role="img" aria-label="人類圖九大中心">', seen={};
-  H.chans.forEach(function(c){var a=gateCenter(c[0]),b=gateCenter(c[1]),k=[a,b].sort().join();if(seen[k])return;seen[k]=1;s+='<line x1="'+C[a][0]+'" y1="'+C[a][1]+'" x2="'+C[b][0]+'" y2="'+C[b][1]+'" stroke="var(--gold)" stroke-width="3"/>'});
-  for(var n in C){var c=C[n],x=c[0],y=c[1],f=H.defined[n]?"var(--accent)":"var(--surface)",st='stroke="var(--muted)" stroke-width="1.2" fill="'+f+'"',d;
-    if(c[2]==="sq")d='<rect x="'+(x-18)+'" y="'+(y-18)+'" width="36" height="36" rx="3" '+st+'/>';
-    else if(c[2]==="dia")d='<polygon points="'+x+','+(y-22)+' '+(x+22)+','+y+' '+x+','+(y+22)+' '+(x-22)+','+y+'" '+st+'/>';
-    else if(c[2]==="tri-d")d='<polygon points="'+(x-20)+','+(y-16)+' '+(x+20)+','+(y-16)+' '+x+','+(y+18)+'" '+st+'/>';
-    else d='<polygon points="'+x+','+(y-18)+' '+(x+19)+','+(y+15)+' '+(x-19)+','+(y+15)+'" '+st+'/>';
-    s+=d;}
-  return s+'</svg>';
-}
-function renderHD(R){
-  var H=R.H, T=HD_TYPE[H.type], pl=H.profile.split("/");
-  var chs=H.chans.map(function(c){return '<span class="tag">'+c[0]+"–"+c[1]+'</span>'}).join("")||'<span class="muted">無定義通道</span>';
-  $("p-hd").innerHTML='<div class="split"><div style="min-width:0"><div class="kv"><div><span class="lab">類型</span><b>'+H.type+'</b></div><div><span class="lab">策略</span><b>'+T.strat+'</b></div><div><span class="lab">內在權威</span><b>'+H.auth+'</b></div><div><span class="lab">人生角色</span><b>'+H.profile+'</b></div></div>'+
-   '<h3>你在職場的運作方式</h3><p>'+T.t+'</p><p>人生角色 '+H.profile+'（'+PROFILE_NAME[pl[0]]+'／'+PROFILE_NAME[pl[1]]+'）：'+({1:"你需要把事情研究透才有安全感，面試前做足功課是你的優勢。",2:"你有天賦但不愛自我推銷，好機會常是別人看見後來找你。",3:"你靠試錯學習，換過幾份工作不是失敗，而是在找對的位置。",4:"你的機會幾乎都來自人脈，轉職先從熟人網絡打聽。",5:"別人會把你投射成救火隊，適合接手爛攤子、轉型專案。",6:"前半生多嘗試，約 50 歲後成為領域典範，職涯越走越穩。"})[pl[0]]+'</p>'+
-   '<h3>轉職的身體訊號</h3><p>當<b>'+T.sig+'</b>持續出現，代表你在錯的位置。決策依循「'+H.auth+'」：'+({情緒中心:"情緒有起伏，不要在高峰或低谷時提離職，至少睡過幾晚、心情平穩時再決定。",薦骨中心:"相信當下身體的「嗯／嗯哼」反應，讓朋友用是非題問你：「你想去這家公司嗎？」",直覺中心:"第一直覺最準，直覺只說一次，事後的猶豫多半是頭腦的恐懼。",意志力中心:"問自己「我真的想要嗎？」，只承諾你願意全力投入的工作。",自我投射:"把選項說出來給信任的人聽，從自己的聲音裡聽出方向。","環境（心智投射）":"換到不同環境、跟不同的人討論，聽自己怎麼說，而不是在腦中反覆推演。",月亮週期:"給自己約 28 天，與不同的人談過再定案。"})[H.auth]+'</p>'+
-   '<h3>定義通道</h3><div class="tags">'+chs+'</div></div><div class="hd"><h3>九大中心</h3>'+hdSvg(H)+'<p class="muted small" style="text-align:center;margin-top:6px">藍色為有定義中心</p></div></div>'+
-   '<p class="note">人類圖由出生時刻（個性）與太陽回推 88° 的設計時刻（設計）共 26 個啟動點計算，月交點採平均交點。'+(R.inp.noTime?"未提供出生時間，月亮閘門可能不準，類型通常不受影響。":"")+'</p>';
-}
-
-function renderAstro(R){
-  var A=R.A, rows=BODIES.map(function(b){var l=A.pl[b[0]];return '<tr><td>'+b[0]+'</td><td>'+SIGNS[Math.floor(l/30)]+' '+(l%30).toFixed(1)+'°</td><td>'+(A.hasTime?"第 "+A.house(l)+" 宮":"—")+'</td></tr>'}).join("");
-  var in10=A.hasTime?BODIES.filter(function(b){return A.house(A.pl[b[0]])===10}).map(function(b){return b[0]}):[];
-  var sa=A.pl.土星, mcS=A.mc!=null?SIGNS[Math.floor(A.mc/30)]:null;
-  var now=new Date(), ju=lonOf("Jupiter",now);
-  $("p-astro").innerHTML='<div class="split" style="grid-template-columns:minmax(0,1fr) minmax(0,260px)"><div style="min-width:0">'+
-   (mcS?'<h3>天頂（MC）：社會角色</h3><p>'+MC_TEXT[mcS]+'</p>':'<h3>太陽星座</h3><p>未提供出生時間，無法計算上升與天頂，以下以太陽星座作為第一宮（太陽宮位制）推算行運。</p>')+
-   (A.hasTime?'<h3>第十宮（事業宮）</h3><p>'+(in10.length?in10.map(function(p){return '<b>'+p+'</b>：'+PL_10[p]}).join("；")+"。":"第十宮無行星，事業風格主要由天頂星座與其守護星決定。")+'</p>':"")+
-   '<h3>土星：職涯功課</h3><p>土星在<b>'+SIGNS[Math.floor(sa/30)]+'</b>'+(A.hasTime?"第 "+A.house(sa)+" 宮":"")+'，代表你需要時間累積、但最後會成為專長的領域。每 29.5 年一次的土星回歸（約 29 歲、58 歲）是職涯重新定位的大關卡。</p>'+
-   '<h3>現在的木星</h3><p>木星目前在'+SIGNS[Math.floor(ju/30)]+'，行經你的第 '+A.house(ju)+' 宮。'+(({10:"正是事業宮，今年是爭取升遷、曝光的好年。",6:"在工作宮，適合換到更好的團隊或職務。",2:"在財帛宮，談薪、加薪有利。",9:"在第九宮，外派、進修、國際機會增加。",1:"在第一宮，新開始與個人品牌擴張。"})[A.house(ju)]||"事業宮位暫無木星加持，曲線中的其他訊號更值得參考。")+'</p></div>'+
-   '<div style="min-width:0"><h3>行星位置</h3><div class="tscroll"><table><thead><tr><th>行星</th><th>星座</th><th>宮位</th></tr></thead><tbody>'+rows+
-   (A.hasTime?'<tr><td>上升</td><td>'+SIGNS[Math.floor(A.asc/30)]+' '+(A.asc%30).toFixed(1)+'°</td><td>—</td></tr><tr><td>天頂</td><td>'+mcS+' '+(A.mc%30).toFixed(1)+'°</td><td>—</td></tr>':"")+'</tbody></table></div><p class="muted small">整宮制，熱帶黃道。</p></div></div>';
-}
-
-function run(){
-  $("err").hidden=true;
-  var inp=readInput();
-  if(!inp.y||inp.y<1920||inp.y>2025){$("err").textContent="請輸入 1920 到 2025 年之間的出生日期。";$("err").hidden=false;return}
-  if(typeof Solar==="undefined"||typeof iztro==="undefined"||typeof Astronomy==="undefined"){$("err").textContent="排盤程式庫尚未載入，請確認網路連線後重新整理頁面。";$("err").hidden=false;return}
-  try{
-    var R=compute(inp,new Date());R.inp=inp;
-    renderVerdict(R,inp);chartData=R.months;renderChart();renderTable(R.months);renderFit(R);
-    renderBazi(R,inp);renderZiwei(R);renderQimen(R);renderHD(R);renderAstro(R);
-  }catch(e){$("err").textContent="排盤時發生錯誤："+e.message;$("err").hidden=false;console.error(e)}
-}
-$("f").addEventListener("submit",function(e){e.preventDefault();$("sampleNote").hidden=true;run();if(window.innerWidth<880)$("verdictBlock").scrollIntoView({behavior:"smooth"})});
-document.querySelectorAll("#tabs button").forEach(function(b){b.addEventListener("click",function(){
-  document.querySelectorAll("#tabs button").forEach(function(x){x.setAttribute("aria-selected",x===b?"true":"false");$("p-"+x.dataset.p).hidden=x!==b});
-  try{localStorage.setItem("ccTab",b.dataset.p)}catch(e){}
-})});
-try{var st=localStorage.getItem("ccTab");if(st&&$("t-"+st))$("t-"+st).click()}catch(e){}
-run();
-</script>
+<script src="assets/tools.js"></script>
+<script src="assets/app.js"></script>
 </body>
 </html>
