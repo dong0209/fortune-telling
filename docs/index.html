@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>職運羅盤</title>
+<meta name="description" content="以八字、紫微斗數與西洋星盤推演職涯時機：何時轉職、何時衝升遷、哪種公司適合你。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Serif+TC:wght@600;900&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<canvas id="sky" aria-hidden="true"></canvas>
+
+<header class="topbar wrap">
+  <a class="brand-mini" href="./"><span class="seal" aria-hidden="true">職<br>運</span>職運羅盤</a>
+  <div id="account" aria-live="polite"></div>
+</header>
+
+<section class="hero wrap">
+  <div>
+    <p class="eyebrow">Astra · Career Oracle</p>
+    <h1>觀星宿、排命盤，<br>算準你的<em>職涯時機</em></h1>
+    <p class="lede">以八字定格局、紫微看官祿、星盤觀行運，三術合參推演未來 36 個月的轉職與升遷窗口，告訴你哪一種公司能讓你發光。</p>
+    <div class="arts" aria-label="命理系統"><span>八字</span><span>紫微斗數</span><span>西洋星盤</span><span class="vip">奇門遁甲</span><span class="vip">人類圖</span></div>
+  </div>
+  <div class="hero-ring" id="ring" aria-hidden="true"></div>
+</section>
+
+<div class="layout wrap">
+  <aside class="form panel-box">
+    <h2>輸入生辰</h2>
+    <p class="hint">生辰只用來排盤，不會被儲存。</p>
+    <div class="sample" id="sampleNote">目前顯示的是範例命盤，換成你的生辰即可重新推演。</div>
+    <form id="f">
+      <div class="field"><span class="lab">性別（影響大運與大限順逆）</span>
+        <div class="seg"><label><input type="radio" name="g" id="gF" value="女" checked>女</label><label><input type="radio" name="g" id="gM" value="男">男</label></div>
+      </div>
+      <div class="field"><label for="bd">出生日期（國曆）</label><input type="date" id="bd" value="1993-08-12" min="1920-01-01" max="2025-12-31" required></div>
+      <div class="field"><label for="bt">出生時間</label><input type="time" id="bt" value="09:40"></div>
+      <label class="check"><input type="checkbox" id="noTime">不確定出生時間</label>
+      <div class="field"><label for="city">出生地</label><select id="city"></select></div>
+      <div class="field"><label for="q">你現在最想問的</label>
+        <select id="q">
+          <option value="move">該不該轉職、何時走</option>
+          <option value="stay">留在原公司能不能升遷</option>
+          <option value="fit">什麼類型的公司適合我</option>
+          <option value="biz">要不要出來接案或創業</option>
+        </select>
+      </div>
+      <div class="field"><label for="yrs">目前工作年資</label>
+        <select id="yrs"><option value="0">未滿 1 年</option><option value="1" selected>1–3 年</option><option value="3">3–5 年</option><option value="5">5 年以上</option><option value="-1">目前待業中</option></select>
+      </div>
+      <button class="btn-gold" type="submit" id="go">推演命盤</button>
+      <p class="err" id="err" role="alert" hidden></p>
+      <div class="share-row"><button type="button" class="btn-line" id="btnShare">複製分享連結</button><button type="button" class="btn-line" id="btnCard">產生 IG 圖卡</button></div>
+      <p class="small muted" id="shareMsg" role="status"></p>
+    </form>
+  </aside>
+
+  <main>
+    <section class="block panel-box" id="verdictBlock"><p class="loading">正在推演命盤…</p></section>
+
+    <section class="block panel-box">
+      <p class="eyebrow"><span>流日</span>Daily</p>
+      <h2 id="todayTitle">今天適合做什麼</h2>
+      <div id="today"></div>
+    </section>
+
+    <section class="block panel-box">
+      <p class="eyebrow"><span>天時</span>36 Months</p>
+      <h2>轉職與升遷的時機曲線</h2>
+      <div id="chartArea"></div>
+    </section>
+
+    <section class="block panel-box">
+      <p class="eyebrow"><span>地利</span>Where You Shine</p>
+      <h2>什麼樣的公司適合你</h2>
+      <div id="fitArea"></div>
+    </section>
+
+    <section class="block panel-box" id="toolbox">
+      <p class="eyebrow"><span>人和</span>Toolbox</p>
+      <h2>把命盤用在真實的選擇上</h2>
+      <div id="toolLock" hidden></div>
+      <div id="toolArea">
+        <div class="tabs" role="tablist" id="ttabs">
+          <button role="tab" aria-selected="true" data-p="offer" id="t-offer">兩家 offer 比較</button>
+          <button role="tab" aria-selected="false" data-p="fitnow" id="t-fitnow">現職適配度</button>
+          <button role="tab" aria-selected="false" data-p="syn" id="t-syn">主管／同事合盤 <span class="lk">VIP</span></button>
+        </div>
+        <div class="panel" role="tabpanel" id="p-offer">
+          <form id="offerForm">
+            <div class="offer-cols">
+              <fieldset class="offer-col"><legend>公司 A</legend>
+                <div class="field"><label for="oA-name">公司名稱（選填）</label><input type="text" id="oA-name" maxlength="20" placeholder="公司 A"></div>
+                <div class="field"><label for="oA-type">公司類型</label><select id="oA-type" class="sel-type"></select></div>
+                <div class="field"><label for="oA-ind">產業</label><select id="oA-ind" class="sel-ind"></select></div>
+                <div class="field"><label for="oA-role">職能</label><select id="oA-role" class="sel-role"></select></div>
+                <div class="row2"><div class="field"><label for="oA-dir">在住家的哪個方位</label><select id="oA-dir" class="sel-dir"></select></div>
+                <div class="field"><label for="oA-date">預計報到日</label><input type="date" id="oA-date"></div></div>
+              </fieldset>
+              <fieldset class="offer-col"><legend>公司 B</legend>
+                <div class="field"><label for="oB-name">公司名稱（選填）</label><input type="text" id="oB-name" maxlength="20" placeholder="公司 B"></div>
+                <div class="field"><label for="oB-type">公司類型</label><select id="oB-type" class="sel-type"></select></div>
+                <div class="field"><label for="oB-ind">產業</label><select id="oB-ind" class="sel-ind"></select></div>
+                <div class="field"><label for="oB-role">職能</label><select id="oB-role" class="sel-role"></select></div>
+                <div class="row2"><div class="field"><label for="oB-dir">在住家的哪個方位</label><select id="oB-dir" class="sel-dir"></select></div>
+                <div class="field"><label for="oB-date">預計報到日</label><input type="date" id="oB-date"></div></div>
+              </fieldset>
+            </div>
+            <button class="btn-gold" type="submit">比較兩家公司</button>
+          </form>
+          <div id="offerOut" class="tool-out" aria-live="polite"></div>
+        </div>
+        <div class="panel" role="tabpanel" id="p-fitnow" hidden>
+          <form id="fitForm">
+            <div class="tool-grid">
+              <div class="field"><label for="fn-type">公司類型</label><select id="fn-type" class="sel-type"></select></div>
+              <div class="field"><label for="fn-ind">產業</label><select id="fn-ind" class="sel-ind"></select></div>
+              <div class="field"><label for="fn-role">你的職能</label><select id="fn-role" class="sel-role"></select></div>
+              <div class="field"><label for="fn-founded">公司成立年（選填）</label><input type="number" id="fn-founded" min="1850" max="2026" placeholder="例如 1987" inputmode="numeric"></div>
+            </div>
+            <button class="btn-gold" type="submit">檢查適配度</button>
+          </form>
+          <div id="fitOut" class="tool-out" aria-live="polite"></div>
+        </div>
+        <div class="panel" role="tabpanel" id="p-syn" hidden>
+          <div id="synLock" hidden></div>
+          <form id="synForm">
+            <div class="tool-grid">
+              <div class="field"><label for="sy-rel">對方是你的</label><select id="sy-rel"><option>主管</option><option>老闆</option><option>同事</option><option>下屬</option></select></div>
+              <div class="field"><label for="sy-name">稱呼（選填）</label><input type="text" id="sy-name" maxlength="12" placeholder="例如 王經理"></div>
+              <div class="field"><label for="sy-bd">對方出生日期</label><input type="date" id="sy-bd" min="1920-01-01" value="1978-03-21"></div>
+              <div class="field"><label for="sy-bt">對方出生時間</label><input type="time" id="sy-bt" disabled></div>
+              <div class="field"><span class="lab">對方性別</span><div class="seg"><label><input type="radio" name="sy-g" id="sy-gF" value="女">女</label><label><input type="radio" name="sy-g" id="sy-gM" value="男" checked>男</label></div></div>
+            </div>
+            <label class="check" style="margin-top:4px"><input type="checkbox" id="sy-notime" checked>不知道對方出生時間</label>
+            <button class="btn-gold" type="submit">分析合盤</button>
+          </form>
+          <div id="synOut" class="tool-out" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block panel-box">
+      <p class="eyebrow"><span>命盤</span>Charts</p>
+      <h2>各系統怎麼說</h2>
+      <div class="tabs" role="tablist" id="tabs">
+        <button role="tab" aria-selected="true" data-p="bazi" id="t-bazi">八字</button>
+        <button role="tab" aria-selected="false" data-p="ziwei" id="t-ziwei">紫微斗數</button>
+        <button role="tab" aria-selected="false" data-p="astro" id="t-astro">星盤</button>
+        <button role="tab" aria-selected="false" data-p="qimen" id="t-qimen">奇門遁甲 <span class="lk">VIP</span></button>
+        <button role="tab" aria-selected="false" data-p="hd" id="t-hd">人類圖 <span class="lk">VIP</span></button>
+      </div>
+      <div class="panel" role="tabpanel" id="p-bazi"></div>
+      <div class="panel" role="tabpanel" id="p-ziwei" hidden></div>
+      <div class="panel" role="tabpanel" id="p-astro" hidden></div>
+      <div class="panel" role="tabpanel" id="p-qimen" hidden></div>
+      <div class="panel" role="tabpanel" id="p-hd" hidden></div>
+    </section>
+  </main>
+</div>
+
+<dialog id="loginDlg" aria-labelledby="loginTitle">
+  <div class="dlg-head"><h3 id="loginTitle">登入／註冊</h3><button type="button" class="btn-text" data-close>關閉</button></div>
+  <form id="loginForm">
+    <p class="small muted" style="margin-top:0">輸入 Email，我們會寄一封登入連結給你。第一次使用會自動建立帳號。</p>
+    <div class="field"><label for="loginEmail">Email</label><input type="email" id="loginEmail" required autocomplete="email" placeholder="you@example.com"></div>
+    <button class="btn-gold" type="submit">寄送登入連結</button>
+    <p class="small" id="loginMsg" role="status"></p>
+  </form>
+</dialog>
+
+<dialog id="upgradeDlg" aria-labelledby="upTitle">
+  <div class="dlg-head"><h3 id="upTitle">升級方案</h3><button type="button" class="btn-text" data-close>關閉</button></div>
+  <div id="upBody"></div>
+</dialog>
+
+<dialog id="cardDlg" class="card-dlg" aria-labelledby="cardTitle">
+  <div class="dlg-head"><h3 id="cardTitle">IG 限動圖卡</h3><button type="button" class="btn-text" data-close>關閉</button></div>
+  <img id="cardImg" alt="職運羅盤結果圖卡">
+  <div class="dlg-actions"><a id="cardDl" class="btn-gold" download="職運羅盤.png" href="#">下載圖片</a><span class="small muted" id="cardMsg"></span></div>
+</dialog>
+
+<footer>
+  <nav><a href="privacy.html">隱私權與付費條款</a></nav>
+  <div>職運羅盤以傳統命理與占星規則做程式化推算，屬於自我探索與決策參考，不構成職涯、法律或財務建議。八字採國曆輸入、未做真太陽時校正；紫微斗數依 iztro 排盤；星盤與人類圖行星位置由 astronomy-engine 計算；奇門遁甲採時家轉盤拆補法的簡化版。出生地時區不含夏令時間，1945–1979 年間在台灣出生且遇夏令時者，請將時間減 1 小時再輸入。</div>
+  <div>開源元件：lunar-javascript、iztro、astronomy-engine（MIT 授權）。「人類圖」為本站對 Human Design 的推算，與 Jovian Archive 無關聯。</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/api.js"></script>
+<script src="assets/sky.js"></script>
+<script src="assets/render.js"></script>
+<script src="assets/tools.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

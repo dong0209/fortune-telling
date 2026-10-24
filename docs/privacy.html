@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>隱私權與付費條款・職運羅盤</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Serif+TC:wght@600;900&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+.doc{max-width:760px;margin:24px auto 0;padding:28px 30px}
+.doc h1{font-size:30px;margin-bottom:6px}
+.doc h2{font-size:19px;margin:26px 0 8px;color:var(--gold-bright);font-weight:600}
+.doc p,.doc li{max-width:68ch}
+@media (max-width:520px){.doc{padding:20px 16px}}
+</style>
+</head>
+<body>
+<canvas id="sky" aria-hidden="true"></canvas>
+<header class="topbar wrap"><a class="brand-mini" href="./"><span class="seal" aria-hidden="true">職<br>運</span>職運羅盤</a></header>
+<article class="doc panel-box">
+  <p class="eyebrow">Privacy &amp; Terms</p>
+  <h1>隱私權與付費條款</h1>
+  <p class="muted small">最後更新：2026 年 10 月 24 日。本頁為範本，正式上線前請依實際營運狀況修改，必要時諮詢法律專業人士。</p>
+
+  <h2>我們蒐集哪些資料</h2>
+  <ul>
+    <li><b>出生資料</b>：出生日期、時間、地點與性別只會傳送到伺服器做即時排盤，計算完即丟棄，不會儲存。</li>
+    <li><b>帳號資料</b>：註冊時的 Email，用於登入與通知開通。</li>
+    <li><b>付款回報</b>：付款方式、匯款末五碼或交易編號、付款人姓名與備註，用於核對款項與開通方案。</li>
+  </ul>
+
+  <h2>資料的用途與保存</h2>
+  <p>上述資料只用於提供服務、核對付款與客服聯繫，不會出售或提供給第三方。帳號與付款資料儲存在 Supabase 的資料庫中，於你刪除帳號或停止服務後刪除。你可以隨時來信要求查詢、更正或刪除你的資料。</p>
+
+  <h2>分享連結</h2>
+  <p>使用「複製分享連結」時，你的出生日期與時間會出現在網址中。拿到連結的人都能看到這些資訊，請只分享給信任的人。</p>
+
+  <h2>付費方案</h2>
+  <ul>
+    <li>付費版與 VIP 為線上數位內容，自核准開通起依方案天數提供服務。</li>
+    <li>依《通訊交易解除權合理例外情事適用準則》，非以有形媒介提供之數位內容，經消費者事先同意始提供者，不適用七天猶豫期。你在送出付款回報前會看到並勾選此項說明。</li>
+    <li>付款後請填寫付款回報，我們會在核對款項後開通，通常於 1 個工作天內完成。若款項無法核對，我們會退回回報並說明原因。</li>
+    <li>同一方案續約時，天數從原到期日往後累加；從付費版升級為 VIP 時，自核准日起重新計算。</li>
+  </ul>
+
+  <h2>內容性質</h2>
+  <p>本站內容為傳統命理與占星規則的程式化推算，屬於自我探索與決策參考，不保證任何結果，也不構成職涯、法律或財務建議。</p>
+
+  <h2>聯絡我們</h2>
+  <p id="contact">如有任何問題，請來信聯繫。</p>
+</article>
+<script src="assets/config.js"></script>
+<script src="assets/sky.js"></script>
+<script>var c=(window.APP_CONFIG||{}).contactEmail;if(c)document.getElementById("contact").textContent="如有任何問題，請來信 "+c+"。";</script>
+</body>
+</html>

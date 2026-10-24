@@ -1,0 +1,241 @@
+/* 依伺服器回傳的報告繪製畫面；沒有權限的區塊顯示鎖定卡 */
+var CITY_NAMES=["台北","新北","桃園","新竹","台中","彰化","嘉義","台南","高雄","屏東","宜蘭","花蓮","台東","澎湖","金門","香港","澳門","上海","北京","新加坡","吉隆坡","東京","首爾","雪梨","倫敦","紐約","洛杉磯","溫哥華"];
+var FIT_NAME={corp:"大型企業／集團",startup:"新創／成長期公司",foreign:"外商／跨國企業",public:"公部門／國營事業",freelance:"自由接案／個人品牌",sme:"中小企業／家族企業"};
+var WX=["木","火","土","金","水"];
+var IND_BY_EL=[["教育培訓","出版文創","設計","醫療生技","環保農林"],["半導體與電子","網路媒體","能源","餐飲","美業與娛樂"],["不動產","營建","顧問管理","保險","物流倉儲"],["金融投資","法律","機械製造","汽車","資安"],["國際貿易","航運旅遊","行銷傳播","軟體與資訊流通","飲品水產"]];
+var ROLE_NAMES=["業務","行銷企劃","研發工程","設計創意","財務會計","人資","行政","專案管理","客服","主管職","教育培訓","法務稽核"];
+var DIRS=[["東","木"],["東南","木"],["南","火"],["西南","土"],["東北","土"],["西","金"],["西北","金"],["北","水"]];
+var TIER_NAME={free:"基礎版",paid:"付費版",vip:"VIP"};
+var WEEK="日一二三四五六", ACTS=["提案簡報","談薪加薪","面試","遞辭呈","請假充電"], ACT_LABEL={good:"宜",mid:"平",bad:"忌"};
+
+var $=function(id){return document.getElementById(id)};
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function pad2(n){return String(n).padStart(2,"0")}
+function ym(x){return x.y+"/"+pad2(x.m)}
+function parseDate(v){if(!v)return null;var p=v.split("-").map(Number);return new Date(p[0],p[1]-1,p[2])}
+function ymd(dt){return dt.getFullYear()+"-"+pad2(dt.getMonth()+1)+"-"+pad2(dt.getDate())}
+function md(s){var dt=typeof s==="string"?parseDate(s):s;return (dt.getMonth()+1)+"/"+dt.getDate()+"（"+WEEK[dt.getDay()]+"）"}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function meterRow(label,v,color){return '<div class="meter-row"><span>'+label+'</span><div class="bar"><i style="width:'+v+'%;background:'+color+'"></i></div><span class="num">'+v+'</span></div>'}
+function listHTML(arr){return '<ul class="notes">'+arr.map(function(n){return '<li>'+esc(n)+'</li>'}).join("")+'</ul>'}
+
+var LOCK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="1.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.3" fill="currentColor"/></svg>';
+function lockHTML(need,desc){
+  return '<div class="lock"><div class="lock-body">'+LOCK_SVG+'<b>'+(need==="vip"?"VIP 專屬":"付費版內容")+'</b><p>'+desc+'</p><button type="button" class="btn-gold" data-upgrade="'+need+'">'+(need==="vip"?"升級 VIP":"解鎖付費版")+'</button></div></div>';
+}
+var LOCK_DESC={
+  today:"每日職場指數、提案／談薪／面試／遞辭呈的宜忌，以及未來 7 天的走勢。",
+  chart:"未來 36 個月的轉職與升遷動能曲線，點選任一月份就能看詳解與當月吉日。",
+  fit:"六種公司類型的契合排名、判斷依據，以及依喜用五行推薦的產業。",
+  tools:"兩家 offer 比較、現職適配度檢查，把命盤用在真實的選擇上。",
+  syn:"輸入主管或同事的生日，分析五行生剋與人類圖互動，給你相處與升遷策略。",
+  bazi:"身強身弱、用神、十神職場能量、大運與流年喜忌。",
+  ziwei:"紫微斗數十二宮命盤、官祿宮主星解讀、流年四化對事業的影響。",
+  astro:"天頂星座、事業宮行星、土星職涯功課與木星行運。",
+  qimen:"奇門遁甲八門方位、未來 60 天職場吉日，以及指定日期的 12 時辰擇時。",
+  hd:"人類圖類型、策略、內在權威，以及你該轉職時的身體訊號。"
+};
+
+/* ---------- 天機總斷 ---------- */
+function renderVerdict(rep){
+  var v=rep.verdict, pos=["年柱","月柱","日柱","時柱"], paid=!!v.summary;
+  var pill=v.pillars.map(function(p,i){
+    if(i===3&&v.noTime)return '<div class="pillar"><div class="pos">時柱</div><div class="gz muted">？<br>？</div><div class="god">—</div></div>';
+    return '<div class="pillar'+(i===2?" day":"")+'"><div class="pos">'+pos[i]+'</div><div class="gz">'+p[0]+'<br>'+p[1]+'</div><div class="god">'+esc(v.gods[i])+'</div></div>'}).join("");
+  var right='<div class="pillars">'+pill+'</div>';
+  if(paid)right+='<div style="margin-top:16px"><div class="lab" style="margin-bottom:6px">未來 12 個月平均動能</div>'+meterRow("轉職",v.avg.move,"var(--s-move)")+meterRow("升遷",v.avg.stay,"var(--s-stay)")+'</div>'+
+    '<div class="tags" style="margin-top:10px"><span class="tag gold">'+esc(v.tags[0])+'</span><span class="tag">'+esc(v.tags[1])+'</span></div>';
+  var left='<div class="verdict-call">'+v.call+'</div><p style="margin:0 0 8px">'+esc(v.sub)+'</p>';
+  if(paid){
+    left+='<p class="muted small" style="margin:0">'+esc(v.summary)+'</p><div class="windows">'+
+      '<div class="win"><div class="k"><span class="dot" style="background:var(--s-move)"></span>轉職窗口</div>'+v.windows.move.map(function(x){return '<div><b>'+ym(x)+'</b> <span class="muted small">'+x.move+'</span></div>'}).join("")+'</div>'+
+      '<div class="win"><div class="k"><span class="dot" style="background:var(--s-stay)"></span>升遷窗口</div>'+v.windows.stay.map(function(x){return '<div><b>'+ym(x)+'</b> <span class="muted small">'+x.stay+'</span></div>'}).join("")+'</div></div>';
+  }
+  var inp=rep.input;
+  $("verdictBlock").innerHTML='<p class="eyebrow"><span>天機總斷</span>'+esc(inp.date+(inp.time?" "+inp.time:"")+" · "+inp.city+" · "+inp.gender)+'</p>'+
+    '<div class="verdict"><div style="min-width:0">'+left+'</div><div style="min-width:0">'+right+'</div></div>'+
+    (paid?"":'<div class="teaser"><p>完整判讀會列出未來 36 個月的轉職與升遷窗口月份、你的喜用神、紫微官祿宮與星盤天頂解讀。</p><button type="button" class="btn-gold" data-upgrade="paid">解鎖完整判讀</button></div>');
+}
+
+/* ---------- 每日職場運勢 ---------- */
+var todaySel=0;
+function renderToday(rep){
+  if(!rep.today){$("todayTitle").textContent="今天適合做什麼";$("today").innerHTML=lockHTML("paid",LOCK_DESC.today);return}
+  var days=rep.today, t=days[todaySel]||days[0], first=parseDate(days[0].date);
+  $("todayTitle").textContent=todaySel===0?"今天適合做什麼":md(t.date)+"適合做什麼";
+  $("today").innerHTML='<div class="today"><div style="min-width:0">'+
+    '<div class="today-head"><div class="today-score"><b class="num">'+t.score+'</b><span>職場指數</span></div>'+
+    '<div><div class="today-date">'+md(t.date)+'　'+t.gz+'日</div><div class="muted small">流日'+t.god+(t.door?'・巳時值使'+t.door+'門・開門在'+t.openDir+'方':'')+(t.weekend?'・週末':'')+'</div></div></div>'+
+    '<div class="acts">'+ACTS.map(function(a){var s=t.acts[a];return '<div class="act '+s+'"><span>'+a+'</span><b>'+ACT_LABEL[s]+'</b></div>'}).join("")+'</div>'+
+    listHTML(t.notes)+'</div>'+
+    '<div class="strip" role="group" aria-label="未來 7 天">'+days.map(function(d,i){var dt=parseDate(d.date);
+      return '<button type="button" class="sday'+(i===todaySel?" on":"")+'" data-i="'+i+'" aria-pressed="'+(i===todaySel)+'"><span>'+(i===0?"今天":"週"+WEEK[dt.getDay()])+'</span><span class="num small">'+(dt.getMonth()+1)+'/'+dt.getDate()+'</span><span class="sbar"><i style="height:'+d.score+'%"></i></span><b class="num">'+d.score+'</b></button>'}).join("")+'</div></div>';
+  $("today").querySelectorAll(".sday").forEach(function(b){b.addEventListener("click",function(){todaySel=+b.dataset.i;renderToday(rep)})});
+}
+
+/* ---------- 時機曲線 ---------- */
+var chartData=null, chartSel=null;
+function renderChartArea(rep){
+  if(!rep.months){chartData=null;$("chartArea").innerHTML=lockHTML("paid",LOCK_DESC.chart);return}
+  chartData=rep.months;
+  $("chartArea").innerHTML='<p class="muted small" style="margin:0 0 12px">兩條線用同一把尺：八字流年流月、紫微流年四化、星盤木土天冥行運，三者加權後換算成 0–100 的相對動能。曲線高點是窗口，不是保證。</p>'+
+    '<div class="legend"><span><i style="background:var(--s-move)"></i>轉職動能</span><span><i style="background:var(--s-stay)"></i>升遷動能（留任）</span></div>'+
+    '<div class="chart-wrap" id="chart"></div><p class="muted small" style="margin:6px 0 0">點選曲線上任一個月份，下方會展開那個月的詳解。</p>'+
+    '<div class="month-detail" id="monthDetail" aria-live="polite"></div>'+
+    '<details class="table"><summary>以表格檢視逐月數值</summary><div class="tscroll">'+
+    '<table><thead><tr><th>月份</th><th>流年</th><th>流月</th><th style="text-align:right">轉職</th><th style="text-align:right">升遷</th><th>主要訊號</th></tr></thead><tbody>'+
+    rep.months.map(function(m){return '<tr><td class="num" style="text-align:left">'+ym(m)+'</td><td>'+m.ygz+'</td><td>'+m.mgz+'</td><td class="num">'+m.move+'</td><td class="num">'+m.stay+'</td><td style="white-space:normal;min-width:220px">'+esc(m.notes.slice(0,2).join("；")||"—")+'</td></tr>'}).join("")+'</tbody></table></div></details>';
+  renderChart();
+}
+function renderChart(){
+  var box=$("chart");if(!chartData||!box)return;
+  var ms=chartData, W=Math.max(300,box.clientWidth), H=W<500?220:260, L=30, Rr=W<500?14:60, T=12, Bt=28;
+  var iw=W-L-Rr, ih=H-T-Bt, n=ms.length;
+  function x(i){return L+iw*i/(n-1)} function y(v){return T+ih*(1-v/100)}
+  var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="未來 36 個月轉職與升遷動能折線圖">';
+  [0,25,50,75,100].forEach(function(v){s+='<line x1="'+L+'" x2="'+(L+iw)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="var(--line)" stroke-width="1"/><text x="'+(L-6)+'" y="'+(y(v)+4)+'" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--f-mono)">'+v+'</text>'});
+  ms.forEach(function(m,i){if((m.m===1&&i>2)||i===0){s+='<line x1="'+x(i)+'" x2="'+x(i)+'" y1="'+T+'" y2="'+(T+ih)+'" stroke="var(--line)" stroke-dasharray="2 3"/><text x="'+x(i)+'" y="'+(H-8)+'" font-size="11" fill="var(--muted)" font-family="var(--f-mono)" text-anchor="'+(i===0?"start":"middle")+'">'+(i===0?ym(m):m.y)+'</text>'}});
+  function path(key){return ms.map(function(m,i){return (i?"L":"M")+x(i).toFixed(1)+" "+y(m[key]).toFixed(1)}).join("")}
+  function area(key){return path(key)+"L"+x(n-1)+" "+(T+ih)+"L"+x(0)+" "+(T+ih)+"Z"}
+  s+='<path d="'+area("move")+'" fill="var(--s-move)" fill-opacity=".08"/><path d="'+area("stay")+'" fill="var(--s-stay)" fill-opacity=".08"/>';
+  s+='<path d="'+path("stay")+'" fill="none" stroke="var(--s-stay)" stroke-width="2" stroke-linejoin="round"/>';
+  s+='<path d="'+path("move")+'" fill="none" stroke="var(--s-move)" stroke-width="2" stroke-linejoin="round"/>';
+  if(W>=500){var lm=ms[n-1];var ya=y(lm.move),yb=y(lm.stay);if(Math.abs(ya-yb)<14){if(ya<yb){ya-=7;yb+=7}else{ya+=7;yb-=7}}
+    s+='<text x="'+(x(n-1)+8)+'" y="'+(ya+4)+'" font-size="12" fill="var(--ink)">轉職</text><text x="'+(x(n-1)+8)+'" y="'+(yb+4)+'" font-size="12" fill="var(--ink)">升遷</text>'}
+  s+='<line id="selLine" x1="0" x2="0" y1="'+T+'" y2="'+(T+ih)+'" stroke="var(--gold)" stroke-width="2" visibility="hidden"/>';
+  s+='<line id="xh" x1="0" x2="0" y1="'+T+'" y2="'+(T+ih)+'" stroke="var(--muted)" stroke-width="1" visibility="hidden"/>';
+  s+='<circle id="cm" r="4.5" fill="var(--s-move)" stroke="var(--panel-solid)" stroke-width="2" visibility="hidden"/><circle id="cs" r="4.5" fill="var(--s-stay)" stroke="var(--panel-solid)" stroke-width="2" visibility="hidden"/>';
+  s+='<rect x="'+L+'" y="0" width="'+iw+'" height="'+H+'" fill="transparent" id="hit" style="cursor:pointer"/></svg><div class="tip" id="tip" hidden></div>';
+  box.innerHTML=s;
+  var svg=box.querySelector("svg"), tip=$("tip");
+  function mark(i){var sl=$("selLine");sl.setAttribute("x1",x(i));sl.setAttribute("x2",x(i));sl.setAttribute("visibility","visible")}
+  if(chartSel!=null)mark(chartSel);
+  function idx(ev){var r=svg.getBoundingClientRect();return clamp(Math.round(((ev.clientX-r.left)*W/r.width-L)/iw*(n-1)),0,n-1)}
+  $("hit").addEventListener("click",function(ev){var i=idx(ev);mark(i);selectMonth(i)});
+  function show(ev){
+    var r=svg.getBoundingClientRect(), i=idx(ev), m=ms[i];
+    var xh=$("xh");xh.setAttribute("x1",x(i));xh.setAttribute("x2",x(i));xh.setAttribute("visibility","visible");
+    [["cm","move"],["cs","stay"]].forEach(function(c){var el=$(c[0]);el.setAttribute("cx",x(i));el.setAttribute("cy",y(m[c[1]]));el.setAttribute("visibility","visible")});
+    tip.innerHTML='<h4>'+ym(m)+'　'+m.mgz+'月</h4><div><span class="dot" style="background:var(--s-move)"></span> 轉職 <b class="num">'+m.move+'</b>　<span class="dot" style="background:var(--s-stay)"></span> 升遷 <b class="num">'+m.stay+'</b></div>'+
+      (m.notes.length?'<ul>'+m.notes.slice(0,3).map(function(t){return "<li>"+esc(t)+"</li>"}).join("")+'</ul>':"")+'<div class="muted" style="margin-top:4px">點一下看本月詳解</div>';
+    tip.hidden=false;var tx=x(i)*r.width/W;tip.style.left=clamp(tx+12,0,r.width-tip.offsetWidth)+"px";if(tx+12+tip.offsetWidth>r.width)tip.style.left=Math.max(0,tx-12-tip.offsetWidth)+"px";tip.style.top="10px";
+  }
+  $("hit").addEventListener("pointermove",show);$("hit").addEventListener("pointerdown",show);
+  $("hit").addEventListener("pointerleave",function(){tip.hidden=true;["xh","cm","cs"].forEach(function(id){$(id).setAttribute("visibility","hidden")})});
+}
+function renderMonthDetail(d){
+  var sys=Object.keys(d.detail).map(function(k){var ns=d.detail[k];return '<div><span class="lab">'+k+'</span>'+(ns.length?'<ul>'+ns.map(function(n){return '<li>'+esc(n)+'</li>'}).join("")+'</ul>':'<p class="muted small" style="margin:4px 0 0">無特別訊號</p>')+'</div>'}).join("");
+  $("monthDetail").innerHTML='<div class="md-head"><h3>'+d.y+' 年 '+d.m+' 月　<span class="muted">'+d.ygz+'年 '+d.mgz+'月</span></h3>'+
+    '<div class="md-meters">'+meterRow("轉職",d.move,"var(--s-move)")+meterRow("升遷",d.stay,"var(--s-stay)")+'</div></div>'+
+    '<div class="md-grid">'+sys+'</div>'+
+    '<div class="md-grid two"><div><span class="lab">這個月建議你</span><ul>'+d.advice.map(function(a){return '<li>'+esc(a)+'</li>'}).join("")+'</ul></div>'+
+    '<div><span class="lab">本月職場吉日（平日）</span>'+(d.good.length?'<ul>'+d.good.map(function(g){return '<li><b class="num">'+md(g.date)+'</b> '+g.gz+'日'+(g.door?'，'+g.door+'門，開門'+g.openDir:'，指數 '+g.score)+'</li>'}).join("")+'</ul>':'<p class="muted small" style="margin:4px 0 0">本月剩餘日子不多，請看下個月。</p>')+'</div></div>';
+}
+
+/* ---------- 公司類型 ---------- */
+function renderFit(rep){
+  if(!rep.fit){$("fitArea").innerHTML=lockHTML("paid",LOCK_DESC.fit);return}
+  $("fitArea").innerHTML='<div class="fit">'+rep.fit.map(function(f,i){
+    return '<div class="fit-item'+(i===0?" top":"")+'"><div class="fit-head"><h3>'+f.name+'</h3>'+(i===0?'<span class="badge">最適合</span>':'<span class="num muted small">'+f.v+'</span>')+'</div>'+
+      '<div class="bar"><i style="width:'+f.v+'%"></i></div><p>'+esc(f.desc)+'</p>'+(f.why.length?'<p>依據：'+f.why.slice(0,3).map(esc).join("、")+'</p>':"")+'</div>'}).join("")+'</div>'+
+    '<h3 style="font-size:15px;margin:18px 0 8px;font-weight:600">建議產業（依八字喜用五行）</h3><div class="tags">'+
+    rep.industries.map(function(g){return g.names.map(function(t){return '<span class="tag'+(g.primary?" gold":"")+'">'+g.el+"・"+esc(t)+'</span>'}).join("")}).join("")+'</div>';
+}
+
+/* ---------- 八字 ---------- */
+function renderBazi(rep){
+  var B=rep.bazi;if(!B){$("p-bazi").innerHTML=lockHTML("paid",LOCK_DESC.bazi);return}
+  var nowY=new Date().getFullYear(), cur=B.dayun.filter(function(d){return nowY>=d.startYear&&nowY<=d.endYear})[0];
+  $("p-bazi").innerHTML='<div class="split"><div style="min-width:0"><h3>日主與格局</h3><p>日主 <b>'+B.dmG+'（'+B.dmWx+'）</b>，同類與生扶力量約佔 '+B.support+'%，判為<b>'+(B.strong?"身強":"身弱")+'</b>。'+(B.strong?"能量足、扛得住壓力，需要舞台與輸出口，職涯上要找能讓你發揮、承擔責任的位置。":"需要資源與團隊支撐，職涯上先找好平台與貴人，再求表現。")+'</p>'+
+    '<p>以<b>'+B.useCat+'</b>為用神（'+B.useWx+'）：'+esc(B.useText)+'。'+(B.hasYima?"命帶驛馬，換城市、外派、跨國工作對你是加分。":"")+'</p>'+
+    '<h3>十神職場能量分布</h3>'+B.cats.map(function(c){return meterRow(c.name,c.v,"var(--gold)")}).join("")+
+    '<p class="muted small">官殺＝組織與權責；印＝學習與靠山；比劫＝自主與競爭；食傷＝創意與表達；財＝資源與業績。</p></div>'+
+    '<div><h3>五行</h3>'+B.elem.map(function(e){return meterRow(e.name+(e.fav?"・喜":""),e.v,"var(--gold-bright)")}).join("")+'</div></div>'+
+    '<h3>大運（十年一運）</h3><div class="yun">'+B.dayun.map(function(d){return '<div class="'+(d===cur?"now":"")+'"><b>'+d.gz+'</b>'+d.startAge+'–'+d.endAge+'歲<br>'+d.startYear+'<br><span style="color:var(--gold)">'+d.god+'</span></div>'}).join("")+'</div>'+
+    (cur?'<p style="margin-top:10px">目前走 <b>'+cur.gz+'</b> 運（'+cur.startYear+'–'+cur.endYear+'），天干為'+cur.god+'，屬'+(cur.good?"喜用":"忌神")+'運。'+(cur.good?"這十年的大方向對事業有利，適合積極布局。":"這十年做事較費力，重大轉換要挑流年好的時機。")+'</p>':"")+
+    '<h3>流年重點</h3><div class="tscroll"><table><thead><tr><th>流年</th><th>十神</th><th>喜忌</th><th>職場訊號</th></tr></thead><tbody>'+
+    B.years.map(function(e){return '<tr><td>'+e.gz+'</td><td>'+e.god+'</td><td><span class="pill '+(e.fav==="喜"?"good":e.fav==="忌"?"bad":"mid")+'">'+e.fav+'</span></td><td style="white-space:normal">'+esc(e.notes.join("；")||"平穩之年")+'</td></tr>'}).join("")+'</tbody></table></div>';
+}
+
+/* ---------- 紫微 ---------- */
+function renderZiwei(rep){
+  var Z=rep.ziwei;if(!Z){$("p-ziwei").innerHTML=lockHTML("paid",LOCK_DESC.ziwei);return}
+  var layout={巳:[1,1],午:[1,2],未:[1,3],申:[1,4],辰:[2,1],酉:[2,4],卯:[3,1],戌:[3,4],寅:[4,1],丑:[4,2],子:[4,3],亥:[4,4]};
+  var cells=Z.palaces.map(function(p,i){var g=layout[p.branch];
+    var stars=p.stars.map(function(s){return esc(s.name)+(s.mutagen?'<span class="mu '+s.mutagen+'">'+s.mutagen+'</span>':"")}).join(" ")||'<span class="muted" style="font-size:12px">空宮</span>';
+    var hl=(i===Z.career||i===Z.soulIdx||i===Z.travel)?" hl":"";
+    return '<div class="pal'+hl+'" style="grid-row:'+g[0]+';grid-column:'+g[1]+'"><div class="pn"><span>'+p.name+'</span><span>'+p.stem+p.branch+'</span></div><div class="st">'+stars+'</div><div class="muted" style="font-size:11px">'+p.range.join("–")+'歲</div></div>'}).join("");
+  cells+='<div class="pal center"><b style="font-family:var(--f-display);font-size:17px;color:var(--gold-bright)">'+Z.fiveElementsClass+'</b><span class="muted">命主 '+Z.soul+'・身主 '+Z.body+'</span><span class="muted">'+Z.lunarDate+'</span></div>';
+  $("p-ziwei").innerHTML='<div class="split even"><div style="min-width:0"><h3>官祿宮：你的工作樣貌</h3>'+(Z.borrowed?'<p class="muted small">官祿宮無主星，借對宮（夫妻宮）主星來看。</p>':"")+
+    Z.careerTexts.map(function(c){return '<p><b>'+c.star+'</b>：'+esc(c.text)+'</p>'}).join("")+
+    '<h3>命宮</h3><p>'+esc(Z.soulText)+'</p>'+
+    '<h3>流年四化與事業</h3><div class="tscroll"><table><thead><tr><th>年份</th><th>四化對官祿、遷移的影響</th></tr></thead><tbody>'+
+    Z.years.map(function(e){return '<tr><td>'+e.y+'（'+e.gz+'）</td><td style="white-space:normal">'+esc(e.notes.join("；")||"官祿宮無四化引動，維持現狀")+'</td></tr>'}).join("")+'</tbody></table></div></div>'+
+    '<div style="min-width:0"><h3>命盤</h3><div class="palaces">'+cells+'</div><p class="muted small" style="margin-top:6px">金框為命宮、官祿、遷移三宮。</p></div></div>';
+}
+
+/* ---------- 星盤 ---------- */
+function renderAstro(rep){
+  var A=rep.astro;if(!A){$("p-astro").innerHTML=lockHTML("paid",LOCK_DESC.astro);return}
+  var rows=A.planets.map(function(p){return '<tr><td>'+p.name+'</td><td>'+p.sign+' '+p.deg+'°</td><td>'+(p.house?"第 "+p.house+" 宮":"—")+'</td></tr>'}).join("");
+  if(A.asc)rows+='<tr><td>上升</td><td>'+A.asc.sign+' '+A.asc.deg+'°</td><td>—</td></tr><tr><td>天頂</td><td>'+A.mc.sign+' '+A.mc.deg+'°</td><td>—</td></tr>';
+  $("p-astro").innerHTML='<div class="split" style="grid-template-columns:minmax(0,1fr) minmax(0,260px)"><div style="min-width:0">'+
+    (A.mc?'<h3>天頂（MC）：社會角色</h3><p>'+esc(A.mc.text)+'</p>':'<h3>太陽星座</h3><p>未提供出生時間，無法計算上升與天頂，行運改以太陽星座作為第一宮（太陽宮位制）推算。</p>')+
+    (A.hasTime?'<h3>第十宮（事業宮）</h3><p>'+(A.in10.length?A.in10.map(function(x){return '<b>'+x.p+'</b>：'+esc(x.text)}).join("；")+"。":"第十宮無行星，事業風格主要由天頂星座與其守護星決定。")+'</p>':"")+
+    '<h3>土星：職涯功課</h3><p>土星在<b>'+A.saturn.sign+'</b>'+(A.saturn.house?"第 "+A.saturn.house+" 宮":"")+'，代表你需要時間累積、但最後會成為專長的領域。每 29.5 年一次的土星回歸（約 29 歲、58 歲）是職涯重新定位的大關卡。</p>'+
+    '<h3>現在的木星</h3><p>木星目前在'+A.jupiterNow.sign+'，行經你的第 '+A.jupiterNow.house+' 宮。'+esc(A.jupiterNow.text)+'</p></div>'+
+    '<div style="min-width:0"><h3>行星位置</h3><div class="tscroll"><table><thead><tr><th>行星</th><th>星座</th><th>宮位</th></tr></thead><tbody>'+rows+'</tbody></table></div><p class="muted small">整宮制，熱帶黃道。</p></div></div>';
+}
+
+/* ---------- 奇門（VIP） ---------- */
+var DIR_OF={1:"北",8:"東北",3:"東",4:"東南",9:"南",2:"西南",7:"西",6:"西北"};
+function renderQimen(rep){
+  var Q=rep.qimen;if(!Q){$("p-qimen").innerHTML=lockHTML("vip",LOCK_DESC.qimen);return}
+  var q=Q.today;
+  var grid=[4,9,2,3,5,7,8,1,6].map(function(p){
+    if(p===5)return '<div><span class="muted">中五</span><b>'+q.ju+'局</b>'+(q.yang?"陽遁":"陰遁")+'</div>';
+    return '<div class="'+(q.doors[p]==="開"?"open":"")+'"><span class="muted">'+DIR_OF[p]+'</span><b>'+q.doors[p]+'門</b>'+(p===q.zhiShiAt?"值使":"")+'</div>'}).join("");
+  $("p-qimen").innerHTML='<div class="split" style="grid-template-columns:minmax(0,1fr) 330px"><div style="min-width:0"><h3>開門：事業之門</h3><p>奇門遁甲以八門判斷行事吉凶，<b>開門</b>主事業、開創與求職，<b>休門</b>主貴人與休養，<b>生門</b>主財利。面試、談薪、遞辭呈時，挑值使落在開、休、生三吉門的時辰，並朝開門所在方位出發或就座。</p>'+
+    '<p>今天（'+q.dgz+'日）巳時 9–11 點：'+q.term+q.yuan+'元，'+(q.yang?"陽":"陰")+'遁'+q.ju+'局，值使<b>'+q.zhiShi+'門</b>，開門在<b>'+q.openDir+'方</b>。</p></div>'+
+    '<div><h3>今日巳時八門</h3><div class="qm">'+grid+'</div></div></div>'+
+    '<h3>未來 60 天職場吉日（巳時）</h3><div class="tscroll"><table><thead><tr><th>日期</th><th>日干支</th><th>巳時值使</th><th>開門方位</th><th>適合</th><th>黃曆宜</th></tr></thead><tbody>'+
+    Q.days.map(function(d){var g={開:"good",休:"good",生:"good"}[d.door]||"mid";return '<tr><td class="num">'+md(d.date)+'</td><td>'+d.dgz+'</td><td><span class="pill '+g+'">'+d.door+'門</span></td><td>'+d.openDir+'</td><td>'+d.act+'</td><td style="white-space:normal">'+(d.hits.join("、")||"—")+'</td></tr>'}).join("")+'</tbody></table></div>'+
+    '<h3>指定日期擇時</h3><p>已經約好面試或談判？選日期看當天 12 個時辰的值使門與開門方位。</p>'+
+    '<div class="field" style="max-width:220px"><label for="qmDate">日期</label><input type="date" id="qmDate"></div><div id="qmHours" aria-live="polite"></div>'+
+    '<p class="note">已排除與你日支相沖的日子與週末。奇門在此採時家轉盤拆補法，只排地盤三奇六儀與八門，不含九星、八神與天盤格局。</p>';
+}
+function renderQimenHours(r){
+  $("qmHours").innerHTML='<p class="small">'+md(r.date)+'　'+r.dgz+'日，'+(r.yang?"陽":"陰")+'遁'+r.ju+'局。'+(r.clash?'<span style="color:var(--cinnabar)">這天與你的日支相沖，重要事情盡量改期。</span>':"")+'</p>'+
+    '<div class="tscroll"><table><thead><tr><th>時辰</th><th>時間</th><th>時干支</th><th>值使</th><th>開門方位</th><th>適合</th></tr></thead><tbody>'+
+    r.rows.map(function(x){return '<tr'+(x.work&&x.level==="good"?' class="hl-row"':"")+'><td>'+x.zhi+'時</td><td class="num">'+x.range+'</td><td>'+x.hgz+'</td><td><span class="pill '+x.level+'">'+x.door+'門</span></td><td>'+x.openDir+'</td><td>'+x.use+'</td></tr>'}).join("")+
+    '</tbody></table></div><p class="note">底色標示的是上班時段內值使落在吉門的時辰。</p>';
+}
+
+/* ---------- 人類圖（VIP） ---------- */
+function hdSvg(H){
+  var C={頭頂:[100,22,"tri"],邏輯:[100,68,"tri-d"],喉嚨:[100,118,"sq"],G中心:[100,178,"dia"],意志力:[146,198,"tri"],薦骨:[100,258,"sq"],直覺:[36,236,"tri"],情緒:[164,236,"tri"],根部:[100,312,"sq"]};
+  var s='<svg viewBox="0 0 200 340" role="img" aria-label="人類圖九大中心">', seen={};
+  H.channelCenters.forEach(function(c){var a=c[0],b=c[1],k=[a,b].sort().join();if(seen[k])return;seen[k]=1;s+='<line x1="'+C[a][0]+'" y1="'+C[a][1]+'" x2="'+C[b][0]+'" y2="'+C[b][1]+'" stroke="var(--gold)" stroke-width="3"/>'});
+  for(var n in C){var c=C[n],x=c[0],y=c[1],on=H.defined.indexOf(n)>=0,st='stroke="'+(on?"var(--gold-bright)":"var(--faint)")+'" stroke-width="1.2" fill="'+(on?"var(--gold)":"var(--panel-solid)")+'"',d;
+    if(c[2]==="sq")d='<rect x="'+(x-18)+'" y="'+(y-18)+'" width="36" height="36" rx="3" '+st+'/>';
+    else if(c[2]==="dia")d='<polygon points="'+x+','+(y-22)+' '+(x+22)+','+y+' '+x+','+(y+22)+' '+(x-22)+','+y+'" '+st+'/>';
+    else if(c[2]==="tri-d")d='<polygon points="'+(x-20)+','+(y-16)+' '+(x+20)+','+(y-16)+' '+x+','+(y+18)+'" '+st+'/>';
+    else d='<polygon points="'+x+','+(y-18)+' '+(x+19)+','+(y+15)+' '+(x-19)+','+(y+15)+'" '+st+'/>';
+    s+=d;}
+  return s+'</svg>';
+}
+function renderHD(rep){
+  var H=rep.hd;if(!H){$("p-hd").innerHTML=lockHTML("vip",LOCK_DESC.hd);return}
+  var chs=H.chans.map(function(c){return '<span class="tag">'+c[0]+"–"+c[1]+'</span>'}).join("")||'<span class="muted">無定義通道</span>';
+  $("p-hd").innerHTML='<div class="split"><div style="min-width:0"><div class="kv"><div><span class="lab">類型</span><b>'+H.type+'</b></div><div><span class="lab">策略</span><b>'+H.strat+'</b></div><div><span class="lab">內在權威</span><b>'+H.auth+'</b></div><div><span class="lab">人生角色</span><b>'+H.profile+'</b></div></div>'+
+    '<h3>你在職場的運作方式</h3><p>'+esc(H.text)+'</p><p>人生角色 '+H.profile+'（'+H.profileNames.join("／")+'）：'+esc(H.profileText)+'</p>'+
+    '<h3>轉職的身體訊號</h3><p>當<b>'+H.sig+'</b>持續出現，代表你在錯的位置。決策依循「'+H.auth+'」：'+esc(H.authText)+'</p>'+
+    '<h3>定義通道</h3><div class="tags">'+chs+'</div></div><div class="hd"><h3>九大中心</h3>'+hdSvg(H)+'<p class="muted small" style="text-align:center;margin-top:6px">金色為有定義中心</p></div></div>'+
+    '<p class="note">人類圖由出生時刻（個性）與太陽回推 88° 的設計時刻（設計）共 26 個啟動點計算，月交點採平均交點。'+(rep.verdict.noTime?"未提供出生時間，月亮閘門可能不準，類型通常不受影響。":"")+'</p>';
+}
+
+function renderAll(rep){
+  todaySel=0;chartSel=null;
+  renderVerdict(rep);renderToday(rep);renderChartArea(rep);renderFit(rep);
+  renderBazi(rep);renderZiwei(rep);renderAstro(rep);renderQimen(rep);renderHD(rep);
+}

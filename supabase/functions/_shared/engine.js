@@ -1,3 +1,10 @@
+/* 職運羅盤 排盤與評分引擎（只在伺服器端執行）
+ * 用法：createEngine({Solar, LunarUtil, iztro, Astronomy}) → {CITIES, runAction}
+ * 檔案以「設定全域函式」的方式撰寫，Deno 以 import 執行、Node 以 require 執行皆可。 */
+(function(root){
+"use strict";
+root.createEngine=function(deps){
+var Solar=deps.Solar, LunarUtil=deps.LunarUtil, iztro=deps.iztro, Astronomy=deps.Astronomy;
 /* ============ 共用 ============ */
 var CITIES=[
   ["台北",25.03,121.56,8],["新北",25.01,121.46,8],["桃園",24.99,121.30,8],["新竹",24.80,120.97,8],["台中",24.15,120.67,8],
@@ -390,3 +397,203 @@ function synastry(R,other){
   score+=Math.min(12,em.length*4)+Math.min(6,comp.length*3);
   return {B2:B2,H2:H2,theyToMe:theyToMe,meToThem:meToThem,score:clamp(score,8,96),notes:notes,em:em,comp:comp};
 }
+
+/* ============ 報告分級（伺服器端） ============ */
+var RANK={free:0,paid:1,vip:2};
+var FIT_NAME={corp:"大型企業／集團",startup:"新創／成長期公司",foreign:"外商／跨國企業",public:"公部門／國營事業",freelance:"自由接案／個人品牌",sme:"中小企業／家族企業"};
+var FIT_DESC={corp:"制度清楚、升遷有階梯，適合穩定累積職級與資源。",startup:"變動快、角色彈性大，能用成果換取速度與股權。",foreign:"跨文化、重專業與績效，有外派與國際視野。",public:"穩定、重程序與公共價值，適合長期耕耘。",freelance:"自己掌握時間與作品，收入與品牌綁在一起。",sme:"老闆近、決策快，人和決定一切，容易成為核心。"};
+var IND={0:["教育培訓","出版文創","設計","醫療生技","環保農林"],1:["半導體與電子","網路媒體","能源","餐飲","美業與娛樂"],2:["不動產","營建","顧問管理","保險","物流倉儲"],3:["金融投資","法律","機械製造","汽車","資安"],4:["國際貿易","航運旅遊","行銷傳播","軟體與資訊流通","飲品水產"]};
+var CAT_CAREER={官殺:"在組織裡被賦予權責時最有力量",印:"靠專業、學歷與貴人提攜前進",食傷:"靠創意與表達被看見，討厭被框住",財:"對數字與資源敏感，重實質報酬",比劫:"獨立、好勝，適合合夥或自己當家"};
+var TERM_TW={惊蛰:"驚蟄",谷雨:"穀雨",小满:"小滿",芒种:"芒種",处暑:"處暑"};
+var AUTH_TEXT={情緒中心:"情緒有起伏，不要在高峰或低谷時提離職，至少睡過幾晚、心情平穩時再決定。",薦骨中心:"相信當下身體的「嗯／嗯哼」反應，讓朋友用是非題問你：「你想去這家公司嗎？」",直覺中心:"第一直覺最準，直覺只說一次，事後的猶豫多半是頭腦的恐懼。",意志力中心:"問自己「我真的想要嗎？」，只承諾你願意全力投入的工作。",自我投射:"把選項說出來給信任的人聽，從自己的聲音裡聽出方向。","環境（心智投射）":"換到不同環境、跟不同的人討論，聽自己怎麼說，而不是在腦中反覆推演。",月亮週期:"給自己約 28 天，與不同的人談過再定案。"};
+var PROFILE_TEXT={1:"你需要把事情研究透才有安全感，面試前做足功課是你的優勢。",2:"你有天賦但不愛自我推銷，好機會常是別人看見後來找你。",3:"你靠試錯學習，換過幾份工作不是失敗，而是在找對的位置。",4:"你的機會幾乎都來自人脈，轉職先從熟人網絡打聽。",5:"別人會把你投射成救火隊，適合接手爛攤子、轉型專案。",6:"前半生多嘗試，約 50 歲後成為領域典範，職涯越走越穩。"};
+var JUP_TEXT={10:"正是事業宮，今年是爭取升遷、曝光的好年。",6:"在工作宮，適合換到更好的團隊或職務。",2:"在財帛宮，談薪、加薪有利。",9:"在第九宮，外派、進修、國際機會增加。",1:"在第一宮，新開始與個人品牌擴張。"};
+var Q_SET=["move","stay","fit","biz"], Y_SET=[0,1,3,5,-1];
+
+function pad2(n){return String(n).padStart(2,"0")}
+function ym(x){return x.y+"/"+pad2(x.m)}
+function iso(dt){return dt.getFullYear()+"-"+pad2(dt.getMonth()+1)+"-"+pad2(dt.getDate())}
+function parseISO(s){if(typeof s!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(s))return null;var p=s.split("-").map(Number);var d=new Date(p[0],p[1]-1,p[2]);return isNaN(d)?null:d}
+function bestWindows(ms,key,n){
+  var sorted=ms.map(function(x,i){return {i:i,v:x[key]}}).sort(function(a,b){return b.v-a.v}), pick=[];
+  for(var j=0;j<sorted.length&&pick.length<n;j++){if(pick.every(function(p){return Math.abs(p.i-sorted[j].i)>2}))pick.push(sorted[j])}
+  return pick.sort(function(a,b){return a.i-b.i}).map(function(p){return ms[p.i]});
+}
+function bad(msg){var e=new Error(msg);e.code="bad_request";return e}
+function needTier(tier,min){if(RANK[tier]<RANK[min]){var e=new Error(min==="vip"?"此功能為 VIP 專屬":"此功能需要付費版");e.code="forbidden";e.need=min;throw e}}
+
+/* 驗證並補齊輸入：出生地座標一律由伺服器查表 */
+function normInput(raw){
+  raw=raw||{};
+  var p=String(raw.date||"").split("-").map(Number), y=p[0],m=p[1],d=p[2];
+  if(!(y>=1920&&y<=2025&&m>=1&&m<=12&&d>=1&&d<=31))throw bad("出生日期需介於 1920 到 2025 年之間");
+  var test=new Date(y,m-1,d);if(test.getMonth()!==m-1)throw bad("出生日期不存在");
+  var noTime=!!raw.noTime, t=String(raw.time||"12:00").split(":").map(Number), hh=t[0], mm=t[1];
+  if(!noTime&&!(hh>=0&&hh<=23&&mm>=0&&mm<=59))throw bad("出生時間格式錯誤");
+  var c=CITIES[+raw.city]||CITIES[0];
+  return {y:y,m:m,d:d,hh:noTime?12:hh,mm:noTime?0:mm,noTime:noTime,gender:raw.gender==="男"?"男":"女",lat:c[1],lon:c[2],tz:c[3],city:c[0],
+    q:Q_SET.indexOf(raw.q)>=0?raw.q:"move",yrs:Y_SET.indexOf(+raw.yrs)>=0?+raw.yrs:1};
+}
+
+function verdictOf(R,inp){
+  var B=R.B, diff=R.mvAvg-R.stAvg, call, sub;
+  if(inp.yrs===-1){call="未來一年，<em>主動出擊</em>找下一份工作";sub="你目前待業，曲線看的是哪幾個月出手命中率最高。"}
+  else if(diff>6){call="未來一年偏向<em>轉職</em>";sub="外部機會的動能明顯高於內部升遷，與其等升，不如準備換。"}
+  else if(diff<-6){call="未來一年偏向<em>留任升遷</em>";sub="組織內的晉升與授權訊號較強，先把這一階拿到手再談跳槽。"}
+  else {call="未來一年<em>邊做邊看</em>";sub="內外動能接近，建議爭取內部轉調或新專案，同時低調接觸外部機會。"}
+  if(inp.q==="biz")sub+=(B.cats.食傷+B.cats.比劫)/B.total>0.38?" 你的八字食傷與比劫有力，接案或創業的體質是有的，先從副業試水溫。":" 你的八字偏重官印，比較適合在組織裡當專家，創業建議先找合夥人互補。";
+  if(inp.yrs===0&&diff>6)sub+=" 你年資未滿一年，若要走，最好等到窗口期。";
+  return {call:call,sub:sub};
+}
+function slimDay(d,vip){
+  var o={date:iso(d.date),gz:d.gz,god:d.god,score:d.score,acts:d.acts,weekend:d.weekend,notes:vip?d.notes:d.notes.filter(function(n){return n.indexOf("巳時")<0})};
+  if(vip){o.door=d.door;o.openDir=d.openDir}
+  return o;
+}
+function slimMonth(m){return {y:m.y,m:m.m,ygz:m.ygz,mgz:m.mgz,move:m.move,stay:m.stay,notes:m.notes}}
+
+function buildReport(inp,tier,now){
+  var R=compute(inp,now), rk=RANK[tier], vip=rk>=2, B=R.B, v=verdictOf(R,inp);
+  var rep={tier:tier,generatedAt:now.toISOString(),input:{date:inp.y+"/"+inp.m+"/"+inp.d,time:inp.noTime?null:pad2(inp.hh)+":"+pad2(inp.mm),city:inp.city,gender:inp.gender},
+    verdict:{call:v.call,sub:v.sub,pillars:B.pillars,gods:B.gods,noTime:inp.noTime}};
+  if(rk<1)return rep;
+  var top=R.fitList[0], mcSign=R.A.mc!=null?"天頂"+SIGNS[Math.floor(R.A.mc/30)]:"太陽"+SIGNS[Math.floor(R.A.pl.太陽/30)];
+  rep.verdict.summary="日主 "+B.dmG+WX[B.dm]+"，"+(B.strong?"身強":"身弱")+"，喜用 "+B.favEl.map(function(e){return WX[e]}).join("、")+"。紫微官祿宮 "+R.Z.careerStars.join("、")+(R.Z.borrowed?"（借對宮）":"")+"；"+(vip?"人類圖 "+R.H.type+" "+R.H.profile+"；":"")+mcSign+"。最適合的環境是"+FIT_NAME[top.k]+"。";
+  rep.verdict.windows={move:bestWindows(R.months,"move",3).map(slimMonth),stay:bestWindows(R.months,"stay",3).map(slimMonth)};
+  rep.verdict.avg={move:Math.round(R.mvAvg),stay:Math.round(R.stAvg)};
+  rep.verdict.tags=[B.useCat+"為用",CAT_CAREER[B.useCat]];
+  rep.verdict.topFit=FIT_NAME[top.k];
+  rep.months=R.months.map(slimMonth);
+  rep.fit=R.fitList.map(function(f){return {k:f.k,v:f.v,name:FIT_NAME[f.k],desc:FIT_DESC[f.k],why:f.why.filter(function(w){return vip||w.indexOf("人類圖")<0})}});
+  rep.industries=[B.useEl].concat(B.favEl.filter(function(e){return e!==B.useEl})).map(function(e,i){return {el:WX[e],names:IND[e].slice(0,i?3:5),primary:i===0}});
+  var tElem=B.elem.reduce(function(a,b){return a+b},0)+1;
+  rep.bazi={dmG:B.dmG,dmWx:WX[B.dm],support:Math.round(B.support*100),strong:B.strong,useCat:B.useCat,useWx:WX[B.useEl],useText:CAT_CAREER[B.useCat],hasYima:B.hasYima,
+    cats:["官殺","印","比劫","食傷","財"].map(function(c){return {name:c,v:Math.round(B.cats[c]/B.total*100)}}),
+    elem:WX.map(function(w,i){return {name:w,fav:B.favEl.indexOf(i)>=0,v:Math.round((i===B.dm?B.elem[i]+1:B.elem[i])/tElem*100)}}),
+    dayun:B.dayun.map(function(d){return {gz:d.gz,startYear:d.startYear,endYear:d.endYear,startAge:d.startAge,endAge:d.endAge,god:d.god,good:B.fav.indexOf(d.cat)>=0}}),
+    years:Object.keys(R.by).map(function(k){var e=R.by[k];return {gz:k,god:tenGod(B.dmG,k[0]),fav:e.fav>0?"喜":e.fav<-0.5?"忌":"平",notes:e.notes}})};
+  var Z=R.Z, a=Z.a, soulStars=Z.pal[Z.soul].majorStars.map(function(s){return s.name});
+  rep.ziwei={fiveElementsClass:a.fiveElementsClass,soul:a.soul,body:a.body,lunarDate:a.lunarDate,career:Z.career,soulIdx:Z.soul,travel:Z.travel,borrowed:Z.borrowed,
+    palaces:Z.pal.map(function(p){return {name:p.name,stem:p.heavenlyStem,branch:p.earthlyBranch,range:p.decadal.range,stars:p.majorStars.map(function(s){return {name:s.name,mutagen:s.mutagen||""}})}}),
+    careerTexts:Z.careerStars.filter(function(s){return ZW_STAR[s]}).map(function(s){return {star:s,text:ZW_STAR[s].t}}),
+    soulText:soulStars.length?"命宮主星 "+soulStars.join("、")+"。"+(ZW_STAR[soulStars[0]]?ZW_STAR[soulStars[0]].t:""):"命宮為空宮，個性受對宮遷移宮影響大，適應力強、容易隨環境調整。",
+    years:Object.keys(R.zy).map(function(y){return {y:+y,gz:R.zy[y].gz,notes:R.zy[y].notes}})};
+  var A=R.A, ju=lonOf("Jupiter",now), jh=A.house(ju), sa=A.pl.土星;
+  rep.astro={hasTime:A.hasTime,planets:BODIES.map(function(b){var l=A.pl[b[0]];return {name:b[0],sign:SIGNS[Math.floor(l/30)],deg:+(l%30).toFixed(1),house:A.hasTime?A.house(l):null}}),
+    asc:A.hasTime?{sign:SIGNS[Math.floor(A.asc/30)],deg:+(A.asc%30).toFixed(1)}:null,mc:A.mc!=null?{sign:SIGNS[Math.floor(A.mc/30)],deg:+(A.mc%30).toFixed(1),text:MC_TEXT[SIGNS[Math.floor(A.mc/30)]]}:null,
+    in10:A.hasTime?BODIES.filter(function(b){return A.house(A.pl[b[0]])===10}).map(function(b){return {p:b[0],text:PL_10[b[0]]}}):[],
+    saturn:{sign:SIGNS[Math.floor(sa/30)],house:A.hasTime?A.house(sa):null},
+    jupiterNow:{sign:SIGNS[Math.floor(ju/30)],house:jh,text:JUP_TEXT[jh]||"事業宮位暫無木星加持，曲線中的其他訊號更值得參考。"}};
+  var days=[];for(var i=0;i<7;i++)days.push(slimDay(dailyFortune(B,new Date(now.getFullYear(),now.getMonth(),now.getDate()+i)),vip));
+  rep.today=days;
+  if(!vip)return rep;
+  var q=qimen(now.getFullYear(),now.getMonth()+1,now.getDate(),10);
+  rep.qimen={today:{dgz:q.dgz,term:TERM_TW[q.term]||q.term,yuan:q.yuan,yang:q.yang,ju:q.ju,zhiShi:q.zhiShi,zhiShiAt:q.zhiShiAt,doors:q.doors,openDir:q.openDir},
+    days:R.qdays.filter(function(d){return DOOR_Q[d.door]>=0.5}).sort(function(a,b){return b.score-a.score}).slice(0,8).sort(function(a,b){return a.date-b.date})
+      .map(function(d){return {date:iso(d.date),dgz:d.q.dgz,door:d.door,openDir:d.q.openDir,act:d.act,hits:d.hits}})};
+  var H=R.H, T=HD_TYPE[H.type], pl=H.profile.split("/");
+  rep.hd={type:H.type,strat:T.strat,sig:T.sig,text:T.t,auth:H.auth,authText:AUTH_TEXT[H.auth],profile:H.profile,profileNames:[PROFILE_NAME[pl[0]],PROFILE_NAME[pl[1]]],profileText:PROFILE_TEXT[pl[0]],
+    chans:H.chans,defined:Object.keys(H.defined),channelCenters:H.chans.map(function(c){return [gateCenter(c[0]),gateCenter(c[1])]})};
+  return rep;
+}
+
+/* ---------- 互動功能 ---------- */
+function monthAdvice(m){
+  var out=[];
+  if(m.move>=65)out.push("更新履歷與作品集，把近一年成果量化","主動聯繫獵頭，或約業界朋友 coffee chat","鎖定 3–5 個目標職缺投遞");
+  if(m.stay>=65)out.push("跟主管約 1:1，直接談你下一階的目標","爭取一個能被高層看見的專案","整理成果，準備考核或加薪談判");
+  if(!out.length&&m.move<40&&m.stay<40)out.push("低調蓄力，適合進修或考證照","不宜裸辭或衝動提離職","經營人脈，為下一個窗口做準備");
+  if(!out.length)out.push(m.move>m.stay?"外部機會開始浮現，可以先看看市場行情":"內部機會較多，先把手上的事做出亮點","維持現狀的同時，保留一點觀察外部的時間");
+  return out.slice(0,4);
+}
+function actMonth(R,p,vip,now){
+  var i=+p.i;if(!(i>=0&&i<R.months.length))throw bad("月份不存在");
+  var m=R.months[i], dim=new Date(m.y,m.m,0).getDate(), list=[];
+  for(var d=1;d<=dim;d++){var dt=new Date(m.y,m.m-1,d);if(dt<=now)continue;var f=dailyFortune(R.B,dt);if(!f.weekend)list.push(f)}
+  var good=list.sort(function(a,b){return b.score-a.score}).slice(0,3).sort(function(a,b){return a.date-b.date}).map(function(g){var o={date:iso(g.date),gz:g.gz,score:g.score};if(vip){o.door=g.door;o.openDir=g.openDir}return o});
+  return {y:m.y,m:m.m,ygz:m.ygz,mgz:m.mgz,move:m.move,stay:m.stay,detail:m.detail,advice:monthAdvice(m),good:good};
+}
+function readJobParam(o){
+  o=o||{};var f={name:String(o.name||"").slice(0,20)};
+  if(FIT_NAME[o.type])f.type=o.type;
+  if(IND_LIST.some(function(x){return x.n===o.industry}))f.industry=o.industry;
+  if(ROLES[o.role])f.role=o.role;
+  if(DIR_EL[o.dir]!=null)f.dir=o.dir;
+  var d=parseISO(o.date);if(d)f.date=d;
+  var fd=+o.founded;if(fd>=1850&&fd<=new Date().getFullYear())f.founded=fd;
+  return f;
+}
+function actOffer(R,p,vip){
+  var A=readJobParam(p.A),B=readJobParam(p.B);A.name=A.name||"公司 A";B.name=B.name||"公司 B";
+  if(!(A.type||A.industry)||!(B.type||B.industry))throw bad("每家公司至少選擇公司類型或產業，才有辦法比較。");
+  var sa=scoreJob(R,A), sb=scoreJob(R,B), keys=[], label={type:"公司類型",industry:"產業五行",role:"職能",dir:"方位",date:"報到時機"};
+  sa.parts.concat(sb.parts).forEach(function(x){if(keys.indexOf(x.k)<0)keys.push(x.k)});
+  function val(s,k){var x=s.parts.filter(function(y){return y.k===k})[0];return x?x.v:null}
+  var diff=sa.total-sb.total, win=diff>=5?A.name:diff<=-5?B.name:null, notes=[];
+  [[sa,A],[sb,B]].forEach(function(z){var x=z[0].parts.filter(function(y){return y.k==="industry"})[0];if(x)notes.push(z[1].name+" 的產業屬"+WX[x.el]+"，"+(x.v>=80?"是你的喜用五行":"不是你的喜用五行"))});
+  [[sa,A],[sb,B]].forEach(function(z){var x=z[0].parts.filter(function(y){return y.k==="date"})[0];if(x){var dd=x.day;notes.push(z[1].name+" 報到日 "+(z[1].date.getMonth()+1)+"/"+z[1].date.getDate()+"："+dd.gz+"日，流日"+dd.god+(vip?"，巳時"+dd.door+"門":"")+"，當日指數 "+dd.score)}});
+  return {names:[A.name,B.name],winner:win,rows:keys.map(function(k){return {label:label[k],a:val(sa,k),b:val(sb,k)}}),totals:[sa.total,sb.total],notes:notes};
+}
+function actFitNow(R,p){
+  var o=readJobParam(p);delete o.dir;delete o.date;
+  if(!o.type&&!o.industry&&!o.role)throw bad("至少選擇公司類型、產業或職能其中一項。");
+  var s=scoreJob(R,o), B=R.B, low=s.parts.slice().sort(function(a,b){return a.v-b.v})[0], top=R.fitList[0];
+  var why={type:"公司型態跟你的命盤不太合拍。你最適合的是「"+FIT_NAME[top.k]+"」，"+FIT_DESC[top.k],
+    industry:"產業屬"+WX[low.el||0]+"，不是你的喜用五行，做起來比較費力。對你最有利的是"+bestIndustry(B).join("、")+"這類產業。",
+    role:"目前的職能用不太到你的強項。命盤上最能發揮的是「"+bestRole(B)+"」，可以考慮內部轉調。",
+    founded:"公司成立年（"+(low.gz||"")+"）的五行跟你不合，整體氣場比較難互相拉抬。"};
+  var level=s.total>=75?"高度契合":s.total>=55?"中等契合":"契合度偏低";
+  var tip=s.total>=70?(R.stAvg>=R.mvAvg?"契合度高，未來一年的升遷動能也比較強，建議留下來拚下一階。":"契合度不錯，但外部動能較強，可以先在內部爭取更好的位置，同時留意外面的機會。"):
+    s.total>=55?(R.stAvg>=R.mvAvg?"契合度普通，但未來一年升遷動能較強，先把卡住的那一項補起來，爭取下一階。":"契合度普通，外部動能也偏強，可以一邊補強卡住的那一項，一邊觀察外面的機會。"):
+    (R.mvAvg>R.stAvg?"契合度不高，加上未來一年轉職動能較強，可以開始規劃離開。":"契合度不高，但近期的轉職動能不強，建議先爭取內部轉調或調整職能。");
+  return {total:s.total,level:level,parts:s.parts.map(function(x){return {label:x.label,v:x.v}}),low:low.v<70?{label:low.label,text:why[low.k]}:null,tip:tip};
+}
+var REL_TEXT={印:"對方的五行生你，是貴人型的關係。",官殺:"對方的五行剋你，會給你壓力，也會逼你成長。",財:"你的五行剋對方，在這段關係裡你比較強勢。",食傷:"你的五行生對方，你付出得多，對方受益多。",比劫:"兩人五行相同，像夥伴也像對手。"};
+var STRAT={
+  主管:{印:"主動請益、讓他帶你，升遷靠他推薦最快。",官殺:"交付要準時、數字要清楚，扛住他給的壓力就是升遷門票。",財:"注意別搶他的功，用「幫你達成目標」的方式提案。",食傷:"你容易一直付出，記得定期 1:1 對齊，讓成果被看見。",比劫:"他可能把你當潛在競爭者，分工要清楚，公開場合把功勞歸給他。"},
+  同事:{印:"他是你的資源，多交流對你有幫助。",官殺:"他容易挑你毛病，用文件化溝通減少摩擦。",財:"你容易主導，別讓他覺得被指揮。",食傷:"你會幫他很多，注意界線，別把他的工作攬到自己身上。",比劫:"分工清楚，維持良性競爭。"},
+  下屬:{印:"他會反過來支持你，給他發揮的空間。",官殺:"他有主見、會挑戰你，用目標而不是命令來管理。",財:"你管得住他，給清楚的指令即可。",食傷:"你會花很多心力培養他，值得，但別過度。",比劫:"讓他負責獨立的一塊，避免爭功。"}};
+STRAT.老闆=STRAT.主管;
+var HD_COMM={生產者:"用是非題問他，讓他回應，不要一次丟一大包任務。",顯示生產者:"給他幾個選項讓他快速回應，容忍他跳步。",投射者:"先詢問他的意見，被邀請的建議他才聽得進去。",顯示者:"他習慣先做再說，請他事前告知，你自己也主動同步進度。",反映者:"重要決定給他時間，不要當場逼他表態。"};
+var WX_STYLE=["重理念與成長，跟他談願景與發展","重熱情與速度，簡報要有亮點","重穩定與信用，說到做到最重要","重規則與效率，先給結論和數據","重彈性與資訊，先給全貌再談細節"];
+function actSynastry(R,p,me){
+  var bd=parseISO(p.date);if(!bd||bd.getFullYear()<1920||bd>new Date())throw bad("請輸入對方 1920 年以後的出生日期。");
+  var noTime=!!p.noTime||!p.time, t=String(p.time||"12:00").split(":").map(Number);
+  if(!noTime&&!(t[0]>=0&&t[0]<=23&&t[1]>=0&&t[1]<=59))throw bad("對方出生時間格式錯誤");
+  var other={y:bd.getFullYear(),m:bd.getMonth()+1,d:bd.getDate(),hh:noTime?12:t[0],mm:noTime?0:t[1],noTime:noTime,gender:p.gender==="男"?"男":"女",lat:me.lat,lon:me.lon,tz:me.tz};
+  var rel_=STRAT[p.rel]?p.rel:"主管", nm=String(p.name||"").slice(0,12)||"對方", S=synastry(R,other), notes=S.notes.slice();
+  if(S.em.length)notes.push("人類圖電磁通道 "+S.em.map(function(c){return c[0]+"–"+c[1]}).join("、")+"：你們各持一半，湊在一起會互相吸引、激出火花");
+  if(S.comp.length)notes.push("人類圖共有通道 "+S.comp.map(function(c){return c[0]+"–"+c[1]}).join("、")+"：做事方式相近，合作安心");
+  return {score:S.score,name:nm,otherDm:S.B2.dmG+WX[S.B2.dm],otherType:S.H2.type,relText:REL_TEXT[S.theyToMe],notes:notes,
+    strategy:[STRAT[rel_][S.theyToMe],"溝通方式："+HD_COMM[S.H2.type],"對方"+WX[S.B2.dm]+"日主，"+WX_STYLE[S.B2.dm]+"。"],noTime:noTime};
+}
+var SHICHEN=[["子",0,"23–01"],["丑",2,"01–03"],["寅",4,"03–05"],["卯",6,"05–07"],["辰",8,"07–09"],["巳",10,"09–11"],["午",12,"11–13"],["未",14,"13–15"],["申",16,"15–17"],["酉",18,"17–19"],["戌",20,"19–21"],["亥",22,"21–23"]];
+var DOOR_USE={開:"面試、提案、開工",休:"拜訪貴人、請託、休息",生:"談薪、簽約、談條件",景:"簡報、文書、發表",杜:"保密、閉門作業",傷:"不宜談判",驚:"不宜重要會談",死:"不宜行動"};
+function actQimenDay(R,p){
+  var dt=parseISO(p.date);if(!dt||dt.getFullYear()<1900||dt.getFullYear()>2100)throw bad("日期格式錯誤");
+  var rows=SHICHEN.map(function(s){var q=qimen(dt.getFullYear(),dt.getMonth()+1,dt.getDate(),s[1]),door=q.doors[q.zhiShiAt];
+    return {zhi:s[0],range:s[2],hgz:q.hgz,door:door,openDir:q.openDir,use:DOOR_USE[door],level:DOOR_Q[door]>=2?"good":DOOR_Q[door]>0?"mid":"bad",work:s[1]>=8&&s[1]<=18}});
+  var q0=qimen(dt.getFullYear(),dt.getMonth()+1,dt.getDate(),10);
+  return {date:iso(dt),dgz:q0.dgz,yang:q0.yang,ju:q0.ju,clash:chong(q0.dgz[1],R.B.dayZhi),rows:rows};
+}
+/* 分派：tier 由伺服器依會員資料決定，不信任前端 */
+function runAction(name,rawInput,tier,params,now){
+  if(!RANK.hasOwnProperty(tier))tier="free";
+  now=now||new Date();
+  var inp=normInput(rawInput);
+  if(name==="report")return buildReport(inp,tier,now);
+  var need={month:"paid",offer:"paid",fitnow:"paid",synastry:"vip",qimenDay:"vip"}[name];
+  if(!need)throw bad("未知的功能");
+  needTier(tier,need);
+  var R=compute(inp,now), vip=RANK[tier]>=2;
+  if(name==="month")return actMonth(R,params||{},vip,now);
+  if(name==="offer")return actOffer(R,params||{},vip);
+  if(name==="fitnow")return actFitNow(R,params||{});
+  if(name==="synastry")return actSynastry(R,params||{},inp);
+  return actQimenDay(R,params||{});
+}
+
+return {CITIES:CITIES,runAction:runAction};
+};
+if(typeof module!=="undefined"&&module.exports)module.exports=root.createEngine;
+})(typeof globalThis!=="undefined"?globalThis:this);
