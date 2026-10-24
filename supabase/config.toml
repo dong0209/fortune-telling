@@ -1,0 +1,6 @@
+# 只列出與預設值不同的設定。其餘請沿用 `supabase init` 產生的預設值。
+
+[functions.analyze]
+# 免費版訪客沒有登入憑證，所以關閉閘道的 JWT 檢查；
+# 函式內部會自行驗證登入憑證並查詢會員等級。
+verify_jwt = false
