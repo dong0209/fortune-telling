@@ -46,6 +46,14 @@ async function tierOf(req: Request): Promise<string> {
   return p.tier;
 }
 
+// 伺服器以 UTC 運作；「今天」「此刻時辰」一律以台灣時間計算
+function taipeiNow(): Date {
+  const p: Record<string, string> = {};
+  new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Taipei", hourCycle: "h23", year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric" })
+    .formatToParts(new Date()).forEach((x) => (p[x.type] = x.value));
+  return new Date(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second);
+}
+
 Deno.serve(async (req) => {
   const headers = { ...cors(req.headers.get("Origin")), "Content-Type": "application/json; charset=utf-8" };
   if (req.method === "OPTIONS") return new Response("ok", { headers });
@@ -53,7 +61,7 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     const tier = await tierOf(req);
-    const result = engine.runAction(String(body.action ?? "report"), body.input, tier, body.params ?? {}, new Date());
+    const result = engine.runAction(String(body.action ?? "report"), body.input, tier, body.params ?? {}, taipeiNow());
     return new Response(JSON.stringify({ tier, result }), { headers });
   } catch (e) {
     // deno-lint-ignore no-explicit-any

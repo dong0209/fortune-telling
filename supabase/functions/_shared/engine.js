@@ -7,12 +7,12 @@ root.createEngine=function(deps){
 var Solar=deps.Solar, LunarUtil=deps.LunarUtil, iztro=deps.iztro, Astronomy=deps.Astronomy, STROKES=deps.strokes||{};
 /* ============ 共用 ============ */
 var CITIES=[
-  ["台北",25.03,121.56,8],["新北",25.01,121.46,8],["桃園",24.99,121.30,8],["新竹",24.80,120.97,8],["台中",24.15,120.67,8],
-  ["彰化",24.08,120.54,8],["嘉義",23.48,120.45,8],["台南",22.99,120.21,8],["高雄",22.63,120.30,8],["屏東",22.67,120.49,8],
-  ["宜蘭",24.75,121.75,8],["花蓮",23.99,121.60,8],["台東",22.76,121.14,8],["澎湖",23.57,119.58,8],["金門",24.43,118.32,8],
-  ["香港",22.32,114.17,8],["澳門",22.20,113.55,8],["上海",31.23,121.47,8],["北京",39.90,116.40,8],["新加坡",1.35,103.82,8],
-  ["吉隆坡",3.14,101.69,8],["東京",35.68,139.69,9],["首爾",37.57,126.98,9],["雪梨",-33.87,151.21,10],["倫敦",51.51,-0.13,0],
-  ["紐約",40.71,-74.01,-5],["洛杉磯",34.05,-118.24,-8],["溫哥華",49.28,-123.12,-8]];
+  ["台北",25.03,121.56,8,"Asia/Taipei"],["新北",25.01,121.46,8,"Asia/Taipei"],["桃園",24.99,121.30,8,"Asia/Taipei"],["新竹",24.80,120.97,8,"Asia/Taipei"],["台中",24.15,120.67,8,"Asia/Taipei"],
+  ["彰化",24.08,120.54,8,"Asia/Taipei"],["嘉義",23.48,120.45,8,"Asia/Taipei"],["台南",22.99,120.21,8,"Asia/Taipei"],["高雄",22.63,120.30,8,"Asia/Taipei"],["屏東",22.67,120.49,8,"Asia/Taipei"],
+  ["宜蘭",24.75,121.75,8,"Asia/Taipei"],["花蓮",23.99,121.60,8,"Asia/Taipei"],["台東",22.76,121.14,8,"Asia/Taipei"],["澎湖",23.57,119.58,8,"Asia/Taipei"],["金門",24.43,118.32,8,"Asia/Taipei"],
+  ["香港",22.32,114.17,8,"Asia/Hong_Kong"],["澳門",22.20,113.55,8,"Asia/Macau"],["上海",31.23,121.47,8,"Asia/Shanghai"],["北京",39.90,116.40,8,"Asia/Shanghai"],["新加坡",1.35,103.82,8,"Asia/Singapore"],
+  ["吉隆坡",3.14,101.69,8,"Asia/Kuala_Lumpur"],["東京",35.68,139.69,9,"Asia/Tokyo"],["首爾",37.57,126.98,9,"Asia/Seoul"],["雪梨",-33.87,151.21,10,"Australia/Sydney"],["倫敦",51.51,-0.13,0,"Europe/London"],
+  ["紐約",40.71,-74.01,-5,"America/New_York"],["洛杉磯",34.05,-118.24,-8,"America/Los_Angeles"],["溫哥華",49.28,-123.12,-8,"America/Vancouver"]];
 var GAN="甲乙丙丁戊己庚辛壬癸", ZHI="子丑寅卯辰巳午未申酉戌亥";
 var WX=["木","火","土","金","水"];
 var GAN_WX={甲:0,乙:0,丙:1,丁:1,戊:2,己:2,庚:3,辛:3,壬:4,癸:4};
@@ -164,7 +164,7 @@ function lonOf(body,date){
   return Astronomy.Ecliptic(Astronomy.GeoVector(Astronomy.Body[body],date,true)).elon;
 }
 function meanNode(date){var T=Astronomy.MakeTime(date).tt/36525;return norm360(125.04452-1934.136261*T)}
-function utcDate(inp){var hh=inp.noTime?12:inp.hh,mm=inp.noTime?0:inp.mm;return new Date(Date.UTC(inp.y,inp.m-1,inp.d,hh,mm)-inp.tz*3600000)}
+function utcDate(inp){return new Date(inp.utcMs)}
 function calcAstro(inp){
   var dt=utcDate(inp), pl={};
   BODIES.forEach(function(b){pl[b[0]]=lonOf(b[1],dt)});
@@ -424,6 +424,23 @@ function bestWindows(ms,key,n){
 function bad(msg){var e=new Error(msg);e.code="bad_request";return e}
 function needTier(tier,min){if(RANK[tier]<RANK[min]){var e=new Error(min==="vip"?"此功能為 VIP 專屬":"此功能需要付費版");e.code="forbidden";e.need=min;throw e}}
 
+/* 時區換算：以 Intl（IANA 時區資料庫）取得某一刻在當地的 UTC 偏移，涵蓋各地夏令時間與台灣日治、戰後的歷史時區 */
+function zoneOffsetMin(tz,utcMs){
+  var p={};new Intl.DateTimeFormat("en-US",{timeZone:tz,hourCycle:"h23",year:"numeric",month:"numeric",day:"numeric",hour:"numeric",minute:"numeric"})
+    .formatToParts(new Date(utcMs)).forEach(function(x){p[x.type]=x.value});
+  return Math.round((Date.UTC(+p.year,+p.month-1,+p.day,+p.hour,+p.minute)-Math.floor(utcMs/60000)*60000)/60000);
+}
+function zonedToUtc(y,m,d,hh,mm,tz){
+  var guess=Date.UTC(y,m-1,d,hh,mm), off=zoneOffsetMin(tz,guess), utc=guess-off*60000, off2=zoneOffsetMin(tz,utc);
+  if(off2!==off){utc=guess-off2*60000;off=off2}
+  return {utc:utc,off:off};
+}
+/* 均時差（分鐘），近似公式，誤差約 1 分鐘 */
+function eotMinutes(utcMs){
+  var dt=new Date(utcMs), N=Math.floor((utcMs-Date.UTC(dt.getUTCFullYear(),0,0))/86400000), B=2*Math.PI*(N-81)/365;
+  return 9.87*Math.sin(2*B)-7.53*Math.cos(B)-1.5*Math.sin(B);
+}
+
 /* 驗證並補齊輸入：出生地座標一律由伺服器查表 */
 function normInput(raw){
   raw=raw||{};
@@ -432,8 +449,19 @@ function normInput(raw){
   var test=new Date(y,m-1,d);if(test.getMonth()!==m-1)throw bad("出生日期不存在");
   var noTime=!!raw.noTime, t=String(raw.time||"12:00").split(":").map(Number), hh=t[0], mm=t[1];
   if(!noTime&&!(hh>=0&&hh<=23&&mm>=0&&mm<=59))throw bad("出生時間格式錯誤");
-  var c=CITIES[+raw.city]||CITIES[0];
-  return {y:y,m:m,d:d,hh:noTime?12:hh,mm:noTime?0:mm,noTime:noTime,gender:raw.gender==="男"?"男":"女",lat:c[1],lon:c[2],tz:c[3],city:c[0],
+  var c=CITIES[+raw.city]||CITIES[0], civil={y:y,m:m,d:d,hh:noTime?12:hh,mm:noTime?0:mm};
+  /* 出生當地鐘錶時間 → 真正的 UTC（含夏令時間與歷史時區），再視選項換算成真太陽時或標準時間 */
+  var z=zonedToUtc(civil.y,civil.m,civil.d,civil.hh,civil.mm,c[4]), solar=!noTime&&raw.solar!==false, calcMs, note=null;
+  var dst=z.off!==c[3]*60;
+  if(noTime)calcMs=Date.UTC(y,m-1,d,12,0);
+  else if(solar){var eot=eotMinutes(z.utc);calcMs=z.utc+c[2]*240000+eot*60000;
+    var lonMin=Math.round(c[2]*4-c[3]*60), eotR=Math.round(eot), t=new Date(calcMs);
+    note="依真太陽時 "+pad2(t.getUTCHours())+":"+pad2(t.getUTCMinutes())+" 排盤（經度修正 "+(lonMin>=0?"+":"")+lonMin+" 分、均時差 "+(eotR>=0?"+":"")+eotR+" 分）"}
+  else {calcMs=z.utc+c[3]*3600000;note="依標準時間排盤（未做真太陽時校正）"}
+  if(dst&&!noTime)note+="；出生當時當地實施夏令或戰時時間（UTC"+(z.off>=0?"+":"")+(z.off/60)+"），已自動換算";
+  var k=new Date(calcMs);
+  return {y:k.getUTCFullYear(),m:k.getUTCMonth()+1,d:k.getUTCDate(),hh:noTime?12:k.getUTCHours(),mm:noTime?0:k.getUTCMinutes(),civil:civil,utcMs:z.utc,timeNote:note,
+    noTime:noTime,gender:raw.gender==="男"?"男":"女",lat:c[1],lon:c[2],tz:c[3],city:c[0],
     q:Q_SET.indexOf(raw.q)>=0?raw.q:"move",yrs:Y_SET.indexOf(+raw.yrs)>=0?+raw.yrs:1,name:normName(raw.name)};
 }
 
@@ -461,7 +489,7 @@ function slimMonth(m){return {y:m.y,m:m.m,ygz:m.ygz,mgz:m.mgz,move:m.move,stay:m
 
 function buildReport(inp,tier,now){
   var R=compute(inp,now), rk=RANK[tier], vip=rk>=2, B=R.B, v=verdictOf(R,inp);
-  var rep={tier:tier,generatedAt:now.toISOString(),input:{date:inp.y+"/"+inp.m+"/"+inp.d,time:inp.noTime?null:pad2(inp.hh)+":"+pad2(inp.mm),city:inp.city,gender:inp.gender},
+  var rep={tier:tier,generatedAt:now.toISOString(),input:{date:inp.civil.y+"/"+inp.civil.m+"/"+inp.civil.d,time:inp.noTime?null:pad2(inp.civil.hh)+":"+pad2(inp.civil.mm),city:inp.city,gender:inp.gender,timeNote:inp.timeNote},
     verdict:{call:v.call,sub:v.sub,pillars:B.pillars,gods:B.gods,noTime:inp.noTime}};
   var X=R.X;
   rep.teasers={iching:{title:X.iching.hex.name,line:X.iching.hex.text},meihua:{title:X.meihua.ben.name+" → "+X.meihua.bian.name,line:X.meihua.relName+"："+X.meihua.relText},
@@ -596,6 +624,7 @@ function runAction(name,rawInput,tier,params,now){
   var inp=normInput(rawInput);
   if(name==="report")return buildReport(inp,tier,now);
   if(name==="compare")return actCompare(compute(inp,now),params||{},tier);
+  if(name==="divine")return actDivine(params||{},now);
   var need={month:"paid",offer:"paid",fitnow:"paid",synastry:"vip",qimenDay:"vip"}[name];
   if(!need)throw bad("未知的功能");
   needTier(tier,need);
@@ -695,8 +724,8 @@ var NUM_YEAR={1:["move","新循環的起點，適合開新局、換跑道。"],2
   4:["stay","打地基之年，宜在現職累積實力與制度。"],5:["move","變動與自由之年，轉職、外派的機會多。"],6:["stay","責任之年，承擔更多照顧與管理角色。"],
   7:["wait","沉潛與進修之年，適合學習、考證照。"],8:["stay","權力與收穫之年，升遷加薪的好時機。"],9:["move","結束與放下之年，適合告別不適合的工作。"]};
 function calcNumerology(inp,now){
-  var r=reduce9(digitSum(""+inp.y+inp.m+inp.d)), y0=now.getFullYear(), years=[];
-  for(var Y=y0;Y<y0+6;Y++){var n=reduce9(digitSum(inp.m)+digitSum(inp.d)+digitSum(Y)).n;years.push({y:Y,n:n,stance:NUM_YEAR[n][0],text:NUM_YEAR[n][1]})}
+  var cv=inp.civil, r=reduce9(digitSum(""+cv.y+cv.m+cv.d)), y0=now.getFullYear(), years=[];
+  for(var Y=y0;Y<y0+6;Y++){var n=reduce9(digitSum(cv.m)+digitSum(cv.d)+digitSum(Y)).n;years.push({y:Y,n:n,stance:NUM_YEAR[n][0],text:NUM_YEAR[n][1]})}
   var M=NUM_MAIN[r.n];
   return {main:r.n,chain:r.chain.join("/"),title:M[0],text:M[1],env:M[2],years:years};
 }
@@ -807,6 +836,26 @@ function actCompare(R,p,tier){
       env:et&&env[et]>1?FIT_NAME[et]+"（"+env[et]+" 票）":null,year:yt&&years[yt]>1?yt+" 年（"+years[yt]+" 個系統指向這一年轉職）":null};
   }
   return {cards:cards,consensus:consensus};
+}
+
+/* ============ 每日職場一卦：梅花易數字占 ============ */
+var DV_REL={印:["大吉","用生體","這件事會反過來幫你，可以放心推進。"],比劫:["吉","體用比和","事情與你同頻，按計畫進行就會順利。"],
+  財:["小吉","體剋用","你能掌握主導權，但需要花力氣去爭取。"],食傷:["小凶","體生用","你付出多、收穫少，先評估值不值得再投入。"],
+  官殺:["凶","用剋體","阻力偏大，建議暫緩，或換個做法、換個時機。"]};
+function actDivine(p,now){
+  var q=String(p.question||"").replace(/\s+/g,"").slice(0,40), cs=q.split("").filter(function(c){return STROKES[c]});
+  if(cs.length<2)throw bad("請用至少兩個中文字寫下你的問題");
+  var half=Math.floor(cs.length/2), sum=function(a){return a.reduce(function(x,c){return x+STROKES[c]},0)};
+  var a=sum(cs.slice(0,half)), b=sum(cs.slice(half)), l=Solar.fromYmdHms(now.getFullYear(),now.getMonth()+1,now.getDate(),now.getHours(),now.getMinutes(),0).getLunar();
+  var H=ZHI.indexOf(l.getTimeZhi())+1, up=a%8||8, lo=b%8||8, mv=(a+b+H)%6||6;
+  var ben=hexOf(up,lo), L=ben.lines, hu=hexOf(triKey(L.slice(2,5)),triKey(L.slice(1,4)));
+  var BL=L.slice();BL[mv-1]=1-BL[mv-1];
+  var bian=hexOf(triKey(BL.slice(3,6)),triKey(BL.slice(0,3)));
+  var ti=mv<=3?up:lo, yong=mv<=3?lo:up, yongAfter=mv<=3?triKey(BL.slice(0,3)):triKey(BL.slice(3,6));
+  var r=DV_REL[rel(TRI[ti].el,TRI[yong].el)], ro=rel(TRI[ti].el,TRI[yongAfter].el);
+  return {question:q,date:iso(now),shichen:l.getTimeZhi()+"時",nums:{upper:a,lower:b,hour:H},ben:ben,hu:hu,bian:bian,moving:mv,
+    ti:TRI[ti].n+TRI[ti].img+"（"+WX[TRI[ti].el]+"）",yong:TRI[yong].n+TRI[yong].img+"（"+WX[TRI[yong].el]+"）",
+    luck:r[0],relName:r[1],relText:r[2],outcome:MH_OUT[ro]};
 }
 
 return {CITIES:CITIES,runAction:runAction};

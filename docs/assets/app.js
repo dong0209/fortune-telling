@@ -1,7 +1,7 @@
 /* 主流程：讀取表單 → 向伺服器要報告 → 繪製；登入狀態改變時重新推演 */
 function readInput(){
   var noTime=$("noTime").checked||!$("bt").value;
-  return {date:$("bd").value,time:noTime?null:$("bt").value,noTime:noTime,gender:$("gM").checked?"男":"女",city:+$("city").value,q:$("q").value,yrs:+$("yrs").value,name:$("nm").value.trim()};
+  return {date:$("bd").value,time:noTime?null:$("bt").value,noTime:noTime,gender:$("gM").checked?"男":"女",city:+$("city").value,q:$("q").value,yrs:+$("yrs").value,name:$("nm").value.trim(),solar:$("solar").checked};
 }
 async function run(){
   $("err").hidden=true;
