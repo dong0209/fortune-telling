@@ -109,7 +109,7 @@ function wrapText(ctx,text,x,y,maxW,lh){
 }
 function drawCard(){
   var rep=STATE.rep, v=rep.verdict, cv=document.createElement("canvas");cv.width=1080;cv.height=1920;
-  var c=cv.getContext("2d"), SERIF='"Noto Serif TC","Songti TC",serif', SANS='"Noto Sans TC","PingFang TC",sans-serif', MONO='"IBM Plex Mono",monospace', LAT='"Cinzel",serif';
+  var c=cv.getContext("2d"), SERIF='"LXGW WenKai TC","Kaiti TC",serif', SANS='"Noto Sans TC","PingFang TC",sans-serif', MONO='"IBM Plex Mono",monospace', LAT='"Cinzel",serif';
   var GOLD="#D9B56A", GB="#F1D58E", INK="#ECE6D6", MUTED="#8F97B5", LINE="#253057", MOVE="#EF7A4A", STAY="#4F96EC";
   var g=c.createRadialGradient(760,120,40,760,120,1300);g.addColorStop(0,"#1B2656");g.addColorStop(0.5,"#0A0F22");g.addColorStop(1,"#05070F");c.fillStyle=g;c.fillRect(0,0,1080,1920);
   var seed=11;function rnd(){seed=(seed*16807)%2147483647;return (seed-1)/2147483646}
@@ -161,7 +161,7 @@ function drawCard(){
 }
 function openCard(){
   if(!STATE.rep){$("shareMsg").textContent="請先推演命盤。";return}
-  var fonts=['900 82px "Noto Serif TC"','400 34px "Noto Sans TC"','700 30px "Noto Sans TC"','500 40px "IBM Plex Mono"','500 24px "Cinzel"'];
+  var fonts=['700 82px "LXGW WenKai TC"','400 34px "Noto Sans TC"','700 30px "Noto Sans TC"','500 40px "IBM Plex Mono"','500 24px "Cinzel"'];
   var ready=document.fonts&&document.fonts.load?Promise.all(fonts.map(function(f){return document.fonts.load(f,"職運羅盤0A")})).catch(function(){}):Promise.resolve();
   $("cardMsg").textContent="圖卡產生中…";$("cardDlg").showModal();
   ready.then(function(){var url=drawCard();$("cardImg").src=url;$("cardDl").href=url;$("cardMsg").textContent="手機可長按圖片儲存，電腦請按「下載圖片」。"});
