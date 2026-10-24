@@ -244,10 +244,10 @@ function renderHD(rep){
 var STANCE_NAME={move:"轉職",stay:"留任",wait:"觀望"};
 function stancePill(s){return s?'<span class="pill st-'+s+'">'+STANCE_NAME[s]+'</span>':'<span class="pill">—</span>'}
 function teaserHTML(t){return '<div class="teaser-box"><span class="lab">免費預覽</span><b>'+esc(t.title)+'</b><p>'+esc(t.line)+'</p></div>'}
-function freeView(id,rep,key){
+function freeView(id,rep,key,need){
   var t=rep.teasers&&rep.teasers[key];
   if(key==="name"&&!t){$(id).innerHTML='<p class="notice">在左側填入姓名後重新推演，就能看到姓名學的分析。</p>';return}
-  $(id).innerHTML=(t?teaserHTML(t):"")+lockHTML("paid",LOCK_DESC[key]);
+  $(id).innerHTML=(t?teaserHTML(t):"")+lockHTML(need||"paid",LOCK_DESC[key]);
 }
 function hexHTML(h,label,moving){
   var ls=h.lines.map(function(v,i){return '<i class="ln'+(v?"":" yin")+(moving===i+1?" mv":"")+'"></i>'}).reverse().join("");
@@ -260,7 +260,7 @@ function renderIching(rep){
     '<p class="note">本站採河洛理數的簡化算法，只取先天卦，不推元堂爻與後天卦。</p></div><div>'+hexHTML(X.hex,"先天卦")+'</div></div>';
 }
 function renderMeihua(rep){
-  var X=rep.meihua;if(!X){freeView("p-meihua",rep,"meihua");return}
+  var X=rep.meihua;if(!X){freeView("p-meihua",rep,"meihua","vip");return}
   $("p-meihua").innerHTML='<div class="hx-row">'+hexHTML(X.ben,"本卦",X.moving)+hexHTML(X.hu,"互卦")+hexHTML(X.bian,"變卦")+'</div>'+
     '<h3>體用：'+X.relName+'　'+stancePill(X.stance)+'</h3><p>體卦（代表你）為'+X.ti+'，用卦（代表工作環境）為'+X.yong+'。'+esc(X.relText)+'</p>'+
     '<h3>卦象走向</h3><p>本卦'+X.ben.name+'：'+esc(X.ben.text)+'</p><p>互卦'+X.hu.name+'（過程）：'+esc(X.hu.text)+'</p><p>變卦'+X.bian.name+'（結果）：'+esc(X.bian.text)+esc(X.outcome)+'</p>'+
@@ -274,7 +274,7 @@ function renderNumerology(rep){
     '<h3>未來 6 年流年數</h3>'+yearTable(X.years,["流年數","n"])+'<p class="note">流年數＝出生月日的數字加上該年份的數字，再加總化為 1–9。1、5、9 年利變動，4、6、8 年利深耕。</p>';
 }
 function renderNineStar(rep){
-  var X=rep.ninestar;if(!X){freeView("p-ninestar",rep,"ninestar");return}
+  var X=rep.ninestar;if(!X){freeView("p-ninestar",rep,"ninestar","vip");return}
   $("p-ninestar").innerHTML='<div class="big-num"><b>'+X.star+'</b><div><span class="lab">本命星（以 '+X.effYear+' 年立春後計）</span><h3 style="margin:2px 0 4px">'+X.name+'</h3><p style="margin:0">'+esc(X.text)+'</p></div></div>'+
     '<h3>未來 6 年本命星落宮</h3>'+yearTable(X.years,["落宮","palace"])+'<p class="note">飛入震、艮、巽宮的年份利轉換跑道，乾、離宮利升遷曝光，坎宮與中宮宜守。</p>';
 }
@@ -304,7 +304,7 @@ function cmpLimit(){return CMP.tier==="vip"?99:CMP.tier==="paid"?2:1}
 function renderChips(rep){
   CMP.tier=rep.tier;
   if(!CMP.sel.length)CMP.sel=CMP.tier==="vip"?["bazi","ziwei","astro","iching","meihua"]:CMP.tier==="paid"?["bazi","ziwei"]:["bazi"];
-  $("sysChips").innerHTML=rep.systems.map(function(x){var on=CMP.sel.indexOf(x.key)>=0;return '<button type="button" class="chip" data-k="'+x.key+'" aria-pressed="'+on+'">'+x.name+(x.vipOnly?' <span class="lk">VIP</span>':'')+'</button>'}).join("");
+  $("sysChips").innerHTML=["東方","西方"].map(function(sc){return '<div class="chip-row"><span class="school">'+sc+'學派</span>'+rep.systems.filter(function(x){return x.school===sc}).map(function(x){var on=CMP.sel.indexOf(x.key)>=0;return '<button type="button" class="chip" data-k="'+x.key+'" aria-pressed="'+on+'">'+x.name+(x.vipOnly?' <span class="lk">VIP</span>':'')+'</button>'}).join("")+'</div>'}).join("");
   $("sysChips").querySelectorAll(".chip").forEach(function(b){b.addEventListener("click",function(){
     var k=b.dataset.k,i=CMP.sel.indexOf(k);if(i>=0)CMP.sel.splice(i,1);else CMP.sel.push(k);
     b.setAttribute("aria-pressed",String(i<0));cmpStatus(rep)})});
@@ -320,7 +320,7 @@ function cmpStatus(rep){
   var n=CMP.sel.length, need=cmpNeed(rep);
   $("cmpCount").textContent="已選 "+n+" 種・"+TIER_NAME[CMP.tier]+(CMP.tier==="vip"?" 可不限種類比對":" 最多可同時比對 "+cmpLimit()+" 種");
   $("cmpGo").disabled=!n||!!need;
-  $("cmpHint").innerHTML=!n?'<p class="small muted">請至少選擇一種系統。</p>':need?'<div class="teaser"><p>'+(need==="vip"?"同時比對 3 種以上，或選擇奇門遁甲、人類圖，需要 VIP 版。":"同時比對 2 種需要付費版。")+'</p><button type="button" class="btn-gold" data-upgrade="'+need+'">'+(need==="vip"?"贊助解鎖 VIP 版":"贊助解鎖付費版")+'</button></div>':"";
+  $("cmpHint").innerHTML=!n?'<p class="small muted">請至少選擇一種系統。</p>':need?'<div class="teaser"><p>'+(need==="vip"?"同時比對 3 種以上，或選擇標示 VIP 的學派，需要 VIP 版。":"同時比對 2 種需要付費版。")+'</p><button type="button" class="btn-gold" data-upgrade="'+need+'">'+(need==="vip"?"贊助解鎖 VIP 版":"贊助解鎖付費版")+'</button></div>':"";
 }
 function renderCompare(r){
   var C=r.consensus, html="";
@@ -330,9 +330,11 @@ function renderCompare(r){
       '<div style="min-width:0"><span class="lab">共識度 '+C.agree+'%</span><div class="vote-bar">'+["move","stay","wait"].map(function(k){return C.votes[k]?'<i class="st-'+k+'" style="width:'+(C.votes[k]/tot*100)+'%" title="'+STANCE_NAME[k]+' '+C.votes[k]+'"></i>':""}).join("")+'</div>'+
       '<div class="vote-legend small">'+["move","stay","wait"].map(function(k){return '<span><i class="dot st-'+k+'"></i>'+STANCE_NAME[k]+' '+C.votes[k]+'</span>'}).join("")+'</div>'+
       (C.env?'<p class="small" style="margin:8px 0 0">最多系統推薦的環境：<b>'+esc(C.env)+'</b></p>':"")+(C.year?'<p class="small" style="margin:4px 0 0">轉職時機交集：<b>'+esc(C.year)+'</b></p>':"")+'</div></div>';
+    var S=C.schools||{};
+    if(S.東方||S.西方)html+='<div class="ew">'+["東方","西方"].map(function(sc){var x=S[sc];return '<div class="ew-side"><span class="lab">'+sc+'學派</span>'+(x?'<b>'+(x.lead?stancePill(x.lead):'<span class="pill">分歧</span>')+'</b><span class="small muted">'+esc(x.text)+'</span>':'<span class="small muted">這次沒有選'+sc+'學派</span>')+'</div>'}).join('<div class="ew-vs">VS</div>')+(S.verdict?'<p class="ew-verdict">'+esc(S.verdict)+'</p>':'')+'</div>';
   }
   html+='<div class="sys-cards">'+r.cards.map(function(c){
-    return '<article class="sys-card"><header><b>'+c.name+'</b>'+stancePill(c.stance)+'</header><dl>'+
+    return '<article class="sys-card"><header><b>'+c.name+' <span class="school-tag">'+c.school+'</span></b>'+stancePill(c.stance)+'</header><dl>'+
       '<dt>轉職時機</dt><dd>'+esc(c.moveWhen||"—")+'</dd><dt>升遷時機</dt><dd>'+esc(c.stayWhen||"—")+'</dd><dt>適合環境</dt><dd>'+esc(c.envName||"—")+'</dd></dl><p>'+esc(c.note)+'</p></article>'}).join("")+'</div>';
   $("cmpOut").innerHTML=html;
 }

@@ -495,9 +495,9 @@ function buildReport(inp,tier,now){
   rep.teasers={iching:{title:X.iching.hex.name,line:X.iching.hex.text},meihua:{title:X.meihua.ben.name+" → "+X.meihua.bian.name,line:X.meihua.relName+"："+X.meihua.relText},
     numerology:{title:"主命數 "+X.numerology.main,line:X.numerology.title+"："+X.numerology.text},ninestar:{title:X.ninestar.name,line:X.ninestar.text},
     name:X.name?{title:X.name.chars.map(function(c){return c.c}).join("")+"・總格 "+X.name.grids[4].n,line:X.name.sancaiFlow}:null};
-  rep.systems=SYSTEMS.map(function(x){return {key:x[0],name:x[1],vipOnly:VIP_ONLY.indexOf(x[0])>=0}});
+  rep.systems=SYSTEMS.map(function(x){return {key:x[0],name:x[1],school:x[2],vipOnly:VIP_ONLY.indexOf(x[0])>=0}});
   if(rk<1)return rep;
-  rep.iching=X.iching;rep.meihua=X.meihua;rep.numerology=X.numerology;rep.ninestar=X.ninestar;rep.name=X.name;
+  rep.iching=X.iching;rep.numerology=X.numerology;rep.name=X.name;
   var top=R.fitList[0], mcSign=R.A.mc!=null?"天頂"+SIGNS[Math.floor(R.A.mc/30)]:"太陽"+SIGNS[Math.floor(R.A.pl.太陽/30)];
   rep.verdict.summary="日主 "+B.dmG+WX[B.dm]+"，"+(B.strong?"身強":"身弱")+"，喜用 "+B.favEl.map(function(e){return WX[e]}).join("、")+"。紫微官祿宮 "+R.Z.careerStars.join("、")+(R.Z.borrowed?"（借對宮）":"")+"；"+(vip?"人類圖 "+R.H.type+" "+R.H.profile+"；":"")+mcSign+"。最適合的環境是"+FIT_NAME[top.k]+"。";
   rep.verdict.windows={move:bestWindows(R.months,"move",3).map(slimMonth),stay:bestWindows(R.months,"stay",3).map(slimMonth)};
@@ -528,6 +528,7 @@ function buildReport(inp,tier,now){
   var days=[];for(var i=0;i<7;i++)days.push(slimDay(dailyFortune(B,new Date(now.getFullYear(),now.getMonth(),now.getDate()+i)),vip));
   rep.today=days;
   if(!vip)return rep;
+  rep.meihua=X.meihua;rep.ninestar=X.ninestar;
   var q=qimen(now.getFullYear(),now.getMonth()+1,now.getDate(),10);
   rep.qimen={today:{dgz:q.dgz,term:TERM_TW[q.term]||q.term,yuan:q.yuan,yang:q.yang,ju:q.ju,zhiShi:q.zhiShi,zhiShiAt:q.zhiShiAt,doors:q.doors,openDir:q.openDir},
     days:R.qdays.filter(function(d){return DOOR_Q[d.door]>=0.5}).sort(function(a,b){return b.score-a.score}).slice(0,8).sort(function(a,b){return a.date-b.date})
@@ -782,8 +783,9 @@ function calcName(name,B){
 }
 
 /* ============ 綜合比對 ============ */
-var SYSTEMS=[["bazi","八字"],["ziwei","紫微斗數"],["astro","西洋星盤"],["iching","易經"],["meihua","梅花易數"],["numerology","生命靈數"],["ninestar","九宮飛星"],["name","姓名學"],["qimen","奇門遁甲"],["hd","人類圖"]];
-var VIP_ONLY=["qimen","hd"];
+var SYSTEMS=[["bazi","八字","東方"],["ziwei","紫微斗數","東方"],["iching","易經","東方"],["name","姓名學","東方"],["meihua","梅花易數","東方"],["ninestar","九宮飛星","東方"],["qimen","奇門遁甲","東方"],
+  ["astro","西洋星盤","西方"],["numerology","生命靈數","西方"],["hd","人類圖","西方"]];
+var VIP_ONLY=["meihua","ninestar","qimen","hd"];
 function envTop(m){var best=null;for(var k in m)if(m[k]>0&&(best===null||m[k]>m[best]))best=k;return best}
 function seriesStance(R,key){
   var ms=R.months.slice(0,12), sm=0, ss=0;ms.forEach(function(m){sm+=m.sys[key].move;ss+=m.sys[key].stay});
@@ -793,7 +795,7 @@ function seriesStance(R,key){
 function seriesPeak(R,key,field){var best=0;R.months.forEach(function(m,i){if(m.sys[key][field]>R.months[best].sys[key][field])best=i});return ym(R.months[best])}
 function firstYear(list,stances){for(var i=0;i<list.length;i++)if(stances.indexOf(list[i].stance)>=0)return list[i].y+" 年";return null}
 function buildCard(R,key){
-  var B=R.B, c={key:key,name:SYSTEMS.filter(function(s){return s[0]===key})[0][1],vipOnly:VIP_ONLY.indexOf(key)>=0};
+  var B=R.B, sd=SYSTEMS.filter(function(s){return s[0]===key})[0], c={key:key,name:sd[1],school:sd[2],vipOnly:VIP_ONLY.indexOf(key)>=0};
   function sh(cat){return B.cats[cat]/B.total*5}
   if(key==="bazi"||key==="ziwei"||key==="astro"){
     var s=seriesStance(R,key);c.stance=s.stance;c.lean=s.lean;c.moveWhen=seriesPeak(R,key,"move");c.stayWhen=seriesPeak(R,key,"stay");
@@ -817,6 +819,21 @@ function buildCard(R,key){
   c.stanceText=c.stance?STANCE_NAME[c.stance]:"—";c.envName=c.env?FIT_NAME[c.env]:null;
   return c;
 }
+/* 東方與西方各自的多數意見，以及兩邊是否一致 */
+function schoolCompare(voted){
+  var out={};
+  ["東方","西方"].forEach(function(sc){
+    var cs=voted.filter(function(c){return c.school===sc});if(!cs.length)return;
+    var v={move:0,stay:0,wait:0};cs.forEach(function(c){v[c.stance]++});
+    var top=Object.keys(v).sort(function(a,b){return v[b]-v[a]})[0], tie=Object.keys(v).filter(function(k){return v[k]===v[top]}).length>1;
+    out[sc]={n:cs.length,votes:v,lead:tie?null:top,text:sc+"學派 "+cs.length+" 種："+(tie?"意見分歧":(cs.length>1?"多數傾向":"傾向")+STANCE_NAME[top])};
+  });
+  if(out.東方&&out.西方){
+    var a=out.東方.lead,b=out.西方.lead;
+    out.verdict=a&&b?(a===b?"東西方結論一致：都傾向「"+STANCE_NAME[a]+"」，這個方向的把握度較高。":"東西方結論不同：東方傾向「"+STANCE_NAME[a]+"」、西方傾向「"+STANCE_NAME[b]+"」，建議把兩邊的理由都看過再決定。"):"至少一方意見分歧，東西方尚未形成共同結論。";
+  }
+  return out;
+}
 function actCompare(R,p,tier){
   var keys=[];(Array.isArray(p.systems)?p.systems:[]).forEach(function(k){if(keys.indexOf(k)<0&&SYSTEMS.some(function(s){return s[0]===k}))keys.push(k)});
   if(!keys.length)throw bad("請至少選擇一種命理系統。");
@@ -834,6 +851,7 @@ function actCompare(R,p,tier){
       summary:n+" 種系統中，"+["move","stay","wait"].filter(function(k){return votes[k]}).map(function(k){return votes[k]+" 種傾向"+STANCE_NAME[k]}).join("、")+"。",
       advice:tie?"各系統意見分歧，代表這個決定沒有一面倒的答案，請以現實條件為主，命盤當作參考。":agree>=75?"多數系統看法一致，可以把「"+STANCE_NAME[lead]+"」當作主要方向。":"整體偏向「"+STANCE_NAME[lead]+"」，但仍有不同聲音，建議先做小幅度的試探。",
       env:et&&env[et]>1?FIT_NAME[et]+"（"+env[et]+" 票）":null,year:yt&&years[yt]>1?yt+" 年（"+years[yt]+" 個系統指向這一年轉職）":null};
+    consensus.schools=schoolCompare(voted);
   }
   return {cards:cards,consensus:consensus};
 }
