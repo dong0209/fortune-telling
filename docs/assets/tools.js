@@ -233,6 +233,12 @@ async function openUpgrade(need){
   });
 }
 
+/* ---------- 綜合比對 ---------- */
+async function runCompare(){
+  loading("cmpOut","各派會診中…");
+  try{var r=await API.analyze("compare",STATE.input,{systems:CMP.sel});renderCompare(r.result)}catch(e){showError("cmpOut",e)}
+}
+
 /* ---------- 綁定 ---------- */
 function bindTools(){
   fillSelects();
@@ -242,6 +248,7 @@ function bindTools(){
   $("sy-notime").addEventListener("change",function(){$("sy-bt").disabled=this.checked});
   $("noTime").addEventListener("change",function(){$("bt").disabled=this.checked});
   $("btnShare").addEventListener("click",copyShare);
+  $("cmpGo").addEventListener("click",runCompare);
   $("btnCard").addEventListener("click",openCard);
   $("loginForm").addEventListener("submit",doLogin);
   document.querySelectorAll("dialog [data-close]").forEach(function(b){b.addEventListener("click",function(){b.closest("dialog").close()})});

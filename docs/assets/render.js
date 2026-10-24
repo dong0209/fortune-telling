@@ -33,7 +33,12 @@ var LOCK_DESC={
   ziwei:"紫微斗數十二宮命盤、官祿宮主星解讀、流年四化對事業的影響。",
   astro:"天頂星座、事業宮行星、土星職涯功課與木星行運。",
   qimen:"奇門遁甲八門方位、未來 60 天職場吉日，以及指定日期的 12 時辰擇時。",
-  hd:"人類圖類型、策略、內在權威，以及你該轉職時的身體訊號。"
+  hd:"人類圖類型、策略、內在權威，以及你該轉職時的身體訊號。",
+  iching:"以河洛理數從八字起出你的先天卦，看卦象對職涯的提示。",
+  meihua:"以生辰起本卦、互卦、變卦，用體用生剋看你和工作環境的關係。",
+  numerology:"主命數的職場特質，以及未來 6 年每一年的流年數與該動或該守。",
+  ninestar:"本命星的職場特質，以及未來 6 年本命星飛入哪一宮。",
+  name:"姓名的天、人、地、外、總五格與三才配置，看名字對事業運的加分。"
 };
 
 /* ---------- 天機總斷 ---------- */
@@ -234,8 +239,95 @@ function renderHD(rep){
     '<p class="note">人類圖由出生時刻（個性）與太陽回推 88° 的設計時刻（設計）共 26 個啟動點計算，月交點採平均交點。'+(rep.verdict.noTime?"未提供出生時間，月亮閘門可能不準，類型通常不受影響。":"")+'</p>';
 }
 
+/* ---------- 易經、梅花易數、生命靈數、九宮飛星、姓名學 ---------- */
+var STANCE_NAME={move:"轉職",stay:"留任",wait:"觀望"};
+function stancePill(s){return s?'<span class="pill st-'+s+'">'+STANCE_NAME[s]+'</span>':'<span class="pill">—</span>'}
+function teaserHTML(t){return '<div class="teaser-box"><span class="lab">免費預覽</span><b>'+esc(t.title)+'</b><p>'+esc(t.line)+'</p></div>'}
+function freeView(id,rep,key){
+  var t=rep.teasers&&rep.teasers[key];
+  if(key==="name"&&!t){$(id).innerHTML='<p class="notice">在左側填入姓名後重新推演，就能看到姓名學的分析。</p>';return}
+  $(id).innerHTML=(t?teaserHTML(t):"")+lockHTML("paid",LOCK_DESC[key]);
+}
+function hexHTML(h,label,moving){
+  var ls=h.lines.map(function(v,i){return '<i class="ln'+(v?"":" yin")+(moving===i+1?" mv":"")+'"></i>'}).reverse().join("");
+  return '<figure class="hx"><figcaption class="lab">'+label+'</figcaption><div class="hx-lines" aria-hidden="true">'+ls+'</div><b>'+h.name+'</b><span class="muted small">上'+h.upper+'下'+h.lower+'・第 '+h.no+' 卦</span></figure>';
+}
+function renderIching(rep){
+  var X=rep.iching;if(!X){freeView("p-iching",rep,"iching");return}
+  $("p-iching").innerHTML='<div class="split"><div style="min-width:0"><h3>你的先天卦：'+X.hex.name+'　'+stancePill(X.hex.stance)+'</h3><p>'+esc(X.hex.text)+'</p>'+
+    '<h3>起卦過程</h3><p>以河洛理數將八字的天干地支化為數字：奇數相加為天數 '+X.tian+'，化為 '+X.tianNum+'；偶數相加為地數 '+X.di+'，化為 '+X.diNum+'。依洛書數取卦，'+X.order+'。</p>'+
+    '<p class="note">本站採河洛理數的簡化算法，只取先天卦，不推元堂爻與後天卦。</p></div><div>'+hexHTML(X.hex,"先天卦")+'</div></div>';
+}
+function renderMeihua(rep){
+  var X=rep.meihua;if(!X){freeView("p-meihua",rep,"meihua");return}
+  $("p-meihua").innerHTML='<div class="hx-row">'+hexHTML(X.ben,"本卦",X.moving)+hexHTML(X.hu,"互卦")+hexHTML(X.bian,"變卦")+'</div>'+
+    '<h3>體用：'+X.relName+'　'+stancePill(X.stance)+'</h3><p>體卦（代表你）為'+X.ti+'，用卦（代表工作環境）為'+X.yong+'。'+esc(X.relText)+'</p>'+
+    '<h3>卦象走向</h3><p>本卦'+X.ben.name+'：'+esc(X.ben.text)+'</p><p>互卦'+X.hu.name+'（過程）：'+esc(X.hu.text)+'</p><p>變卦'+X.bian.name+'（結果）：'+esc(X.bian.text)+esc(X.outcome)+'</p>'+
+    '<p class="note">起卦：農曆年支數 '+X.nums.Y+'＋月 '+X.nums.M+'＋日 '+X.nums.D+' 得上卦，再加時支數 '+X.nums.H+' 得下卦，總數除以 6 得第 '+X.moving+' 爻動（圖中紅框標示）。</p>';
+}
+function yearTable(rows,mid){return '<div class="tscroll"><table><thead><tr><th>年份</th><th>'+mid[0]+'</th><th>判斷</th><th>職場提示</th></tr></thead><tbody>'+
+  rows.map(function(r){return '<tr><td class="num">'+r.y+'</td><td>'+r[mid[1]]+'</td><td>'+stancePill(r.stance)+'</td><td style="white-space:normal">'+esc(r.text)+'</td></tr>'}).join("")+'</tbody></table></div>'}
+function renderNumerology(rep){
+  var X=rep.numerology;if(!X){freeView("p-numerology",rep,"numerology");return}
+  $("p-numerology").innerHTML='<div class="big-num"><b>'+X.main+'</b><div><span class="lab">主命數 '+X.chain+'</span><h3 style="margin:2px 0 4px">'+X.title+'</h3><p style="margin:0">'+esc(X.text)+'</p></div></div>'+
+    '<h3>未來 6 年流年數</h3>'+yearTable(X.years,["流年數","n"])+'<p class="note">流年數＝出生月日的數字加上該年份的數字，再加總化為 1–9。1、5、9 年利變動，4、6、8 年利深耕。</p>';
+}
+function renderNineStar(rep){
+  var X=rep.ninestar;if(!X){freeView("p-ninestar",rep,"ninestar");return}
+  $("p-ninestar").innerHTML='<div class="big-num"><b>'+X.star+'</b><div><span class="lab">本命星（以 '+X.effYear+' 年立春後計）</span><h3 style="margin:2px 0 4px">'+X.name+'</h3><p style="margin:0">'+esc(X.text)+'</p></div></div>'+
+    '<h3>未來 6 年本命星落宮</h3>'+yearTable(X.years,["落宮","palace"])+'<p class="note">飛入震、艮、巽宮的年份利轉換跑道，乾、離宮利升遷曝光，坎宮與中宮宜守。</p>';
+}
+function renderName(rep){
+  var X=rep.name;if(!X){if(!rep.iching){freeView("p-name",rep,"name");return}$("p-name").innerHTML='<p class="notice">在左側填入姓名後重新推演，就能看到姓名學的分析。</p>';return}
+  $("p-name").innerHTML='<div class="name-chars">'+X.chars.map(function(c){return '<div><b>'+esc(c.c)+'</b><span class="num">'+c.s+'</span></div>'}).join("")+'</div>'+
+    '<div class="tscroll"><table><thead><tr><th>五格</th><th style="text-align:right">筆畫</th><th>五行</th><th>吉凶</th></tr></thead><tbody>'+
+    X.grids.map(function(g){return '<tr><td>'+g.name+'</td><td class="num">'+g.n+'</td><td>'+g.el+'</td><td><span class="pill '+(g.luck==="吉"?"good":g.luck==="凶"?"bad":"mid")+'">'+g.luck+'</span></td></tr>'}).join("")+'</tbody></table></div>'+
+    '<h3>三才配置：'+X.sancai+'　'+stancePill(X.stance)+'</h3><p>'+esc(X.sancaiFlow)+'</p><p>'+esc(X.renText)+esc(X.zongText)+'</p><p>'+esc(X.favText)+'</p>'+
+    '<p class="note">筆畫採康熙字典算法（例如「氵」以「水」4 畫計）。複姓會自動辨識。</p>';
+}
+
+/* ---------- 綜合比對 ---------- */
+var CMP={sel:[],tier:"free"};
+function cmpLimit(){return CMP.tier==="vip"?99:CMP.tier==="paid"?2:1}
+function renderChips(rep){
+  CMP.tier=rep.tier;
+  if(!CMP.sel.length)CMP.sel=CMP.tier==="vip"?["bazi","ziwei","astro","iching","meihua"]:CMP.tier==="paid"?["bazi","ziwei"]:["bazi"];
+  $("sysChips").innerHTML=rep.systems.map(function(x){var on=CMP.sel.indexOf(x.key)>=0;return '<button type="button" class="chip" data-k="'+x.key+'" aria-pressed="'+on+'">'+x.name+(x.vipOnly?' <span class="lk">VIP</span>':'')+'</button>'}).join("");
+  $("sysChips").querySelectorAll(".chip").forEach(function(b){b.addEventListener("click",function(){
+    var k=b.dataset.k,i=CMP.sel.indexOf(k);if(i>=0)CMP.sel.splice(i,1);else CMP.sel.push(k);
+    b.setAttribute("aria-pressed",String(i<0));cmpStatus(rep)})});
+  cmpStatus(rep);$("cmpOut").innerHTML="";
+}
+function cmpNeed(rep){
+  var vipSys=CMP.sel.some(function(k){return rep.systems.some(function(x){return x.key===k&&x.vipOnly})});
+  if((vipSys||CMP.sel.length>=3)&&CMP.tier!=="vip")return "vip";
+  if(CMP.sel.length===2&&CMP.tier==="free")return "paid";
+  return null;
+}
+function cmpStatus(rep){
+  var n=CMP.sel.length, need=cmpNeed(rep);
+  $("cmpCount").textContent="已選 "+n+" 種・"+TIER_NAME[CMP.tier]+(CMP.tier==="vip"?" 可不限種類比對":" 最多可同時比對 "+cmpLimit()+" 種");
+  $("cmpGo").disabled=!n||!!need;
+  $("cmpHint").innerHTML=!n?'<p class="small muted">請至少選擇一種系統。</p>':need?'<div class="teaser"><p>'+(need==="vip"?"同時比對 3 種以上，或選擇奇門遁甲、人類圖，需要 VIP 版。":"同時比對 2 種需要付費版。")+'</p><button type="button" class="btn-gold" data-upgrade="'+need+'">'+(need==="vip"?"贊助解鎖 VIP 版":"贊助解鎖付費版")+'</button></div>':"";
+}
+function renderCompare(r){
+  var C=r.consensus, html="";
+  if(C){
+    var tot=C.votes.move+C.votes.stay+C.votes.wait;
+    html+='<div class="consensus"><div><span class="lab">綜合判斷</span><div class="cons-call">'+(C.lead?'傾向<em>'+STANCE_NAME[C.lead]+'</em>':'<em>意見分歧</em>')+'</div><p style="margin:0">'+esc(C.summary)+esc(C.advice)+'</p></div>'+
+      '<div style="min-width:0"><span class="lab">共識度 '+C.agree+'%</span><div class="vote-bar">'+["move","stay","wait"].map(function(k){return C.votes[k]?'<i class="st-'+k+'" style="width:'+(C.votes[k]/tot*100)+'%" title="'+STANCE_NAME[k]+' '+C.votes[k]+'"></i>':""}).join("")+'</div>'+
+      '<div class="vote-legend small">'+["move","stay","wait"].map(function(k){return '<span><i class="dot st-'+k+'"></i>'+STANCE_NAME[k]+' '+C.votes[k]+'</span>'}).join("")+'</div>'+
+      (C.env?'<p class="small" style="margin:8px 0 0">最多系統推薦的環境：<b>'+esc(C.env)+'</b></p>':"")+(C.year?'<p class="small" style="margin:4px 0 0">轉職時機交集：<b>'+esc(C.year)+'</b></p>':"")+'</div></div>';
+  }
+  html+='<div class="sys-cards">'+r.cards.map(function(c){
+    return '<article class="sys-card"><header><b>'+c.name+'</b>'+stancePill(c.stance)+'</header><dl>'+
+      '<dt>轉職時機</dt><dd>'+esc(c.moveWhen||"—")+'</dd><dt>升遷時機</dt><dd>'+esc(c.stayWhen||"—")+'</dd><dt>適合環境</dt><dd>'+esc(c.envName||"—")+'</dd></dl><p>'+esc(c.note)+'</p></article>'}).join("")+'</div>';
+  $("cmpOut").innerHTML=html;
+}
+
 function renderAll(rep){
   todaySel=0;chartSel=null;
   renderVerdict(rep);renderToday(rep);renderChartArea(rep);renderFit(rep);
   renderBazi(rep);renderZiwei(rep);renderAstro(rep);renderQimen(rep);renderHD(rep);
+  renderIching(rep);renderMeihua(rep);renderNumerology(rep);renderNineStar(rep);renderName(rep);renderChips(rep);
 }

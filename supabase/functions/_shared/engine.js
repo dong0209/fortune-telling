@@ -4,7 +4,7 @@
 (function(root){
 "use strict";
 root.createEngine=function(deps){
-var Solar=deps.Solar, LunarUtil=deps.LunarUtil, iztro=deps.iztro, Astronomy=deps.Astronomy;
+var Solar=deps.Solar, LunarUtil=deps.LunarUtil, iztro=deps.iztro, Astronomy=deps.Astronomy, STROKES=deps.strokes||{};
 /* ============ 共用 ============ */
 var CITIES=[
   ["台北",25.03,121.56,8],["新北",25.01,121.46,8],["桃園",24.99,121.30,8],["新竹",24.80,120.97,8],["台中",24.15,120.67,8],
@@ -292,7 +292,8 @@ function compute(inp,now){
     var bm=baziEffect(B,mgz,mgz+"月"), am=astroMonth(A,new Date(Date.UTC(Y,M-1,15)));
     var mv=by[ygz].move*0.6+bm.move*0.8+zy[Y].move*0.7+am.move;
     var st=by[ygz].stay*0.6+bm.stay*0.8+zy[Y].stay*0.7+am.stay;
-    months.push({y:Y,m:M,ygz:ygz,mgz:mgz,mvRaw:mv,stRaw:st,notes:[].concat(bm.notes.slice(0,2),am.notes),detail:{八字流年:by[ygz].notes,八字流月:bm.notes,紫微流年:zy[Y].notes,星盤行運:am.notes}});
+    months.push({y:Y,m:M,ygz:ygz,mgz:mgz,mvRaw:mv,stRaw:st,notes:[].concat(bm.notes.slice(0,2),am.notes),detail:{八字流年:by[ygz].notes,八字流月:bm.notes,紫微流年:zy[Y].notes,星盤行運:am.notes},
+      sys:{bazi:{move:by[ygz].move*0.6+bm.move*0.8,stay:by[ygz].stay*0.6+bm.stay*0.8},ziwei:{move:zy[Y].move,stay:zy[Y].stay},astro:{move:am.move,stay:am.stay}}});
   }
   var all=[];months.forEach(function(x){all.push(x.mvRaw,x.stRaw)});
   var lo=Math.min.apply(null,all),hi=Math.max.apply(null,all);
@@ -316,7 +317,8 @@ function compute(inp,now){
   var fmax=Math.max.apply(null,Object.values(fit));
   var fitList=Object.keys(fit).map(function(k){return {k:k,v:Math.round(100*fit[k]/fmax),why:why[k]}}).sort(function(a,b){return b.v-a.v});
   var nxt=months.slice(0,12), mvAvg=nxt.reduce(function(s,x){return s+x.move},0)/12, stAvg=nxt.reduce(function(s,x){return s+x.stay},0)/12;
-  return {B:B,Z:Z,A:A,H:H,months:months,fitList:fitList,mvAvg:mvAvg,stAvg:stAvg,zy:zy,by:by,qdays:qimenDays(B,now,60)};
+  var X={iching:calcIching(B,inp),meihua:calcMeihua(inp),numerology:calcNumerology(inp,now),ninestar:calcNineStar(B,inp,now),name:calcName(inp.name,B)};
+  return {X:X,B:B,Z:Z,A:A,H:H,months:months,fitList:fitList,mvAvg:mvAvg,stAvg:stAvg,zy:zy,by:by,qdays:qimenDays(B,now,60)};
 }
 
 /* ============ 每日職場運勢 ============ */
@@ -432,9 +434,14 @@ function normInput(raw){
   if(!noTime&&!(hh>=0&&hh<=23&&mm>=0&&mm<=59))throw bad("出生時間格式錯誤");
   var c=CITIES[+raw.city]||CITIES[0];
   return {y:y,m:m,d:d,hh:noTime?12:hh,mm:noTime?0:mm,noTime:noTime,gender:raw.gender==="男"?"男":"女",lat:c[1],lon:c[2],tz:c[3],city:c[0],
-    q:Q_SET.indexOf(raw.q)>=0?raw.q:"move",yrs:Y_SET.indexOf(+raw.yrs)>=0?+raw.yrs:1};
+    q:Q_SET.indexOf(raw.q)>=0?raw.q:"move",yrs:Y_SET.indexOf(+raw.yrs)>=0?+raw.yrs:1,name:normName(raw.name)};
 }
 
+function normName(v){
+  var n=String(v||"").replace(/\s+/g,"");if(!n)return null;
+  if(!/^[\u3400-\u9fff\uf900-\ufaff]{2,5}$/.test(n))throw bad("姓名請輸入 2 到 5 個中文字");
+  return n;
+}
 function verdictOf(R,inp){
   var B=R.B, diff=R.mvAvg-R.stAvg, call, sub;
   if(inp.yrs===-1){call="未來一年，<em>主動出擊</em>找下一份工作";sub="你目前待業，曲線看的是哪幾個月出手命中率最高。"}
@@ -456,7 +463,13 @@ function buildReport(inp,tier,now){
   var R=compute(inp,now), rk=RANK[tier], vip=rk>=2, B=R.B, v=verdictOf(R,inp);
   var rep={tier:tier,generatedAt:now.toISOString(),input:{date:inp.y+"/"+inp.m+"/"+inp.d,time:inp.noTime?null:pad2(inp.hh)+":"+pad2(inp.mm),city:inp.city,gender:inp.gender},
     verdict:{call:v.call,sub:v.sub,pillars:B.pillars,gods:B.gods,noTime:inp.noTime}};
+  var X=R.X;
+  rep.teasers={iching:{title:X.iching.hex.name,line:X.iching.hex.text},meihua:{title:X.meihua.ben.name+" → "+X.meihua.bian.name,line:X.meihua.relName+"："+X.meihua.relText},
+    numerology:{title:"主命數 "+X.numerology.main,line:X.numerology.title+"："+X.numerology.text},ninestar:{title:X.ninestar.name,line:X.ninestar.text},
+    name:X.name?{title:X.name.chars.map(function(c){return c.c}).join("")+"・總格 "+X.name.grids[4].n,line:X.name.sancaiFlow}:null};
+  rep.systems=SYSTEMS.map(function(x){return {key:x[0],name:x[1],vipOnly:VIP_ONLY.indexOf(x[0])>=0}});
   if(rk<1)return rep;
+  rep.iching=X.iching;rep.meihua=X.meihua;rep.numerology=X.numerology;rep.ninestar=X.ninestar;rep.name=X.name;
   var top=R.fitList[0], mcSign=R.A.mc!=null?"天頂"+SIGNS[Math.floor(R.A.mc/30)]:"太陽"+SIGNS[Math.floor(R.A.pl.太陽/30)];
   rep.verdict.summary="日主 "+B.dmG+WX[B.dm]+"，"+(B.strong?"身強":"身弱")+"，喜用 "+B.favEl.map(function(e){return WX[e]}).join("、")+"。紫微官祿宮 "+R.Z.careerStars.join("、")+(R.Z.borrowed?"（借對宮）":"")+"；"+(vip?"人類圖 "+R.H.type+" "+R.H.profile+"；":"")+mcSign+"。最適合的環境是"+FIT_NAME[top.k]+"。";
   rep.verdict.windows={move:bestWindows(R.months,"move",3).map(slimMonth),stay:bestWindows(R.months,"stay",3).map(slimMonth)};
@@ -582,6 +595,7 @@ function runAction(name,rawInput,tier,params,now){
   now=now||new Date();
   var inp=normInput(rawInput);
   if(name==="report")return buildReport(inp,tier,now);
+  if(name==="compare")return actCompare(compute(inp,now),params||{},tier);
   var need={month:"paid",offer:"paid",fitnow:"paid",synastry:"vip",qimenDay:"vip"}[name];
   if(!need)throw bad("未知的功能");
   needTier(tier,need);
@@ -591,6 +605,208 @@ function runAction(name,rawInput,tier,params,now){
   if(name==="fitnow")return actFitNow(R,params||{});
   if(name==="synastry")return actSynastry(R,params||{},inp);
   return actQimenDay(R,params||{});
+}
+
+/* ============ 易經、梅花易數共用：八卦與六十四卦 ============ */
+var TRI={1:{n:"乾",b:[1,1,1],el:3,img:"天"},2:{n:"兌",b:[1,1,0],el:3,img:"澤"},3:{n:"離",b:[1,0,1],el:1,img:"火"},4:{n:"震",b:[1,0,0],el:0,img:"雷"},
+  5:{n:"巽",b:[0,1,1],el:0,img:"風"},6:{n:"坎",b:[0,1,0],el:4,img:"水"},7:{n:"艮",b:[0,0,1],el:2,img:"山"},8:{n:"坤",b:[0,0,0],el:2,img:"地"}};
+/* KW[上卦][下卦]＝文王卦序，上下卦依先天數 1乾 2兌 3離 4震 5巽 6坎 7艮 8坤 */
+var KW={1:[1,10,13,25,44,6,33,12],2:[43,58,49,17,28,47,31,45],3:[14,38,30,21,50,64,56,35],4:[34,54,55,51,32,40,62,16],
+  5:[9,61,37,42,57,59,53,20],6:[5,60,63,3,48,29,39,8],7:[26,41,22,27,18,4,52,23],8:[11,19,36,24,46,7,15,2]};
+var HEX={1:["乾為天","stay","剛健進取，適合爭取主導權與升遷，但忌過度強勢。"],2:["坤為地","stay","厚德載物，宜輔佐與累積，跟對人比自己衝更有利。"],
+3:["水雷屯","wait","萬事起頭難，新局面剛萌芽，先蓄力再行動。"],4:["山水蒙","wait","方向未明，宜請益學習，找導師比換工作重要。"],
+5:["水天需","wait","時機未到，耐心等待，條件成熟自然有機會。"],6:["天水訟","wait","易有爭執與糾紛，避免硬碰硬，重要決定先放緩。"],
+7:["地水師","stay","帶兵之象，適合管理團隊、承擔專案指揮。"],8:["水地比","stay","親近貴人、團結合作，留在好團隊裡發展。"],
+9:["風天小畜","wait","小有積蓄、大事未成，先累積實力。"],10:["天澤履","stay","如履虎尾，謹慎行事、守規矩可平安晉升。"],
+11:["地天泰","stay","天地交泰，上下順暢，現職發展正旺。"],12:["天地否","move","上下不通、才華被壓，久困之處宜另謀出路。"],
+13:["天火同人","move","志同道合，適合加入理念相合的新團隊或合夥。"],14:["火天大有","stay","豐收之象，成果被看見，適合爭取加薪升遷。"],
+15:["地山謙","stay","謙受益，低調做事反得重用。"],16:["雷地豫","move","順勢而動，準備充分可大膽行動。"],
+17:["澤雷隨","move","隨時應變，跟隨對的人或趨勢轉換跑道。"],18:["山風蠱","move","積弊待整頓，不是改革現況就是離開舊環境。"],
+19:["地澤臨","stay","機會臨門，主管看重，適合承接更大責任。"],20:["風地觀","wait","先觀察局勢，看清楚再決定。"],
+21:["火雷噬嗑","move","有障礙要咬斷，果斷處理卡住你的人事。"],22:["山火賁","wait","外表光鮮內在待充實，別只看職稱包裝。"],
+23:["山地剝","move","根基被侵蝕，舊環境走下坡，宜及早準備退路。"],24:["地雷復","move","一陽來復，低谷後的新起點，適合重新出發。"],
+25:["天雷無妄","stay","守正勿妄動，不按牌理的跳槽易失。"],26:["山天大畜","stay","厚積薄發，在現職累積實力與資源。"],
+27:["山雷頤","wait","休養生息，先照顧身心與專業養分。"],28:["澤風大過","move","負荷過重、樑柱將折，現況難以為繼。"],
+29:["坎為水","wait","重重險阻，先求穩住，不宜冒進。"],30:["離為火","stay","光明附麗，依附好平台更能發光。"],
+31:["澤山咸","move","感應而動，有吸引你的機會出現，可認真考慮。"],32:["雷風恆","stay","恆久之道，持續耕耘現職會有回報。"],
+33:["天山遯","move","退避之時，適合抽身離開不利環境。"],34:["雷天大壯","move","氣勢正盛，可主動出擊，但勿莽撞。"],
+35:["火地晉","stay","晉升之象，表現受肯定，升遷有望。"],36:["地火明夷","wait","光明受傷、懷才不遇，暫時韜光養晦。"],
+37:["風火家人","stay","重視團隊與內部關係，適合在熟悉的組織發展。"],38:["火澤睽","move","意見相左、理念不合，合作難以長久。"],
+39:["水山蹇","wait","前路艱難，宜停下求助，不宜硬闖。"],40:["雷水解","move","困境解除，卡關的事開始鬆動，可以行動。"],
+41:["山澤損","wait","先捨後得，短期犧牲換長期收穫。"],42:["風雷益","move","增益之象，新機會帶來成長，適合往外發展。"],
+43:["澤天夬","move","決斷之時，該下的決定不要再拖。"],44:["天風姤","wait","不期而遇的機會，需謹慎評估、不宜急於投入。"],
+45:["澤地萃","stay","人才匯聚，適合在大型組織中發揮。"],46:["地風升","stay","步步高升，循序漸進的升遷運。"],
+47:["澤水困","move","受困乏力，努力卻得不到回報，宜思考轉換。"],48:["水風井","stay","井養不窮，專業深耕、穩定輸出。"],
+49:["澤火革","move","變革之時，轉職、轉型的強烈訊號。"],50:["火風鼎","stay","鼎新立業，承接重任、建立新制度。"],
+51:["震為雷","move","震動突變，職涯有突發變化，宜冷靜應對再行動。"],52:["艮為山","wait","當止則止，暫停腳步，不宜妄動。"],
+53:["風山漸","stay","循序漸進，按部就班累積，晉升穩健。"],54:["雷澤歸妹","wait","位置不正，條件看似誘人但不對等，慎選。"],
+55:["雷火豐","stay","盛大豐收，正值高峰，把握舞台。"],56:["火山旅","move","旅人之象，適合外派、出差或過渡性職位。"],
+57:["巽為風","move","順勢滲透，靠人脈與彈性找到新機會。"],58:["兌為澤","stay","喜悅和樂，人際順，適合溝通協調類角色。"],
+59:["風水渙","move","渙散離合，舊組織鬆動，可重新選擇。"],60:["水澤節","stay","節制有度，守住界線，現職穩紮穩打。"],
+61:["風澤中孚","stay","誠信立身，以信用累積聲望。"],62:["雷山小過","wait","小事可行大事不宜，先做小幅調整。"],
+63:["水火既濟","stay","已成之局，守成為上，防盛極轉衰。"],64:["火水未濟","move","事未成、新局將啟，正處於轉換的過渡期。"]};
+var STANCE_NAME={move:"轉職",stay:"留任",wait:"觀望"};
+function triKey(b){for(var k in TRI)if(TRI[k].b.join()===b.join())return +k}
+function hexOf(up,lo){var no=KW[up][lo-1],h=HEX[no];return {no:no,name:h[0],stance:h[1],text:h[2],upper:TRI[up].n,lower:TRI[lo].n,lines:TRI[lo].b.concat(TRI[up].b)}}
+
+/* 易經：河洛理數先天卦（簡化：不取元堂與後天卦） */
+var HL_GAN={甲:6,乙:2,丙:8,丁:7,戊:1,己:9,庚:3,辛:4,壬:6,癸:2};
+var HL_ZHI={子:[1,6],亥:[1,6],寅:[3,8],卯:[3,8],巳:[2,7],午:[2,7],申:[4,9],酉:[4,9],辰:[5,10],戌:[5,10],丑:[5,10],未:[5,10]};
+var LUO_TRI={1:6,2:8,3:4,4:5,6:1,7:2,8:7,9:3};
+function hlReduce(n,cap){var r=n>cap?n-cap:n;r=r%10===0?r/10:r%10;return r||5}
+function calcIching(B,inp){
+  var used=inp.noTime?3:4, tian=0, di=0;
+  function put(x){if(x%2)tian+=x;else di+=x}
+  for(var i=0;i<used;i++){put(HL_GAN[B.pillars[i][0]]);HL_ZHI[B.pillars[i][1]].forEach(put)}
+  var tn=hlReduce(tian,25), dn=hlReduce(di,30), male=inp.gender==="男";
+  function tri(n){return n===5?(male?7:8):LUO_TRI[n]}
+  var yangYear=GAN.indexOf(B.pillars[0][0])%2===0, tianUp=(yangYear&&male)||(!yangYear&&!male);
+  var up=tianUp?tri(tn):tri(dn), lo=tianUp?tri(dn):tri(tn), h=hexOf(up,lo);
+  return {hex:h,tian:tian,di:di,tianNum:tn,diNum:dn,order:tianUp?"陽男陰女，天數卦在上":"陰男陽女，地數卦在上"};
+}
+
+/* 梅花易數：農曆年支數＋月＋日起上卦，加時支數起下卦，總數除六得動爻 */
+var MH_REL={比劫:["體用比和","stay","你與目前的工作環境同頻，做起來順手，適合留在原處深耕。"],印:["用生體","stay","環境在滋養你，貴人與資源都在身邊，是留任發展的吉象。"],
+  財:["體剋用","move","你能掌控局面，主動出擊、爭取新機會多半能成。"],食傷:["體生用","wait","你付出多、回收少，先評估投入是否值得，再決定去留。"],官殺:["用剋體","move","環境對你形成壓迫，久待耗損，宜規劃轉換。"]};
+var MH_OUT={比劫:"結局平順，維持現狀也能穩定。",印:"後續有貴人相助，結果轉好。",財:"後續由你主導，可得實利。",食傷:"後續仍需持續付出，報酬來得慢。",官殺:"後續阻力增加，要提前防範。"};
+function calcMeihua(inp){
+  var l=Solar.fromYmdHms(inp.y,inp.m,inp.d,inp.hh,inp.mm,0).getLunar();
+  var Y=ZHI.indexOf(l.getYearZhi())+1, M=Math.abs(l.getMonth()), D=l.getDay(), H=inp.noTime?7:ZHI.indexOf(l.getTimeZhi())+1;
+  var up=(Y+M+D)%8||8, lo=(Y+M+D+H)%8||8, mv=(Y+M+D+H)%6||6;
+  var ben=hexOf(up,lo), L=ben.lines;
+  var hu=hexOf(triKey(L.slice(2,5)),triKey(L.slice(1,4)));
+  var BL=L.slice();BL[mv-1]=1-BL[mv-1];
+  var bian=hexOf(triKey(BL.slice(3,6)),triKey(BL.slice(0,3)));
+  var ti=mv<=3?up:lo, yong=mv<=3?lo:up, yongAfter=mv<=3?triKey(BL.slice(0,3)):triKey(BL.slice(3,6));
+  var r=rel(TRI[ti].el,TRI[yong].el), rr=MH_REL[r], ro=rel(TRI[ti].el,TRI[yongAfter].el);
+  return {ben:ben,hu:hu,bian:bian,moving:mv,ti:TRI[ti].n+TRI[ti].img+"（"+WX[TRI[ti].el]+"）",yong:TRI[yong].n+TRI[yong].img+"（"+WX[TRI[yong].el]+"）",
+    relName:rr[0],stance:rr[1],relText:rr[2],outcome:MH_OUT[ro],nums:{Y:Y,M:M,D:D,H:H}};
+}
+
+/* 生命靈數 */
+function digitSum(s){return String(s).split("").reduce(function(a,c){return a+(+c||0)},0)}
+function reduce9(n){var chain=[n];while(n>9){n=digitSum(n);chain.push(n)}return {n:n,chain:chain}}
+var NUM_MAIN={1:["開創與領導","獨立、果斷，適合自己帶一條線或創業。",["startup","freelance"]],2:["協調與輔佐","細膩、重關係，是最好的合作夥伴與二把手。",["corp","public"]],
+  3:["表達與創意","擅長溝通與表現，適合內容、行銷、教學。",["freelance","startup"]],4:["穩定與務實","重規則與結構，在制度完整的組織最能發揮。",["public","corp"]],
+  5:["自由與變化","討厭一成不變，適合變動快、能出差或跨域的工作。",["foreign","startup"]],6:["責任與照顧","有愛心與承擔力，適合服務、教育、管理他人。",["sme","public"]],
+  7:["研究與分析","求真、喜獨處思考，適合專業研究、技術與顧問。",["foreign","corp"]],8:["權力與財富","目標導向、重成果，適合管理、業務與經營。",["corp","sme"]],
+  9:["理想與奉獻","視野大、重意義，適合公益、國際與助人的工作。",["public","foreign"]]};
+var NUM_YEAR={1:["move","新循環的起點，適合開新局、換跑道。"],2:["wait","合作與等待之年，先建立關係，不宜躁進。"],3:["wait","表達與曝光之年，適合經營作品與人脈。"],
+  4:["stay","打地基之年，宜在現職累積實力與制度。"],5:["move","變動與自由之年，轉職、外派的機會多。"],6:["stay","責任之年，承擔更多照顧與管理角色。"],
+  7:["wait","沉潛與進修之年，適合學習、考證照。"],8:["stay","權力與收穫之年，升遷加薪的好時機。"],9:["move","結束與放下之年，適合告別不適合的工作。"]};
+function calcNumerology(inp,now){
+  var r=reduce9(digitSum(""+inp.y+inp.m+inp.d)), y0=now.getFullYear(), years=[];
+  for(var Y=y0;Y<y0+6;Y++){var n=reduce9(digitSum(inp.m)+digitSum(inp.d)+digitSum(Y)).n;years.push({y:Y,n:n,stance:NUM_YEAR[n][0],text:NUM_YEAR[n][1]})}
+  var M=NUM_MAIN[r.n];
+  return {main:r.n,chain:r.chain.join("/"),title:M[0],text:M[1],env:M[2],years:years};
+}
+
+/* 九宮飛星（紫白九星），以立春分年 */
+var STAR_NAME=["","一白水星","二黑土星","三碧木星","四綠木星","五黃土星","六白金星","七赤金星","八白土星","九紫火星"];
+var STAR_EL=[0,4,2,0,0,2,3,3,2,1];
+var STAR_TEXT={1:"聰明靈活、善於應變，適合需要溝通與資訊整合的工作。",2:"踏實勤勞、耐得住，適合長期耕耘與後勤管理。",3:"積極有衝勁、說做就做，適合開拓與業務。",
+  4:"人緣好、重信用，適合協調、公關與跨部門合作。",5:"氣場強、能扛事，適合在變動中掌舵的角色。",6:"有原則、具權威感，適合管理與決策職。",
+  7:"口才好、懂得享受，適合業務、服務與金融。",8:"穩健保守、重累積，適合資產管理與傳承型工作。",9:"熱情有才華、重形象，適合品牌、設計與公眾工作。"};
+var PAL_ORDER=["中","乾","兌","艮","離","坎","坤","震","巽"];
+var PAL={中:["wait","本命星入中宮，被推到風暴中心，壓力與變動並存，宜守不宜攻。"],乾:["stay","飛入乾宮，貴人提拔、權責上升，適合爭取升遷。"],
+  兌:["wait","飛入兌宮，人際與口舌事多，先把關係顧好再談異動。"],艮:["move","飛入艮宮，轉折變革之年，適合重新定位、轉換跑道。"],
+  離:["stay","飛入離宮，名聲曝光、受到矚目，適合在現職爭取表現。"],坎:["wait","飛入坎宮，低潮蟄伏之年，宜充電、不宜冒進。"],
+  坤:["stay","飛入坤宮，勤勞耕耘、為人作嫁，默默累積會有回報。"],震:["move","飛入震宮，新起點、新行動，適合跨出去。"],
+  巽:["move","飛入巽宮，人脈與遠方機會增加，適合合作或外派。"]};
+var EL_ENV=["startup","freelance","public","corp","foreign"];
+function yearCenter(y){return 1+(((2026-y)%9)+9)%9}
+function calcNineStar(B,inp,now){
+  var y=inp.y, expect=((y-4)%60+60)%60;if(LunarUtil.getJiaZiIndex(B.pillars[0])!==expect)y-=1;
+  var c=yearCenter(y), star;
+  if(inp.gender==="男")star=c===5?2:c;
+  else {var f=15-c;while(f>9)f-=9;star=f===5?8:f}
+  var y0=now.getFullYear(), years=[];
+  for(var Y=y0;Y<y0+6;Y++){var p=PAL_ORDER[(star-yearCenter(Y)+9)%9];years.push({y:Y,palace:p,stance:PAL[p][0],text:PAL[p][1]})}
+  return {star:star,name:STAR_NAME[star],el:WX[STAR_EL[star]],text:STAR_TEXT[star],env:EL_ENV[STAR_EL[star]],years:years,effYear:y};
+}
+
+/* 姓名學：五格剖象與三才，筆畫採康熙字典 */
+var FUXING=["歐陽","司馬","上官","諸葛","東方","皇甫","尉遲","公孫","慕容","長孫","宇文","司徒","夏侯","軒轅","令狐","鍾離","端木","申屠","太史","西門","南宮","張簡","范姜","張廖","周黃","江謝","簡李"];
+var LUCK_GOOD=[1,3,5,7,8,11,13,15,16,18,21,23,24,25,29,31,32,33,35,37,39,41,45,47,48,52,57,61,63,65,67,68,81];
+var LUCK_HALF=[6,17,26,27,30,38,49,51,55,58,71,73,75];
+function luckOf(n){var m=n>81?((n-1)%80)+1:n;return LUCK_GOOD.indexOf(m)>=0?"吉":LUCK_HALF.indexOf(m)>=0?"半吉":"凶"}
+function numEl(n){return [4,0,0,1,1,2,2,3,3,4][n%10]}
+var EL_TRAIT=["仁厚、有成長心，適合教育、文化與企劃","熱情、反應快，適合業務、行銷與表現型工作","穩重、守信，適合管理、財務與行政","果斷、重原則，適合法務、工程與執行","聰明、善變通，適合貿易、資訊與顧問"];
+function calcName(name,B){
+  if(!name)return null;
+  var cs=name.split(""), sl=(cs.length>2&&FUXING.indexOf(cs[0]+cs[1])>=0)?2:1, sur=cs.slice(0,sl), giv=cs.slice(sl);
+  var st=cs.map(function(c){return STROKES[c]}), miss=cs.filter(function(c,i){return !st[i]});
+  if(miss.length)throw bad("查不到「"+miss.join("、")+"」的康熙筆畫，請確認姓名是否為繁體中文");
+  var ss=st.slice(0,sl), gs=st.slice(sl), sum=function(a){return a.reduce(function(x,y){return x+y},0)};
+  var tian=sl===1?ss[0]+1:sum(ss), ren=ss[sl-1]+gs[0], di=giv.length===1?gs[0]+1:sum(gs), zong=sum(st), wai=tian+di-ren;
+  var g={天格:tian,人格:ren,地格:di,外格:wai,總格:zong}, grids=Object.keys(g).map(function(k){return {name:k,n:g[k],luck:luckOf(g[k]),el:WX[numEl(g[k])]}});
+  var eT=numEl(tian),eR=numEl(ren),eD=numEl(di);
+  function flow(a,b){var r=rel(a,b);return r==="比劫"||r==="印"||r==="食傷"?"順":"剋"}
+  var f1=flow(eT,eR), f2=flow(eR,eD), sancai=WX[eT]+WX[eR]+WX[eD];
+  var renLuck=luckOf(ren), zongLuck=luckOf(zong);
+  var stance=(renLuck!=="凶"&&f1==="順"&&f2==="順")?"stay":(renLuck==="凶"||(f1==="剋"&&f2==="剋"))?"move":"wait";
+  var fav=B.favEl.indexOf(eR)>=0;
+  return {chars:cs.map(function(c,i){return {c:c,s:st[i]}}),surname:sur.join(""),grids:grids,sancai:sancai,sancaiFlow:(f1==="順"&&f2==="順")?"三才相生，事業發展順遂，貴人助力多。":(f1==="剋"&&f2==="剋")?"三才相剋，常感內外拉扯，換個環境反而容易突破。":"三才一順一剋，前段或後段較費力，需要耐心經營。",
+    renText:"人格（主運）"+ren+"畫屬"+WX[eR]+"，"+renLuck+"。"+EL_TRAIT[eR]+"。",zongText:"總格（後運）"+zong+"畫，"+zongLuck+"。",
+    favText:fav?"人格五行"+WX[eR]+"正是你八字的喜用，名字為你的事業運加分。":"人格五行"+WX[eR]+"不是你八字的喜用，名字對事業運的助力有限。",
+    stance:stance,env:EL_ENV[eR]};
+}
+
+/* ============ 綜合比對 ============ */
+var SYSTEMS=[["bazi","八字"],["ziwei","紫微斗數"],["astro","西洋星盤"],["iching","易經"],["meihua","梅花易數"],["numerology","生命靈數"],["ninestar","九宮飛星"],["name","姓名學"],["qimen","奇門遁甲"],["hd","人類圖"]];
+var VIP_ONLY=["qimen","hd"];
+function envTop(m){var best=null;for(var k in m)if(m[k]>0&&(best===null||m[k]>m[best]))best=k;return best}
+function seriesStance(R,key){
+  var ms=R.months.slice(0,12), sm=0, ss=0;ms.forEach(function(m){sm+=m.sys[key].move;ss+=m.sys[key].stay});
+  var d=(sm-ss)/(Math.abs(sm)+Math.abs(ss)+1);
+  return {stance:d>0.08?"move":d<-0.08?"stay":"wait",lean:Math.round(50+50*d)};
+}
+function seriesPeak(R,key,field){var best=0;R.months.forEach(function(m,i){if(m.sys[key][field]>R.months[best].sys[key][field])best=i});return ym(R.months[best])}
+function firstYear(list,stances){for(var i=0;i<list.length;i++)if(stances.indexOf(list[i].stance)>=0)return list[i].y+" 年";return null}
+function buildCard(R,key){
+  var B=R.B, c={key:key,name:SYSTEMS.filter(function(s){return s[0]===key})[0][1],vipOnly:VIP_ONLY.indexOf(key)>=0};
+  function sh(cat){return B.cats[cat]/B.total*5}
+  if(key==="bazi"||key==="ziwei"||key==="astro"){
+    var s=seriesStance(R,key);c.stance=s.stance;c.lean=s.lean;c.moveWhen=seriesPeak(R,key,"move");c.stayWhen=seriesPeak(R,key,"stay");
+    if(key==="bazi"){c.env=envTop({corp:sh("官殺")*3+sh("印"),public:sh("官殺")*3+sh("印")*2,startup:sh("食傷")*2+sh("財")+sh("比劫")*2,freelance:sh("食傷")*3+sh("比劫"),sme:sh("財")*2+sh("比劫"),foreign:sh("印")+sh("財")+(B.hasYima?2:0)});
+      c.note="日主"+B.dmG+WX[B.dm]+(B.strong?"身強":"身弱")+"，以"+B.useCat+"為用："+CAT_CAREER[B.useCat]+"。"}
+    if(key==="ziwei"){var zf={};R.Z.careerStars.forEach(function(st){var f=(ZW_STAR[st]||{}).fit||{};for(var k in f)zf[k]=(zf[k]||0)+f[k]});c.env=envTop(zf);
+      c.note="官祿宮"+R.Z.careerStars.join("、")+"："+((ZW_STAR[R.Z.careerStars[0]]||{}).t||"")}
+    if(key==="astro"){var sg=R.A.mc!=null?Math.floor(R.A.mc/30):Math.floor(R.A.pl.太陽/30);c.env=["startup","corp","foreign","sme"][SIGN_EL[sg]-1];
+      c.note=R.A.mc!=null?MC_TEXT[SIGNS[sg]]:"未提供出生時間，以太陽"+SIGNS[sg]+"推算行運。"}
+  } else if(key==="iching"){var h=R.X.iching.hex;c.stance=h.stance;c.note=h.name+"："+h.text;c.env=null}
+  else if(key==="meihua"){var mh=R.X.meihua;c.stance=mh.stance;c.note=mh.ben.name+"之"+mh.bian.name+"，"+mh.relName+"："+mh.relText;c.env=null}
+  else if(key==="numerology"){var nu=R.X.numerology;c.stance=nu.years[0].stance;c.moveWhen=firstYear(nu.years,["move"]);c.stayWhen=firstYear(nu.years.filter(function(x){return x.n===8}),["stay"]);c.env=nu.env[0];
+    c.note="主命數 "+nu.chain+"（"+nu.title+"），今年流年 "+nu.years[0].n+"："+nu.years[0].text}
+  else if(key==="ninestar"){var ns=R.X.ninestar;c.stance=ns.years[0].stance;c.moveWhen=firstYear(ns.years,["move"]);c.stayWhen=firstYear(ns.years.filter(function(x){return x.palace==="乾"||x.palace==="離"}),["stay"]);c.env=ns.env;
+    c.note=ns.name+"，今年"+ns.years[0].text}
+  else if(key==="name"){var nm=R.X.name;if(!nm){c.stance=null;c.note="未填姓名，無法推算。請在左側輸入姓名後重新推演。"}else{c.stance=nm.stance;c.env=nm.env;c.note=nm.renText+nm.sancaiFlow}}
+  else if(key==="qimen"){var good=R.qdays.filter(function(d){var wd=d.date.getDay();return d.door==="開"&&wd!==0&&wd!==6}).length, best=R.qdays.slice().sort(function(a,b){return b.score-a.score})[0];
+    c.stance=good>=4?"move":"wait";c.moveWhen=best?iso(best.date):null;c.note="未來 60 天巳時落開門的平日有 "+good+" 天，"+(good>=4?"出擊時機充足。":"出擊時機有限，宜挑日行動。")}
+  else if(key==="hd"){var t=R.H.type;c.stance={顯示者:"move",顯示生產者:"move",生產者:"stay",投射者:"wait",反映者:"wait"}[t];c.env=envTop(HD_TYPE[t].fit);
+    c.note=t+"，策略是「"+HD_TYPE[t].strat+"」。"+(c.stance==="move"?"你可以主動發起轉換。":"不宜自己硬推，等外在的回應或邀請出現再動。")}
+  c.stanceText=c.stance?STANCE_NAME[c.stance]:"—";c.envName=c.env?FIT_NAME[c.env]:null;
+  return c;
+}
+function actCompare(R,p,tier){
+  var keys=[];(Array.isArray(p.systems)?p.systems:[]).forEach(function(k){if(keys.indexOf(k)<0&&SYSTEMS.some(function(s){return s[0]===k}))keys.push(k)});
+  if(!keys.length)throw bad("請至少選擇一種命理系統。");
+  if(keys.some(function(k){return VIP_ONLY.indexOf(k)>=0}))needTier(tier,"vip");
+  if(keys.length>=3)needTier(tier,"vip");else if(keys.length===2)needTier(tier,"paid");
+  var cards=keys.map(function(k){return buildCard(R,k)}), voted=cards.filter(function(c){return c.stance});
+  var votes={move:0,stay:0,wait:0};voted.forEach(function(c){votes[c.stance]++});
+  var lead=Object.keys(votes).sort(function(a,b){return votes[b]-votes[a]})[0], n=voted.length;
+  var env={};cards.forEach(function(c){if(c.env)env[c.env]=(env[c.env]||0)+1});var et=envTop(env);
+  var years={};cards.forEach(function(c){if(c.moveWhen){var y=c.moveWhen.slice(0,4);years[y]=(years[y]||0)+1}});var yt=envTop(years);
+  var consensus=null;
+  if(n>1){
+    var agree=Math.round(votes[lead]/n*100), tie=Object.keys(votes).filter(function(k){return votes[k]===votes[lead]}).length>1;
+    consensus={votes:votes,lead:tie?null:lead,agree:agree,
+      summary:n+" 種系統中，"+["move","stay","wait"].filter(function(k){return votes[k]}).map(function(k){return votes[k]+" 種傾向"+STANCE_NAME[k]}).join("、")+"。",
+      advice:tie?"各系統意見分歧，代表這個決定沒有一面倒的答案，請以現實條件為主，命盤當作參考。":agree>=75?"多數系統看法一致，可以把「"+STANCE_NAME[lead]+"」當作主要方向。":"整體偏向「"+STANCE_NAME[lead]+"」，但仍有不同聲音，建議先做小幅度的試探。",
+      env:et&&env[et]>1?FIT_NAME[et]+"（"+env[et]+" 票）":null,year:yt&&years[yt]>1?yt+" 年（"+years[yt]+" 個系統指向這一年轉職）":null};
+  }
+  return {cards:cards,consensus:consensus};
 }
 
 return {CITIES:CITIES,runAction:runAction};
