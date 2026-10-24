@@ -4,6 +4,7 @@ import lunar from "npm:lunar-javascript@1.7.3";
 import { astro } from "npm:iztro@2.5.8";
 import * as Astronomy from "npm:astronomy-engine@2.1.19";
 import { createClient } from "npm:@supabase/supabase-js@2.112.4";
+import "../_shared/strokes.js";
 import "../_shared/engine.js";
 
 // deno-lint-ignore no-explicit-any
@@ -12,6 +13,8 @@ const engine = (globalThis as any).createEngine({
   LunarUtil: lunar.LunarUtil,
   iztro: { astro },
   Astronomy,
+  // deno-lint-ignore no-explicit-any
+  strokes: (globalThis as any).KANGXI_STROKES,
 });
 
 const admin = createClient(

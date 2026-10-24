@@ -22,8 +22,8 @@
   <div>
     <p class="eyebrow">Astra · Career Oracle</p>
     <h1>觀星宿、排命盤，<br>算準你的<em>職涯時機</em></h1>
-    <p class="lede">以八字定格局、紫微看官祿、星盤觀行運，三術合參推演未來 36 個月的轉職與升遷窗口，告訴你哪一種公司能讓你發光。</p>
-    <div class="arts" aria-label="命理系統"><span>八字</span><span>紫微斗數</span><span>西洋星盤</span><span class="vip">奇門遁甲</span><span class="vip">人類圖</span></div>
+    <p class="lede">以八字定格局、紫微看官祿、星盤觀行運，再請易經、梅花、靈數、飛星與姓名學會診，推演未來 36 個月的轉職與升遷窗口，告訴你哪一種公司能讓你發光。</p>
+    <div class="arts" aria-label="命理系統"><span>八字</span><span>紫微斗數</span><span>西洋星盤</span><span>易經</span><span>梅花易數</span><span>生命靈數</span><span>九宮飛星</span><span>姓名學</span><span class="vip">奇門遁甲</span><span class="vip">人類圖</span></div>
   </div>
   <div class="hero-ring" id="ring" aria-hidden="true"></div>
 </section>
@@ -40,6 +40,7 @@
       <div class="field"><label for="bd">出生日期（國曆）</label><input type="date" id="bd" value="1993-08-12" min="1920-01-01" max="2025-12-31" required></div>
       <div class="field"><label for="bt">出生時間</label><input type="time" id="bt" value="09:40"></div>
       <label class="check"><input type="checkbox" id="noTime">不確定出生時間</label>
+      <div class="field"><label for="nm">姓名（選填，姓名學用）</label><input type="text" id="nm" maxlength="5" placeholder="例如 陳怡君" autocomplete="name"></div>
       <div class="field"><label for="city">出生地</label><select id="city"></select></div>
       <div class="field"><label for="q">你現在最想問的</label>
         <select id="q">
@@ -61,6 +62,16 @@
 
   <main>
     <section class="block panel-box" id="verdictBlock"><p class="loading">正在推演命盤…</p></section>
+
+    <section class="block panel-box" id="compareBlock">
+      <p class="eyebrow"><span>會診</span>Cross-check</p>
+      <h2>多派綜合比對</h2>
+      <p class="muted small" style="margin:0 0 12px">選擇想比對的命理系統，看它們對「轉職或留任、時機、適合的環境」的判斷是否一致。免費版可看 1 種；同時比對 2 種需要付費版，3 種以上需要 VIP。</p>
+      <div class="chips" id="sysChips" role="group" aria-label="選擇命理系統"></div>
+      <div class="cmp-bar"><span class="small muted" id="cmpCount"></span><button type="button" class="btn-gold" id="cmpGo">開始比對</button></div>
+      <div id="cmpHint"></div>
+      <div id="cmpOut" aria-live="polite"></div>
+    </section>
 
     <section class="block panel-box">
       <p class="eyebrow"><span>流日</span>Daily</p>
@@ -151,12 +162,22 @@
         <button role="tab" aria-selected="true" data-p="bazi" id="t-bazi">八字</button>
         <button role="tab" aria-selected="false" data-p="ziwei" id="t-ziwei">紫微斗數</button>
         <button role="tab" aria-selected="false" data-p="astro" id="t-astro">星盤</button>
+        <button role="tab" aria-selected="false" data-p="iching" id="t-iching">易經</button>
+        <button role="tab" aria-selected="false" data-p="meihua" id="t-meihua">梅花易數</button>
+        <button role="tab" aria-selected="false" data-p="numerology" id="t-numerology">生命靈數</button>
+        <button role="tab" aria-selected="false" data-p="ninestar" id="t-ninestar">九宮飛星</button>
+        <button role="tab" aria-selected="false" data-p="name" id="t-name">姓名學</button>
         <button role="tab" aria-selected="false" data-p="qimen" id="t-qimen">奇門遁甲 <span class="lk">VIP</span></button>
         <button role="tab" aria-selected="false" data-p="hd" id="t-hd">人類圖 <span class="lk">VIP</span></button>
       </div>
       <div class="panel" role="tabpanel" id="p-bazi"></div>
       <div class="panel" role="tabpanel" id="p-ziwei" hidden></div>
       <div class="panel" role="tabpanel" id="p-astro" hidden></div>
+      <div class="panel" role="tabpanel" id="p-iching" hidden></div>
+      <div class="panel" role="tabpanel" id="p-meihua" hidden></div>
+      <div class="panel" role="tabpanel" id="p-numerology" hidden></div>
+      <div class="panel" role="tabpanel" id="p-ninestar" hidden></div>
+      <div class="panel" role="tabpanel" id="p-name" hidden></div>
       <div class="panel" role="tabpanel" id="p-qimen" hidden></div>
       <div class="panel" role="tabpanel" id="p-hd" hidden></div>
     </section>
@@ -186,7 +207,7 @@
 
 <footer>
   <nav><a href="privacy.html">隱私權與贊助條款</a></nav>
-  <div>職運羅盤以傳統命理與占星規則做程式化推算，屬於自我探索與決策參考，不構成職涯、法律或財務建議。八字採國曆輸入、未做真太陽時校正；紫微斗數依 iztro 排盤；星盤與人類圖行星位置由 astronomy-engine 計算；奇門遁甲採時家轉盤拆補法的簡化版。出生地時區不含夏令時間，1945–1979 年間在台灣出生且遇夏令時者，請將時間減 1 小時再輸入。</div>
+  <div>職運羅盤以傳統命理與占星規則做程式化推算，屬於自我探索與決策參考，不構成職涯、法律或財務建議。八字採國曆輸入、未做真太陽時校正；紫微斗數依 iztro 排盤；星盤與人類圖行星位置由 astronomy-engine 計算；奇門遁甲採時家轉盤拆補法的簡化版；易經採河洛理數先天卦（未取元堂與後天卦）；梅花易數以農曆年月日時起卦；九宮飛星以立春分年；姓名學採康熙筆畫五格剖象。出生地時區不含夏令時間，1945–1979 年間在台灣出生且遇夏令時者，請將時間減 1 小時再輸入。</div>
   <div>開源元件：lunar-javascript、iztro、astronomy-engine（MIT 授權）。「人類圖」為本站對 Human Design 的推算，與 Jovian Archive 無關聯。</div>
 </footer>
 
