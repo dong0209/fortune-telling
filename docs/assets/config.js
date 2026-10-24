@@ -1,7 +1,7 @@
 /* 網站設定：部署前請填入以下欄位（anon / publishable key 本來就是公開金鑰，可以放在前端） */
 window.APP_CONFIG = {
-  supabaseUrl: "",        // 例如 https://abcdefgh.supabase.co
-  supabaseAnonKey: "",    // Supabase 後台 → Project Settings → API Keys → anon（或 publishable）key
+  supabaseUrl: "https://jjdqueoldwjbbacoyzyb.supabase.co",
+  supabaseAnonKey: "sb_publishable_3gkVqJegI3foI7qP0rgX-A_wah27Ggq",
 
   // 付款資訊：會顯示在「升級」視窗。QR code 圖片放在 docs/assets/ 底下，沒有圖片就留空字串
   payment: {
