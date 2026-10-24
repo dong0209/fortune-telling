@@ -40,6 +40,7 @@
       <div class="field"><label for="bd">出生日期（國曆）</label><input type="date" id="bd" value="1993-08-12" min="1920-01-01" max="2025-12-31" required></div>
       <div class="field"><label for="bt">出生時間</label><input type="time" id="bt" value="09:40"></div>
       <label class="check"><input type="checkbox" id="noTime">不確定出生時間</label>
+      <label class="check"><input type="checkbox" id="solar" checked>以真太陽時排盤（建議）</label>
       <div class="field"><label for="nm">姓名（選填，姓名學用）</label><input type="text" id="nm" maxlength="5" placeholder="例如 陳怡君" autocomplete="name"></div>
       <div class="field"><label for="city">出生地</label><select id="city"></select></div>
       <div class="field"><label for="q">你現在最想問的</label>
@@ -77,6 +78,17 @@
       <p class="eyebrow"><span>流日</span>Daily</p>
       <h2 id="todayTitle">今天適合做什麼</h2>
       <div id="today"></div>
+    </section>
+
+    <section class="block panel-box" id="divineBlock">
+      <p class="eyebrow"><span>問卦</span>Daily Oracle</p>
+      <h2>每日職場一卦</h2>
+      <p class="muted small" style="margin:0 0 12px">寫下今天最想問的一件職場事，用梅花易數「字占」起卦：問題前半與後半的康熙筆畫分別起上卦、下卦，再加上此刻的時辰得動爻。免費版每天一卦，贊助會員不限次數。</p>
+      <form id="divForm" class="div-form">
+        <div class="field" style="flex:1;margin:0"><label for="dvQ">你的問題</label><input type="text" id="dvQ" maxlength="40" placeholder="例如：這週適合跟主管提加薪嗎？" required></div>
+        <button class="btn-gold" type="submit" id="dvGo">起卦</button>
+      </form>
+      <div id="dvOut" aria-live="polite"></div>
     </section>
 
     <section class="block panel-box">
@@ -207,7 +219,7 @@
 
 <footer>
   <nav><a href="privacy.html">隱私權與贊助條款</a></nav>
-  <div>職運羅盤以傳統命理與占星規則做程式化推算，屬於自我探索與決策參考，不構成職涯、法律或財務建議。八字採國曆輸入、未做真太陽時校正；紫微斗數依 iztro 排盤；星盤與人類圖行星位置由 astronomy-engine 計算；奇門遁甲採時家轉盤拆補法的簡化版；易經採河洛理數先天卦（未取元堂與後天卦）；梅花易數以農曆年月日時起卦；九宮飛星以立春分年；姓名學採康熙筆畫五格剖象。出生地時區不含夏令時間，1945–1979 年間在台灣出生且遇夏令時者，請將時間減 1 小時再輸入。</div>
+  <div>職運羅盤以傳統命理與占星規則做程式化推算，屬於自我探索與決策參考，不構成職涯、法律或財務建議。八字預設依出生地經度與均時差換算為真太陽時（可在表單關閉），出生當時的夏令時間與歷史時區依 IANA 時區資料庫自動換算；紫微斗數依 iztro 排盤；星盤與人類圖行星位置由 astronomy-engine 計算；奇門遁甲採時家轉盤拆補法的簡化版；易經採河洛理數先天卦（未取元堂與後天卦）；梅花易數以農曆年月日時起卦；九宮飛星以立春分年；姓名學採康熙筆畫五格剖象。</div>
   <div>開源元件：lunar-javascript、iztro、astronomy-engine（MIT 授權）。「人類圖」為本站對 Human Design 的推算，與 Jovian Archive 無關聯。</div>
 </footer>
 

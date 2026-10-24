@@ -58,6 +58,7 @@ function renderVerdict(rep){
   }
   var inp=rep.input;
   $("verdictBlock").innerHTML='<p class="eyebrow"><span>天機總斷</span>'+esc(inp.date+(inp.time?" "+inp.time:"")+" · "+inp.city+" · "+inp.gender)+'</p>'+
+    (inp.timeNote?'<p class="small muted" style="margin:-2px 0 6px">'+esc(inp.timeNote)+'</p>':"")+
     '<div class="verdict"><div style="min-width:0">'+left+'</div><div style="min-width:0">'+right+'</div></div>'+
     (paid?"":'<div class="teaser"><p>完整判讀會列出未來 36 個月的轉職與升遷窗口月份、你的喜用神、紫微官祿宮與星盤天頂解讀。</p><button type="button" class="btn-gold" data-upgrade="paid">贊助解鎖完整判讀</button></div>');
 }
@@ -284,6 +285,17 @@ function renderName(rep){
     X.grids.map(function(g){return '<tr><td>'+g.name+'</td><td class="num">'+g.n+'</td><td>'+g.el+'</td><td><span class="pill '+(g.luck==="吉"?"good":g.luck==="凶"?"bad":"mid")+'">'+g.luck+'</span></td></tr>'}).join("")+'</tbody></table></div>'+
     '<h3>三才配置：'+X.sancai+'　'+stancePill(X.stance)+'</h3><p>'+esc(X.sancaiFlow)+'</p><p>'+esc(X.renText)+esc(X.zongText)+'</p><p>'+esc(X.favText)+'</p>'+
     '<p class="note">筆畫採康熙字典算法（例如「氵」以「水」4 畫計）。複姓會自動辨識。</p>';
+}
+
+/* ---------- 每日職場一卦 ---------- */
+var LUCK_CLASS={大吉:"good",吉:"good",小吉:"mid",小凶:"bad",凶:"bad"};
+function renderDivine(d,note){
+  $("dvOut").innerHTML=(note?'<p class="small muted">'+note+'</p>':"")+
+    '<div class="dv-head"><span class="lab">'+esc(d.date)+'・'+esc(d.shichen)+'起卦</span><div class="dv-q">「'+esc(d.question)+'」</div>'+
+    '<div class="dv-luck"><span class="pill '+LUCK_CLASS[d.luck]+'">'+d.luck+'</span> '+d.relName+'：'+esc(d.relText)+'</div></div>'+
+    '<div class="hx-row">'+hexHTML(d.ben,"本卦",d.moving)+hexHTML(d.hu,"互卦")+hexHTML(d.bian,"變卦")+'</div>'+
+    '<p>本卦'+d.ben.name+'（現況）：'+esc(d.ben.text)+'</p><p>變卦'+d.bian.name+'（結果）：'+esc(d.bian.text)+esc(d.outcome)+'</p>'+
+    '<p class="note">體卦（代表你）'+d.ti+'，用卦（代表這件事）'+d.yong+'。前半筆畫 '+d.nums.upper+' 起上卦、後半筆畫 '+d.nums.lower+' 起下卦，加時辰數 '+d.nums.hour+' 得第 '+d.moving+' 爻動。</p>';
 }
 
 /* ---------- 綜合比對 ---------- */
