@@ -279,6 +279,11 @@ dialog.card-dlg{width:min(420px,calc(100vw - 32px))}
 .plan p{margin:0;font-size:12.5px;color:var(--muted)}
 .paybox{border:1px solid var(--line);border-radius:4px;padding:12px;margin-bottom:12px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center}
 .paybox img{width:120px;height:120px;border-radius:3px;background:#fff}
+.pay-sec{border-top:1px solid var(--line);padding-top:14px;margin-top:4px;margin-bottom:14px}
+.sub-box{border:1px solid var(--gold);border-radius:4px;padding:10px 12px;margin-bottom:12px;background:var(--gold-soft);display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between}
+.sub-box div{display:flex;flex-direction:column;gap:2px}
+.sub-box p{flex-basis:100%;margin:0}
+.sub-box p:empty{display:none}
 .paybox dl{margin:0;font-size:13.5px;display:grid;grid-template-columns:auto 1fr;gap:2px 10px}
 .paybox dt{color:var(--muted)}
 .paybox dd{margin:0;word-break:break-all}

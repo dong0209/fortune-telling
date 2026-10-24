@@ -205,25 +205,49 @@ async function openUpgrade(need){
   if(!STATE.user){body.innerHTML='<p>測試權限會綁定在你的帳號上，請先登入或註冊（只需要 Email）。</p><button type="button" class="btn-gold" id="upLogin">登入／註冊</button>';
     $("upLogin").addEventListener("click",function(){$("upgradeDlg").close();openLogin()});return}
   body.innerHTML='<p class="loading">載入贊助方案…</p>';
-  try{UP.plans=await API.plans();var reqs=await API.myRequests()}catch(e){body.innerHTML='<p class="err">'+esc(e.message)+'</p>';return}
+  var cfg=window.APP_CONFIG||{}, card=!!cfg.cardPayment;
+  try{UP.plans=await API.plans();var reqs=await API.myRequests(), subs=card?await API.mySubscriptions():[]}catch(e){body.innerHTML='<p class="err">'+esc(e.message)+'</p>';return}
   var p=STATE.profile||{tier:"free"}, isVip=p.tier==="vip"&&!p.expired;
   if(isVip)UP.plan="vip";
   var methods=payMethods();if(methods.indexOf(UP.method)<0)UP.method=methods[0];
-  if(!methods.length){body.innerHTML='<p class="notice">尚未設定贊助方式。</p>';return}
-  var cfg=window.APP_CONFIG||{};
+  if(!methods.length&&!card){body.innerHTML='<p class="notice">尚未設定贊助方式。</p>';return}
+  var price=function(x){return Number(x.price).toLocaleString('en-US')};
   body.innerHTML='<p style="margin-top:0">職運羅盤目前在測試階段，你的贊助會用來支持網站開發與維運。贊助後可以提前使用並協助測試對應版本的功能。</p><p class="small muted">目前權限：'+TIER_NAME[p.expired?"free":p.tier]+(p.tier!=="free"&&p.tier_expires_at?"（"+(p.expired?"已於 ":"有效至 ")+fmtDate(p.tier_expires_at)+"）":"")+'</p>'+
-    '<div class="plans">'+UP.plans.map(function(x){var dis=isVip&&x.id==="paid";return '<button type="button" class="plan" data-plan="'+x.id+'" aria-pressed="'+(x.id===UP.plan)+'"'+(dis?" disabled":"")+'><b>'+esc(x.name)+'</b><span class="price">贊助 NT$ '+Number(x.price).toLocaleString('en-US')+'</span><p>'+esc(x.description)+'（測試權限 '+x.days+' 天）</p></button>'}).join("")+'</div>'+
+    subs.map(function(x){return '<div class="sub-box"><div><b>每月贊助中：'+TIER_NAME[x.plan]+'</b><span class="small muted">NT$ '+Number(x.amount).toLocaleString('en-US')+'／月'+(x.next_auth_date?'・下次扣款 '+fmtDate(x.next_auth_date):'')+'</span></div><button type="button" class="btn-line" data-cancel="'+x.id+'">取消每月贊助</button><p class="small" role="status"></p></div>'}).join("")+
+    '<div class="plans">'+UP.plans.map(function(x){var dis=isVip&&x.id==="paid";return '<button type="button" class="plan" data-plan="'+x.id+'" aria-pressed="'+(x.id===UP.plan)+'"'+(dis?" disabled":"")+'><b>'+esc(x.name)+'</b><span class="price">每月 NT$ '+price(x)+'</span><p>'+esc(x.description)+'</p></button>'}).join("")+'</div>'+
+    (card?'<section class="pay-sec"><span class="lab">信用卡每月贊助</span><p class="small" style="margin-top:4px">透過藍新金流刷卡，卡號由藍新處理，不會經過本站。每月自動扣款，可以隨時在這裡取消；取消後已付款的期間照常可以使用。付費版升級 VIP 時，VIP 首期扣款成功後會自動停止付費版的扣款，付費版剩餘天數不退費。</p>'+
+      '<label class="check" style="margin:0 0 12px;align-items:flex-start"><input type="checkbox" id="subAgree" style="margin-top:4px"><span>我同意每月自動扣款，並了解開通的是線上數位內容的測試權限，依《通訊交易解除權合理例外情事適用準則》不適用七天猶豫期，並同意<a href="privacy.html" target="_blank" rel="noopener">隱私權與贊助條款</a>。</span></label>'+
+      '<button type="button" class="btn-gold" id="subGo">前往藍新付款</button><p class="small" id="subMsg" role="status"></p></section>':'')+
+    (methods.length?'<section class="pay-sec"><span class="lab">'+(card?'或用街口、轉帳單次贊助':'單次贊助')+'</span><p class="small" style="margin-top:4px">金額同每月贊助，每次開通 '+(UP.plans[0]?UP.plans[0].days:30)+' 天，不會自動續扣。</p>'+
     '<div class="field"><span class="lab">贊助方式</span><div class="seg">'+methods.map(function(m){return '<label><input type="radio" name="upm" value="'+m+'"'+(m===UP.method?" checked":"")+'>'+METHOD_NAME[m]+'</label>'}).join("")+'</div></div>'+
     '<div id="payInfo">'+payInfoHTML(UP.method)+'</div>'+
     '<form id="payForm"><p class="small" style="margin-top:0">完成贊助後填寫下面的回報，我們核對後會為你開通測試權限（通常 3～5 個工作天內，超過 5 個工作天仍未開通請來信通知）。</p>'+
       '<div class="field"><label for="payRef" id="payRefLabel">'+refLabel(UP.method)+'</label><input id="payRef" required maxlength="40"></div>'+
       '<div class="row2"><div class="field"><label for="payName">贊助人姓名（選填）</label><input id="payName" maxlength="40"></div><div class="field"><label for="payNote">備註（選填）</label><input id="payNote" maxlength="200"></div></div>'+
       '<label class="check" style="margin:0 0 12px;align-items:flex-start"><input type="checkbox" id="payAgree" required style="margin-top:4px"><span>我了解贊助後開通的是線上數位內容的測試權限，開通後即可使用，依《通訊交易解除權合理例外情事適用準則》不適用七天猶豫期，並同意<a href="privacy.html" target="_blank" rel="noopener">隱私權與贊助條款</a>。</span></label>'+
-      '<button class="btn-gold" type="submit">送出贊助回報</button><p class="small" id="payMsg" role="status"></p></form>'+
-    (reqs.length?'<div class="req-list"><span class="lab">我的贊助紀錄</span><div class="tscroll"><table><thead><tr><th>日期</th><th>方案</th><th>贊助金額</th><th>狀態</th></tr></thead><tbody>'+
+      '<button class="btn-gold" type="submit">送出贊助回報</button><p class="small" id="payMsg" role="status"></p></form></section>':'')+
+    (reqs.length?'<div class="req-list"><span class="lab">我的贊助回報</span><div class="tscroll"><table><thead><tr><th>日期</th><th>方案</th><th>贊助金額</th><th>狀態</th></tr></thead><tbody>'+
       reqs.map(function(r){return '<tr><td class="num">'+fmtDate(r.created_at)+'</td><td>'+TIER_NAME[r.plan]+'</td><td class="num">'+r.amount+'</td><td><span class="pill '+(r.status==="approved"?"good":r.status==="rejected"?"bad":"mid")+'">'+STATUS_NAME[r.status]+'</span>'+(r.reject_reason?' <span class="muted small">'+esc(r.reject_reason)+'</span>':"")+'</td></tr>'}).join("")+'</tbody></table></div></div>':"")+
     (cfg.contactEmail?'<p class="small muted">贊助或開通問題請寄信至 '+esc(cfg.contactEmail)+'</p>':"");
+  body.querySelectorAll("[data-cancel]").forEach(function(b){b.addEventListener("click",async function(){
+    var msg=b.parentNode.querySelector("[role=status]");
+    if(!confirm("確定要取消每月贊助嗎？取消後不會再扣款，已付款的期間照常可以使用。"))return;
+    b.disabled=true;msg.textContent="取消中…";
+    try{await API.cancelSubscription(b.dataset.cancel);msg.textContent="已取消每月贊助，不會再扣款。";b.remove()}
+    catch(err){msg.textContent="取消失敗："+err.message;b.disabled=false}
+  })});
+  if(card)$("subGo").addEventListener("click",async function(){
+    var btn=this;
+    if(!$("subAgree").checked){$("subMsg").textContent="請先勾選同意每月自動扣款與贊助條款。";return}
+    btn.disabled=true;$("subMsg").textContent="建立付款資料中…";
+    try{var r=await API.subscribe(UP.plan), f=document.createElement("form");
+      f.method="post";f.action=r.action;
+      Object.keys(r.fields).forEach(function(k){var i=document.createElement("input");i.type="hidden";i.name=k;i.value=r.fields[k];f.appendChild(i)});
+      document.body.appendChild(f);$("subMsg").textContent="正在前往藍新付款頁…";f.submit()}
+    catch(err){$("subMsg").textContent=err.message;btn.disabled=false}
+  });
   body.querySelectorAll(".plan").forEach(function(b){b.addEventListener("click",function(){UP.plan=b.dataset.plan;body.querySelectorAll(".plan").forEach(function(x){x.setAttribute("aria-pressed",String(x===b))})})});
+  if(!methods.length)return;
   body.querySelectorAll('input[name="upm"]').forEach(function(r){r.addEventListener("change",function(){UP.method=r.value;$("payInfo").innerHTML=payInfoHTML(r.value);$("payRefLabel").textContent=refLabel(r.value)})});
   $("payForm").addEventListener("submit",async function(e){
     e.preventDefault();var btn=e.submitter;btn.disabled=true;$("payMsg").textContent="送出中…";
@@ -231,6 +255,15 @@ async function openUpgrade(need){
       $("payMsg").textContent="已送出贊助回報，謝謝你的支持！我們核對後會為你開通。";btn.textContent="已送出"}
     catch(err){$("payMsg").textContent="送出失敗："+err.message;btn.disabled=false}
   });
+}
+
+// 藍新付款完成後會帶著 ?pay=success 或 ?pay=fail 導回網站
+function payReturnNotice(){
+  var q=new URLSearchParams(location.search), r=q.get("pay");if(!r)return;
+  q.delete("pay");history.replaceState(null,"",location.pathname+(q.toString()?"?"+q:"")+location.hash);
+  $("upBody").innerHTML=r==="success"?'<p style="margin-top:0"><b>付款成功，謝謝你的每月贊助！</b></p><p>測試權限已經開通，之後每月會自動扣款，可以隨時在「贊助支持」裡取消。</p>'
+    :'<p class="err" style="margin-top:0">付款沒有完成</p><p>信用卡授權失敗或已取消付款，這次沒有扣款。可以再試一次，或改用街口、轉帳贊助。</p>';
+  $("upgradeDlg").showModal();
 }
 
 /* ---------- 每日職場一卦（免費版每天一卦，紀錄存在瀏覽器） ---------- */
@@ -262,6 +295,7 @@ function bindTools(){
   $("btnShare").addEventListener("click",copyShare);
   $("cmpGo").addEventListener("click",runCompare);
   $("divForm").addEventListener("submit",function(e){e.preventDefault();runDivine()});
+  payReturnNotice();
   var dv=loadDivine();if(dv){$("dvQ").value=dv.question;renderDivine(dv,"這是你今天起的卦。")}
   $("btnCard").addEventListener("click",openCard);
   $("loginForm").addEventListener("submit",doLogin);
