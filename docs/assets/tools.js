@@ -215,7 +215,7 @@ async function openUpgrade(need){
     '<div class="plans">'+UP.plans.map(function(x){var dis=isVip&&x.id==="paid";return '<button type="button" class="plan" data-plan="'+x.id+'" aria-pressed="'+(x.id===UP.plan)+'"'+(dis?" disabled":"")+'><b>'+esc(x.name)+'</b><span class="price">贊助 NT$ '+Number(x.price).toLocaleString('en-US')+'</span><p>'+esc(x.description)+'（測試權限 '+x.days+' 天）</p></button>'}).join("")+'</div>'+
     '<div class="field"><span class="lab">贊助方式</span><div class="seg">'+methods.map(function(m){return '<label><input type="radio" name="upm" value="'+m+'"'+(m===UP.method?" checked":"")+'>'+METHOD_NAME[m]+'</label>'}).join("")+'</div></div>'+
     '<div id="payInfo">'+payInfoHTML(UP.method)+'</div>'+
-    '<form id="payForm"><p class="small" style="margin-top:0">完成贊助後填寫下面的回報，我們核對後會為你開通測試權限（通常 1 個工作天內）。</p>'+
+    '<form id="payForm"><p class="small" style="margin-top:0">完成贊助後填寫下面的回報，我們核對後會為你開通測試權限（通常 3～5 個工作天內，超過 5 個工作天仍未開通請來信通知）。</p>'+
       '<div class="field"><label for="payRef" id="payRefLabel">'+refLabel(UP.method)+'</label><input id="payRef" required maxlength="40"></div>'+
       '<div class="row2"><div class="field"><label for="payName">贊助人姓名（選填）</label><input id="payName" maxlength="40"></div><div class="field"><label for="payNote">備註（選填）</label><input id="payNote" maxlength="200"></div></div>'+
       '<label class="check" style="margin:0 0 12px;align-items:flex-start"><input type="checkbox" id="payAgree" required style="margin-top:4px"><span>我了解贊助後開通的是線上數位內容的測試權限，開通後即可使用，依《通訊交易解除權合理例外情事適用準則》不適用七天猶豫期，並同意<a href="privacy.html" target="_blank" rel="noopener">隱私權與贊助條款</a>。</span></label>'+
