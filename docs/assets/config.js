@@ -10,5 +10,5 @@ window.APP_CONFIG = {
     bank:    { label: "銀行轉帳", bank: "396 街口電子支付", account: "900726891", name: "" },
     linepay: { label: "LINE Pay", account: "", qr: "" }
   },
-  contactEmail: ""   // 客服信箱，留空則不顯示
+  contactEmail: "dongdong0935@gmail.com"   // 客服信箱，留空則不顯示
 };
