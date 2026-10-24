@@ -1,4 +1,4 @@
-/* 與 Supabase 溝通：登入、會員資料、排盤、付款回報 */
+/* 與 Supabase 溝通：登入、會員資料、排盤、贊助回報 */
 var API=(function(){
   var cfg=window.APP_CONFIG||{}, sb=null;
   var ready=!!(cfg.supabaseUrl&&cfg.supabaseAnonKey&&window.supabase&&window.supabase.createClient);

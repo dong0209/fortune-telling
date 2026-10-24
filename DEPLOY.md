@@ -24,7 +24,8 @@
 
 1. 打開 Supabase 後台的 **SQL Editor → New query**。
 2. 把 `supabase/migrations/20261024000000_membership.sql` 的內容整份貼上，按 **Run**。
-3. 價格與天數預設是「付費版 NT$299／365 天」「VIP NT$699／365 天」。要修改的話，到 **Table Editor → plans** 直接改 `price`、`days`、`description` 即可，網站會即時讀取。
+3. 接著再貼上 `supabase/migrations/20261024120000_sponsorship.sql` 執行，把方案改成贊助名義：贊助 NT$899 協助測試付費版、贊助 NT$2,399 協助測試 VIP 版，測試權限 365 天。
+4. 之後要調整金額或天數，到 **Table Editor → plans** 直接改 `price`、`days`、`description` 即可，網站會即時讀取。
 
 ## 3. 部署排盤函式
 
