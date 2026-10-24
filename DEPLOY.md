@@ -84,6 +84,13 @@ npx supabase secrets set ALLOWED_ORIGINS=https://dong0209.github.io
 
 3. 重新整理網站，右上角會出現「管理後台」連結（網址是 `admin.html`）。
 
+## 8. 防止 Supabase 免費專案被暫停
+
+Supabase 免費專案連續 7 天沒有任何請求就會被暫停。repo 內的 `.github/workflows/keep-alive.yml` 每天會自動讀一次方案表，讓專案保持喚醒。網址與金鑰會直接從 `config.js` 讀取，不需要另外設定。
+
+- 到 GitHub repo 的 **Actions** 分頁，確認 **Supabase keep-alive** 有啟用。可以按 **Run workflow** 手動跑一次測試。
+- GitHub 會自動停用「repo 超過 60 天沒有新 commit」的排程。如果很久沒更新網站，記得回來重新啟用。
+
 ---
 
 ## 日常營運：開通會員
