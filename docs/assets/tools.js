@@ -109,16 +109,16 @@ function wrapText(ctx,text,x,y,maxW,lh){
 }
 function drawCard(){
   var rep=STATE.rep, v=rep.verdict, cv=document.createElement("canvas");cv.width=1080;cv.height=1920;
-  var c=cv.getContext("2d"), SERIF='"Noto Serif TC","Songti TC",serif', SANS='"Noto Sans TC","PingFang TC",sans-serif', MONO='"IBM Plex Mono",monospace', LAT='"Cinzel",serif';
+  var c=cv.getContext("2d"), SERIF='"Noto Serif TC","Songti TC",serif', SANS='"Noto Sans TC","PingFang TC",sans-serif', MONO='"IBM Plex Mono",monospace', LAT='"Cinzel",serif', LOGO='"MasaLogo","Noto Serif TC",serif';
   var GOLD="#D9B56A", GB="#F1D58E", INK="#ECE6D6", MUTED="#8F97B5", LINE="#253057", MOVE="#EF7A4A", STAY="#4F96EC";
   var g=c.createRadialGradient(760,120,40,760,120,1300);g.addColorStop(0,"#1B2656");g.addColorStop(0.5,"#0A0F22");g.addColorStop(1,"#05070F");c.fillStyle=g;c.fillRect(0,0,1080,1920);
   var seed=11;function rnd(){seed=(seed*16807)%2147483647;return (seed-1)/2147483646}
   for(var i=0;i<260;i++){c.fillStyle=rnd()<0.15?"rgba(241,213,142,"+(0.3+rnd()*0.6)+")":"rgba(220,226,255,"+(0.2+rnd()*0.6)+")";c.beginPath();c.arc(rnd()*1080,rnd()*1920,rnd()*1.8+0.4,0,6.3);c.fill()}
   c.strokeStyle="rgba(217,181,106,.35)";c.lineWidth=1.5;[300,250,190].forEach(function(r){c.beginPath();c.arc(900,250,r,0,6.3);c.stroke()});
   c.strokeStyle=GOLD;c.lineWidth=2;c.strokeRect(48,48,984,1824);
-  c.lineWidth=3;c.strokeRect(96,120,90,90);c.fillStyle=GOLD;c.textAlign="center";c.font="900 34px "+SERIF;c.fillText("職",141,159);c.fillText("運",141,198);
-  c.textAlign="left";c.fillStyle=INK;c.font="900 62px "+SERIF;c.fillText("職運羅盤",214,174);
-  c.fillStyle=GOLD;c.font="500 24px "+LAT;c.fillText("ASTRA · CAREER ORACLE",216,212);
+  c.lineWidth=3;c.strokeRect(96,120,90,90);c.fillStyle=GOLD;c.textAlign="center";c.font="400 36px "+LOGO;c.fillText("職",141,159);c.fillText("運",141,198);
+  c.textAlign="left";c.fillStyle=INK;c.font="400 66px "+LOGO;c.fillText("職運羅盤",214,176);
+  c.fillStyle=GOLD;c.font="500 24px "+LAT;c.fillText("EAST × WEST · CAREER ORACLE",216,212);
   c.fillStyle=GOLD;c.font="700 28px "+SANS;c.fillText("我 的 天 機 總 斷",96,330);
   var call=v.call.replace(/<[^>]+>/g,"");
   c.fillStyle=GB;c.font="900 82px "+SERIF;var y=wrapText(c,call,96,440,888,102);
@@ -161,7 +161,7 @@ function drawCard(){
 }
 function openCard(){
   if(!STATE.rep){$("shareMsg").textContent="請先推演命盤。";return}
-  var fonts=['900 82px "Noto Serif TC"','400 34px "Noto Sans TC"','700 30px "Noto Sans TC"','500 40px "IBM Plex Mono"','500 24px "Cinzel"'];
+  var fonts=['400 66px "MasaLogo"','900 82px "Noto Serif TC"','400 34px "Noto Sans TC"','700 30px "Noto Sans TC"','500 40px "IBM Plex Mono"','500 24px "Cinzel"'];
   var ready=document.fonts&&document.fonts.load?Promise.all(fonts.map(function(f){return document.fonts.load(f,"職運羅盤0A")})).catch(function(){}):Promise.resolve();
   $("cardMsg").textContent="圖卡產生中…";$("cardDlg").showModal();
   ready.then(function(){var url=drawCard();$("cardImg").src=url;$("cardDl").href=url;$("cardMsg").textContent="手機可長按圖片儲存，電腦請按「下載圖片」。"});
