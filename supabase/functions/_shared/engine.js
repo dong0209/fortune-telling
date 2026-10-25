@@ -492,6 +492,7 @@ function buildReport(inp,tier,now){
     numerology:{title:"主命數 "+X.numerology.main,line:X.numerology.title+"："+X.numerology.text},ninestar:{title:X.ninestar.name,line:X.ninestar.text},
     name:X.name?{title:X.name.chars.map(function(c){return c.c}).join("")+"・總格 "+X.name.grids[4].n,line:X.name.sancaiFlow}:null};
   rep.systems=SYSTEMS.map(function(x){return {key:x[0],name:x[1],school:x[2],vipOnly:VIP_ONLY.indexOf(x[0])>=0}});
+  if(!vip)rep.hints=vipHints(R);
   if(rk<1)return rep;
   rep.iching=X.iching;rep.numerology=X.numerology;rep.name=X.name;
   var top=R.fitList[0], mcSign=R.A.mc!=null?"天頂"+SIGNS[Math.floor(R.A.mc/30)]:"太陽"+SIGNS[Math.floor(R.A.pl.太陽/30)];
@@ -522,8 +523,12 @@ function buildReport(inp,tier,now){
     saturn:{sign:SIGNS[Math.floor(sa/30)],house:A.hasTime?A.house(sa):null},
     jupiterNow:{sign:SIGNS[Math.floor(ju/30)],house:jh,text:JUP_TEXT[jh]||"事業宮位暫無木星加持，曲線中的其他訊號更值得參考。"}};
   var days=[];for(var i=0;i<7;i++)days.push(slimDay(dailyFortune(B,new Date(now.getFullYear(),now.getMonth(),now.getDate()+i)),vip));
-  rep.today=days;
-  if(!vip)return rep;
+  rep.today=vip?days:days.slice(0,1);
+  if(!vip){
+    var later=days.slice(1);
+    rep.hints.week={better:later.filter(function(d){return d.score>days[0].score}).length,max:Math.max.apply(null,later.map(function(d){return d.score}))};
+    return rep;
+  }
   rep.meihua=X.meihua;rep.ninestar=X.ninestar;
   var q=qimen(now.getFullYear(),now.getMonth()+1,now.getDate(),10);
   rep.qimen={today:{dgz:q.dgz,term:TERM_TW[q.term]||q.term,yuan:q.yuan,yang:q.yang,ju:q.ju,zhiShi:q.zhiShi,zhiShiAt:q.zhiShiAt,doors:q.doors,openDir:q.openDir},
@@ -533,6 +538,15 @@ function buildReport(inp,tier,now){
   rep.hd={type:H.type,strat:T.strat,sig:T.sig,text:T.t,auth:H.auth,authText:AUTH_TEXT[H.auth],profile:H.profile,profileNames:[PROFILE_NAME[pl[0]],PROFILE_NAME[pl[1]]],profileText:PROFILE_TEXT[pl[0]],
     chans:H.chans,defined:Object.keys(H.defined),channelCenters:H.chans.map(function(c){return [gateCenter(c[0]),gateCenter(c[1])]})};
   return rep;
+}
+
+/* 非 VIP 的鎖定卡要顯示跟本人有關的線索，只透露摘要，完整內容仍只回給 VIP */
+function vipHints(R){
+  var c=actCompare(R,{systems:SYSTEMS.map(function(x){return x[0]})},"vip").consensus, v=c.votes, tot=v.move+v.stay+v.wait;
+  var good=R.qdays.filter(function(d){return DOOR_Q[d.door]>=0.5}).sort(function(a,b){return a.date-b.date});
+  return {consensus:{systems:SYSTEMS.length,voted:tot,lead:c.lead,votes:v},
+    qimen:{count:good.length,next:good.length?iso(good[0].date):null},
+    hd:{type:R.H.type}};
 }
 
 /* ---------- 互動功能 ---------- */
@@ -548,8 +562,10 @@ function actMonth(R,p,vip,now){
   var i=+p.i;if(!(i>=0&&i<R.months.length))throw bad("月份不存在");
   var m=R.months[i], dim=new Date(m.y,m.m,0).getDate(), list=[];
   for(var d=1;d<=dim;d++){var dt=new Date(m.y,m.m-1,d);if(dt<=now)continue;var f=dailyFortune(R.B,dt);if(!f.weekend)list.push(f)}
-  var good=list.sort(function(a,b){return b.score-a.score}).slice(0,3).sort(function(a,b){return a.date-b.date}).map(function(g){var o={date:iso(g.date),gz:g.gz,score:g.score};if(vip){o.door=g.door;o.openDir=g.openDir}return o});
-  return {y:m.y,m:m.m,ygz:m.ygz,mgz:m.mgz,move:m.move,stay:m.stay,detail:m.detail,advice:monthAdvice(m),good:good};
+  var top=list.sort(function(a,b){return b.score-a.score}).slice(0,3), out={y:m.y,m:m.m,ygz:m.ygz,mgz:m.mgz,move:m.move,stay:m.stay,detail:m.detail,advice:monthAdvice(m)};
+  if(!vip){out.goodHint=top.length?{n:top.length,xun:["上旬","中旬","下旬"][Math.min(2,Math.floor((top[0].date.getDate()-1)/10))]}:null;return out}
+  out.good=top.sort(function(a,b){return a.date-b.date}).map(function(g){return {date:iso(g.date),gz:g.gz,score:g.score,door:g.door,openDir:g.openDir}});
+  return out;
 }
 function readJobParam(o){
   o=o||{};var f={name:String(o.name||"").slice(0,20)};
@@ -622,7 +638,7 @@ function runAction(name,rawInput,tier,params,now){
   if(name==="report")return buildReport(inp,tier,now);
   if(name==="compare")return actCompare(compute(inp,now),params||{},tier);
   if(name==="divine")return actDivine(params||{},now);
-  var need={month:"paid",offer:"paid",fitnow:"paid",synastry:"vip",qimenDay:"vip"}[name];
+  var need={month:"paid",offer:"vip",fitnow:"vip",synastry:"vip",qimenDay:"vip"}[name];
   if(!need)throw bad("未知的功能");
   needTier(tier,need);
   var R=compute(inp,now), vip=RANK[tier]>=2;

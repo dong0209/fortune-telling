@@ -19,14 +19,14 @@ function meterRow(label,v,color){return '<div class="meter-row"><span>'+label+'<
 function listHTML(arr){return '<ul class="notes">'+arr.map(function(n){return '<li>'+esc(n)+'</li>'}).join("")+'</ul>'}
 
 var LOCK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="1.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.3" fill="currentColor"/></svg>';
-function lockHTML(need,desc){
-  return '<div class="lock"><div class="lock-body">'+LOCK_SVG+'<b>'+(need==="vip"?"VIP 專屬":"付費版內容")+'</b><p>'+desc+'</p><button type="button" class="btn-gold" data-upgrade="'+need+'">'+(need==="vip"?"贊助解鎖 VIP 版":"贊助解鎖付費版")+'</button><a class="sample-link" href="?sample='+need+'" data-sample="'+need+'">先看張三豐的'+(need==="vip"?"VIP":"付費版")+'範例報告</a></div></div>';
+function lockHTML(need,desc,hint){
+  return '<div class="lock"><div class="lock-body">'+LOCK_SVG+'<b>'+(need==="vip"?"VIP 專屬":"付費版內容")+'</b>'+(hint?'<p class="lock-hint">'+hint+'</p>':'')+'<p>'+desc+'</p><button type="button" class="btn-gold" data-upgrade="'+need+'">'+(need==="vip"?"贊助解鎖 VIP 版":"贊助解鎖付費版")+'</button><a class="sample-link" href="?sample='+need+'" data-sample="'+need+'">先看張三豐的'+(need==="vip"?"VIP":"付費版")+'範例報告</a></div></div>';
 }
 var LOCK_DESC={
-  today:"每日職場指數、提案／談薪／面試／遞辭呈的宜忌，以及未來 7 天的走勢。",
-  chart:"未來 36 個月的轉職與升遷動能曲線，點選任一月份就能看詳解與當月吉日。",
+  today:"今天的職場指數，以及提案／談薪／面試／遞辭呈的宜忌。VIP 再加上未來 7 天的走勢。",
+  chart:"未來 36 個月的轉職與升遷動能曲線，點選任一月份就能看詳解與建議。當月吉日為 VIP 專屬。",
   fit:"六種公司類型的契合排名、判斷依據，以及依喜用五行推薦的產業。",
-  tools:"兩家 offer 比較、現職適配度檢查，把命盤用在真實的選擇上。",
+  tools:"兩家 offer 比較、現職適配度檢查、主管／同事合盤，把命盤用在手上真實的選擇。",
   syn:"輸入主管或同事的生日，分析五行生剋與人類圖互動，給你相處與升遷策略。",
   bazi:"身強身弱、用神、十神職場能量、大運與流年喜忌。",
   ziwei:"紫微斗數十二宮命盤、官祿宮主星解讀、流年四化對事業的影響。",
@@ -76,6 +76,8 @@ function renderToday(rep){
     '<div class="strip" role="group" aria-label="未來 7 天">'+days.map(function(d,i){var dt=parseDate(d.date);
       return '<button type="button" class="sday'+(i===todaySel?" on":"")+'" data-i="'+i+'" aria-pressed="'+(i===todaySel)+'"><span>'+(i===0?"今天":"週"+WEEK[dt.getDay()])+'</span><span class="num small">'+(dt.getMonth()+1)+'/'+dt.getDate()+'</span><span class="sbar"><i style="height:'+d.score+'%"></i></span><b class="num">'+d.score+'</b></button>'}).join("")+'</div></div>';
   $("today").querySelectorAll(".sday").forEach(function(b){b.addEventListener("click",function(){todaySel=+b.dataset.i;renderToday(rep)})});
+  var w=rep.hints&&rep.hints.week;
+  if(w)$("today").insertAdjacentHTML("beforeend",'<div class="teaser"><p>'+(w.better?"未來 6 天中，有 <b>"+w.better+" 天</b>職場指數比今天高，最高 <b>"+w.max+" 分</b>。":"未來 6 天的職場指數都沒有比今天高，重要的事把握今天。")+'哪一天適合面試、談薪或遞辭呈，VIP 可以看完整 7 天。</p><button type="button" class="btn-gold" data-upgrade="vip">贊助解鎖 VIP 版</button></div>');
 }
 
 /* ---------- 時機曲線 ---------- */
@@ -134,7 +136,7 @@ function renderMonthDetail(d){
     '<div class="md-meters">'+meterRow("轉職",d.move,"var(--s-move)")+meterRow("升遷",d.stay,"var(--s-stay)")+'</div></div>'+
     '<div class="md-grid">'+sys+'</div>'+
     '<div class="md-grid two"><div><span class="lab">這個月建議你</span><ul>'+d.advice.map(function(a){return '<li>'+esc(a)+'</li>'}).join("")+'</ul></div>'+
-    '<div><span class="lab">本月職場吉日（平日）</span>'+(d.good.length?'<ul>'+d.good.map(function(g){return '<li><b class="num">'+md(g.date)+'</b> '+g.gz+'日'+(g.door?'，'+g.door+'門，開門'+g.openDir:'，指數 '+g.score)+'</li>'}).join("")+'</ul>':'<p class="muted small" style="margin:4px 0 0">本月剩餘日子不多，請看下個月。</p>')+'</div></div>';
+    '<div><span class="lab">本月職場吉日（平日）</span>'+(!d.good?(d.goodHint?'<p class="small" style="margin:4px 0 6px">本月 <b>'+d.goodHint.n+' 個</b>職場吉日集中在<b>'+d.goodHint.xun+'</b>。是哪幾天、適合面試還是談薪，VIP 才看得到。</p><button type="button" class="btn-line" data-upgrade="vip">解鎖 VIP 看吉日</button>':'<p class="muted small" style="margin:4px 0 0">這個月剩下的平日沒有特別突出的吉日。</p>'):d.good.length?'<ul>'+d.good.map(function(g){return '<li><b class="num">'+md(g.date)+'</b> '+g.gz+'日'+(g.door?'，'+g.door+'門，開門'+g.openDir:'，指數 '+g.score)+'</li>'}).join("")+'</ul>':'<p class="muted small" style="margin:4px 0 0">本月剩餘日子不多，請看下個月。</p>')+'</div></div>';
 }
 
 /* ---------- 公司類型 ---------- */
@@ -195,7 +197,7 @@ function renderAstro(rep){
 /* ---------- 奇門（VIP） ---------- */
 var DIR_OF={1:"北",8:"東北",3:"東",4:"東南",9:"南",2:"西南",7:"西",6:"西北"};
 function renderQimen(rep){
-  var Q=rep.qimen;if(!Q){$("p-qimen").innerHTML=lockHTML("vip",LOCK_DESC.qimen);return}
+  var Q=rep.qimen;if(!Q){var hq=rep.hints&&rep.hints.qimen;$("p-qimen").innerHTML=lockHTML("vip",LOCK_DESC.qimen,hq&&hq.count?"未來 60 天你有 <b>"+hq.count+" 個</b>職場吉日，最近一個在 <b>"+md(hq.next)+"</b>。":"");return}
   var q=Q.today;
   var grid=[4,9,2,3,5,7,8,1,6].map(function(p){
     if(p===5)return '<div><span class="muted">中五</span><b>'+q.ju+'局</b>'+(q.yang?"陽遁":"陰遁")+'</div>';
@@ -230,7 +232,7 @@ function hdSvg(H){
   return s+'</svg>';
 }
 function renderHD(rep){
-  var H=rep.hd;if(!H){$("p-hd").innerHTML=lockHTML("vip",LOCK_DESC.hd);return}
+  var H=rep.hd;if(!H){var hh=rep.hints&&rep.hints.hd;$("p-hd").innerHTML=lockHTML("vip",LOCK_DESC.hd,hh?"你是<b>"+esc(hh.type)+"</b>。你在錯的位置時，身體會出現的訊號是……":"");return}
   var chs=H.chans.map(function(c){return '<span class="tag">'+c[0]+"–"+c[1]+'</span>'}).join("")||'<span class="muted">無定義通道</span>';
   $("p-hd").innerHTML='<div class="split"><div style="min-width:0"><div class="kv"><div><span class="lab">類型</span><b>'+H.type+'</b></div><div><span class="lab">策略</span><b>'+H.strat+'</b></div><div><span class="lab">內在權威</span><b>'+H.auth+'</b></div><div><span class="lab">人生角色</span><b>'+H.profile+'</b></div></div>'+
     '<h3>你在職場的運作方式</h3><p>'+esc(H.text)+'</p><p>人生角色 '+H.profile+'（'+H.profileNames.join("／")+'）：'+esc(H.profileText)+'</p>'+
@@ -300,8 +302,17 @@ function renderDivine(d,note){
 /* ---------- 綜合比對 ---------- */
 var CMP={sel:[],tier:"free"};
 function cmpLimit(){return CMP.tier==="vip"?99:CMP.tier==="paid"?2:1}
+var STANCE_ADVICE={move:"建議你轉職",stay:"建議你留任",wait:"建議你先觀望"};
+function renderCmpTeaser(rep){
+  var c=rep.hints&&rep.hints.consensus;
+  if(!c){$("cmpTeaser").innerHTML="";return}
+  var v=c.votes, tally=["move","stay","wait"].filter(function(k){return v[k]}).map(function(k){return STANCE_NAME[k]+" "+v[k]+" 種"}).join("、");
+  $("cmpTeaser").innerHTML='<div class="teaser cmp-teaser"><p>'+(c.lead?"我們已經用 "+c.systems+" 種學派排過你的命盤：<b>"+v[c.lead]+" 種"+STANCE_ADVICE[c.lead]+"</b>（"+tally+"）。"
+    :"我們已經用 "+c.systems+" 種學派排過你的命盤，<b>各派意見分歧</b>（"+tally+"）。")+"各學派的理由、時機交集與綜合建議，VIP 才能完整比對。</p>"+
+    '<button type="button" class="btn-gold" data-upgrade="vip">贊助解鎖 VIP 版</button></div>';
+}
 function renderChips(rep){
-  CMP.tier=rep.tier;
+  CMP.tier=rep.tier;renderCmpTeaser(rep);
   if(!CMP.sel.length)CMP.sel=CMP.tier==="vip"?["bazi","ziwei","astro","iching","meihua"]:CMP.tier==="paid"?["bazi","ziwei"]:["bazi"];
   $("sysChips").innerHTML=["東方","西方"].map(function(sc){return '<div class="chip-row"><span class="school">'+sc+'學派</span>'+rep.systems.filter(function(x){return x.school===sc}).map(function(x){var on=CMP.sel.indexOf(x.key)>=0;return '<button type="button" class="chip" data-k="'+x.key+'" aria-pressed="'+on+'">'+x.name+(x.vipOnly?' <span class="lk">VIP</span>':'')+'</button>'}).join("")+'</div>'}).join("");
   $("sysChips").querySelectorAll(".chip").forEach(function(b){b.addEventListener("click",function(){
