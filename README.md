@@ -33,7 +33,7 @@
 ## 架構
 
 ```
-docs/                       前端（GitHub Pages 從這個資料夾發布）
+docs/                       前端（Cloudflare Pages 從這個資料夾發布）
   index.html                主頁
   admin.html                管理後台：核對付款、開通會員
   privacy.html              隱私權與付費條款

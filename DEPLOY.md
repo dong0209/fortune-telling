@@ -2,7 +2,7 @@
 
 網站分成兩部分：
 
-- **前端**（`docs/`）：放在 GitHub Pages，負責畫面。
+- **前端**（`docs/`）：放在 Cloudflare Pages（免費、可商用），負責畫面。
 - **後端**（`supabase/`）：放在 Supabase，負責會員登入、付款回報，以及所有排盤計算。網頁只會拿到符合會員等級的結果。
 
 整個流程大約 30 分鐘，Supabase 免費方案就夠用。
@@ -43,14 +43,16 @@ npx supabase functions deploy analyze --no-verify-jwt
 建議再限制只有你的網站能呼叫這個函式：
 
 ```bash
-npx supabase secrets set ALLOWED_ORIGINS=https://dong0209.github.io
+npx supabase secrets set ALLOWED_ORIGINS=https://fortune-telling-dss.pages.dev
 ```
+
+網址要跟瀏覽器網址列的開頭完全一樣（不含結尾的 `/`）。有多個網址時用逗號分隔，例如搬家期間新舊網址並存：`ALLOWED_ORIGINS=https://fortune-telling-dss.pages.dev,https://dong0209.github.io`。
 
 ## 4. 設定登入信
 
 1. 到 **Authentication → URL Configuration**：
-   - **Site URL** 填 `https://dong0209.github.io/fortune-telling/`
-   - **Redirect URLs** 加入 `https://dong0209.github.io/fortune-telling/**`
+   - **Site URL** 填 `https://fortune-telling-dss.pages.dev/`
+   - **Redirect URLs** 加入 `https://fortune-telling-dss.pages.dev/**`
 2. Supabase 內建的寄信服務每小時只能寄很少封，只適合測試。正式上線前，請到 **Authentication → Emails → SMTP Settings** 設定自己的寄信服務（例如 Resend、Brevo，都有免費額度）。
 3. （選用）到 **Authentication → Emails → Templates → Magic Link**，把信件內容改成中文。
 
@@ -65,14 +67,25 @@ npx supabase secrets set ALLOWED_ORIGINS=https://dong0209.github.io
 
 另外，`docs/privacy.html` 是隱私權與付費條款的範本，請依實際狀況修改。
 
-## 6. 開啟 GitHub Pages
+## 6. 用 Cloudflare Pages 發布網站
 
-到 GitHub repo 的 **Settings → Pages**：
+GitHub Pages 的使用條款不允許以收款為主的商業網站，所以前端放在 Cloudflare Pages（免費、可商用、流量不限）。
 
-- Source：**Deploy from a branch**
-- Branch：**main**，資料夾選 **/docs**
+1. 到 <https://dash.cloudflare.com> 登入，選 **Workers & Pages → Create → Pages → Connect to Git**，授權 GitHub 並選這個 repo。
+2. 建置設定：
+   - **Production branch**：`main`
+   - **Framework preset**：None
+   - **Build command**：留空
+   - **Build output directory**：`docs`
+3. 按 **Save and Deploy**。之後每次合併到 `main`，Cloudflare 都會自動重新發布。
 
-約一分鐘後，網站會出現在 `https://dong0209.github.io/fortune-telling/`。
+目前的網址是 `https://fortune-telling-dss.pages.dev/`。網址改變時（例如換成自己的網域），要一起更新：
+
+- 第 3 步的 `ALLOWED_ORIGINS`
+- 第 4 步的 Site URL 與 Redirect URLs
+- 第 9 步藍新函式的 `SITE_URL`（付款完成後導回的網址）
+
+確認新網址一切正常後，到 GitHub repo 的 **Settings → Pages** 把 GitHub Pages 關掉，並把舊網址從 `ALLOWED_ORIGINS` 和 Redirect URLs 移除。
 
 ## 7. 設定自己為管理員
 
@@ -112,7 +125,7 @@ npx supabase secrets set NEWEBPAY_MERCHANT_ID=你的MerchantID NEWEBPAY_HASH_KEY
 npx supabase functions deploy newebpay --no-verify-jwt
 ```
 
-- 函式會把付款結果導回 `https://dong0209.github.io/fortune-telling/`。網址不同的話，再加設 `SITE_URL=你的網站網址`。
+- 函式會把付款結果導回 `https://fortune-telling-dss.pages.dev/`。網址不同的話，再加設 `SITE_URL=你的網站網址`。
 - 先前設定的 `ALLOWED_ORIGINS` 也會套用到這個函式。
 
 ### 9-3 開啟網站上的信用卡選項
@@ -161,5 +174,4 @@ npx supabase secrets set NEWEBPAY_MERCHANT_ID=正式MerchantID NEWEBPAY_HASH_KEY
 - **付款回報**：金額由資料庫依方案價格自動填入。只有管理員能核准或退回。
 - **信用卡每月贊助**：卡號只在藍新的付款頁輸入，不經過本站。扣款結果必須能用藍新金鑰解密才會採信，資料表只有伺服器函式能寫入。
 - **公開 repo 的限制**：這個 repo 是公開的，所以排盤程式碼本身看得到。懂技術的人可以自己架一份來用，但無法透過你的網站免費取得付費內容。如果要連程式碼一起保護：
-  - 方法一：把 repo 改成私人。GitHub Pages 用在私人 repo 需要 GitHub Pro。
-  - 方法二：把前端改放到 Cloudflare Pages，它支援私人 repo，而且免費。
+  - 把 repo 改成私人即可。Cloudflare Pages 支援私人 repo，免費方案就能用。

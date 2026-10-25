@@ -11,7 +11,7 @@ const MERCHANT_ID = Deno.env.get("NEWEBPAY_MERCHANT_ID") ?? "";
 const HASH_KEY = Deno.env.get("NEWEBPAY_HASH_KEY") ?? "";
 const HASH_IV = Deno.env.get("NEWEBPAY_HASH_IV") ?? "";
 const GATEWAY = Deno.env.get("NEWEBPAY_ENV") === "production" ? "https://core.newebpay.com" : "https://ccore.newebpay.com";
-const SITE_URL = Deno.env.get("SITE_URL") ?? "https://dong0209.github.io/fortune-telling/";
+const SITE_URL = Deno.env.get("SITE_URL") ?? "https://fortune-telling-dss.pages.dev/";
 const SELF_URL = Deno.env.get("SUPABASE_URL") + "/functions/v1/newebpay";
 const PLAN_DESC: Record<string, string> = { paid: "職運羅盤付費版每月贊助", vip: "職運羅盤VIP版每月贊助" };
 
