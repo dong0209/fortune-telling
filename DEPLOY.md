@@ -25,7 +25,8 @@
 1. 打開 Supabase 後台的 **SQL Editor → New query**。
 2. 把 `supabase/migrations/20261024000000_membership.sql` 的內容整份貼上，按 **Run**。
 3. 接著再貼上 `supabase/migrations/20261024120000_sponsorship.sql` 執行，把方案改成贊助名義：贊助 NT$899 協助測試付費版、贊助 NT$2,399 協助測試 VIP 版，測試權限 365 天。
-4. 最後貼上 `supabase/migrations/20261025000000_plan_descriptions.sql` 與 `supabase/migrations/20261026000000_newebpay_period.sql` 執行。後者會把方案改成每月贊助（付費版 NT$899、VIP NT$2,399），並建立信用卡每月贊助用的資料表；街口、轉帳單次贊助改為每次開通 30 天。
+4. 再依檔名順序執行其餘的遷移檔：先貼上 `supabase/migrations/20261025000000_plan_descriptions.sql` 與 `supabase/migrations/20261026000000_newebpay_period.sql` 執行。後者會把方案改成每月贊助（付費版 NT$899、VIP NT$2,399），並建立信用卡每月贊助用的資料表；街口、轉帳單次贊助改為每次開通 30 天。
+   最後執行 `20261027000000_vip_decision_tools.sql` 更新方案說明：offer 比較、現職適配度、每月吉日、未來 7 天運勢改列 VIP。
 5. 之後要調整金額或天數，到 **Table Editor → plans** 直接改 `price`、`days`、`description` 即可，網站會即時讀取。
 
 ## 3. 部署排盤函式
@@ -57,7 +58,7 @@ git pull
 npx supabase functions deploy analyze --no-verify-jwt
 ```
 
-⚠️ **先部署函式，再合併前端。** 網頁送出的出生地是清單編號；如果網頁已經換成新清單、伺服器還是舊清單，新加入的地點會被當成台北排盤。新版函式仍然認得舊編號，所以先部署函式不會影響目前的網站。
+⚠️ **部署順序要看改動內容，PR 說明裡會註明。** 例如出生地清單那次要**先部署函式，再合併前端**： 網頁送出的出生地是清單編號；如果網頁已經換成新清單、伺服器還是舊清單，新加入的地點會被當成台北排盤。新版函式仍然認得舊編號，所以先部署函式不會影響目前的網站。
 
 ## 4. 設定登入信
 
