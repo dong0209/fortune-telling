@@ -364,3 +364,20 @@ footer nav{display:flex;gap:16px}
 .brand-mini{font-family:var(--f-logo);font-weight:400;font-size:22px;letter-spacing:.12em}
 .seal{font-family:var(--f-logo);font-weight:400;font-size:13px}
 .lede,.verdict p,.panel p,.sys-card p,.consensus p,.ew-verdict,ul.notes,.teaser-box p,.md-grid ul,.dv-luck,.fit-item p{font-family:var(--f-read)}
+
+/* ---------- 範例報告 ---------- */
+.sample-bar{border-color:var(--line-gold)}
+.sample-head{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-start;justify-content:space-between}
+.sample-head h2{margin:0 0 4px}
+.sample-head p{margin:0}
+.sample-tabs button{border:0;background:transparent;color:var(--muted);padding:7px 14px;font:inherit;font-size:13px;cursor:pointer}
+.sample-tabs button[aria-selected="true"]{background:var(--gold-soft);color:var(--gold-bright)}
+.sample-actions{display:flex;flex-wrap:wrap;gap:10px}
+.sample-veil{position:relative;max-height:380px;overflow:hidden}
+.sys-card.sample-veil{max-height:none;min-height:180px}
+.sample-veil .veil{position:absolute;left:0;right:0;bottom:0;height:72%;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+  background:linear-gradient(to bottom,transparent,var(--panel-solid) 88%);-webkit-mask-image:linear-gradient(to bottom,transparent,#000 30%);mask-image:linear-gradient(to bottom,transparent,#000 30%)}
+.sample-veil .veil-cta{position:absolute;left:0;right:0;bottom:18px;text-align:center;padding:0 16px}
+.sample-veil .veil-cta p{margin:0 0 8px;font-size:13px;color:var(--gold-bright)}
+.lock .sample-link{display:block;margin-top:10px;font-size:12.5px;color:var(--muted)}
+

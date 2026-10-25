@@ -20,7 +20,7 @@ function listHTML(arr){return '<ul class="notes">'+arr.map(function(n){return '<
 
 var LOCK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="1.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.3" fill="currentColor"/></svg>';
 function lockHTML(need,desc){
-  return '<div class="lock"><div class="lock-body">'+LOCK_SVG+'<b>'+(need==="vip"?"VIP 專屬":"付費版內容")+'</b><p>'+desc+'</p><button type="button" class="btn-gold" data-upgrade="'+need+'">'+(need==="vip"?"贊助解鎖 VIP 版":"贊助解鎖付費版")+'</button></div></div>';
+  return '<div class="lock"><div class="lock-body">'+LOCK_SVG+'<b>'+(need==="vip"?"VIP 專屬":"付費版內容")+'</b><p>'+desc+'</p><button type="button" class="btn-gold" data-upgrade="'+need+'">'+(need==="vip"?"贊助解鎖 VIP 版":"贊助解鎖付費版")+'</button><a class="sample-link" href="?sample='+need+'" data-sample="'+need+'">先看張三豐的'+(need==="vip"?"VIP":"付費版")+'範例報告</a></div></div>';
 }
 var LOCK_DESC={
   today:"每日職場指數、提案／談薪／面試／遞辭呈的宜忌，以及未來 7 天的走勢。",
