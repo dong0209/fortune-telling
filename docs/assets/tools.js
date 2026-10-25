@@ -10,7 +10,7 @@ function showError(id,e){
 
 /* ---------- 表單選單 ---------- */
 function fillSelects(){
-  CITY_NAMES.forEach(function(c,i){var o=document.createElement("option");o.value=i;o.textContent=c;$("city").appendChild(o)});
+  bindCityCombo();
   document.querySelectorAll(".sel-type").forEach(function(s){s.innerHTML='<option value="">選擇公司類型</option>'+Object.keys(FIT_NAME).map(function(k){return '<option value="'+k+'">'+FIT_NAME[k]+'</option>'}).join("")});
   document.querySelectorAll(".sel-ind").forEach(function(s){s.innerHTML='<option value="">選擇產業</option>'+WX.map(function(w,e){return '<optgroup label="'+w+'">'+IND_BY_EL[e].map(function(n){return '<option>'+n+'</option>'}).join("")+'</optgroup>'}).join("")});
   document.querySelectorAll(".sel-role").forEach(function(s){s.innerHTML='<option value="">選擇職能</option>'+ROLE_NAMES.map(function(r){return '<option>'+r+'</option>'}).join("")});
@@ -83,12 +83,57 @@ function shareURL(){
   var base=/^https?:/.test(location.protocol)?location.origin+location.pathname:location.href.split(/[?#]/)[0];
   return base+"?"+p.toString();
 }
+/* ---------- 出生地搜尋（清單在 cities.js，編號與伺服器端相同） ---------- */
+var TW_COUNTY=/[市縣]$/;
+function cityLabel(i){var c=CITY_LIST[i];return TW_COUNTY.test(c[1])?c[1]+c[0]:c[0]+"（"+c[1]+"）"}
+function cityNorm(s){return String(s).toLowerCase().replace(/臺/g,"台").replace(/[\s'’.\-（）()]/g,"")}
+var CITY_KEYS=null;
+function citySearch(q){
+  q=cityNorm(q);
+  // 名稱、地區、英文名，以及去掉「市縣區鄉鎮」字尾的簡稱（讓「台南永康」也找得到）
+  var bare=function(s){return s.length>2?s.replace(/[市縣區鄉鎮]$/,""):s};
+  if(!CITY_KEYS)CITY_KEYS=CITY_LIST.map(function(c){var n=cityNorm(c[0]),r=cityNorm(c[1]);return [n,r,cityNorm(c[2]),bare(r)+bare(n),bare(n)]});
+  if(!q)return CITY_LIST.slice(0,15).map(function(c,i){return i});
+  var hits=[];
+  for(var i=0;i<CITY_KEYS.length;i++){
+    var k=CITY_KEYS[i], s=k[0]===q||k[4]===q?0:k[0].indexOf(q)===0?1:k[0].indexOf(q)>0?2:(k[1]+k[0]).indexOf(q)>=0||(k[0]+k[1]).indexOf(q)>=0||k[3].indexOf(q)>=0?3:k[2].indexOf(q)===0?4:k[2].indexOf(q)>0?5:k[1].indexOf(q)>=0?6:-1;
+    if(s>=0)hits.push([s,i]);
+  }
+  hits.sort(function(a,b){return a[0]-b[0]||a[1]-b[1]});
+  return hits.slice(0,30).map(function(h){return h[1]});
+}
+function setCity(i){$("city").value=String(i);$("cityInput").value=cityLabel(i)}
+function bindCityCombo(){
+  var inp=$("cityInput"), list=$("cityList"), items=[], act=-1;
+  setCity(+$("city").value||0);
+  function close(){list.hidden=true;inp.setAttribute("aria-expanded","false");inp.removeAttribute("aria-activedescendant");act=-1}
+  function mark(n){
+    act=n;list.querySelectorAll("li").forEach(function(li,j){li.setAttribute("aria-selected",String(j===n))});
+    if(n>=0){var li=list.children[n];inp.setAttribute("aria-activedescendant",li.id);li.scrollIntoView({block:"nearest"})}
+  }
+  function open(q){
+    items=citySearch(q);
+    list.innerHTML=items.length?items.map(function(i,j){var c=CITY_LIST[i];return '<li role="option" id="cityOpt'+j+'" data-i="'+i+'" aria-selected="false">'+esc(c[0])+' <span>'+esc(c[1])+(/[\u3400-\u9fff]/.test(c[0])&&c[2]&&!TW_COUNTY.test(c[1])?" · "+esc(c[2]):"")+'</span></li>'}).join(""):'<li class="none">找不到這個地點，請改輸入鄰近的大城市</li>';
+    list.hidden=false;inp.setAttribute("aria-expanded","true");mark(items.length&&q?0:-1);
+  }
+  function pick(n){if(items[n]==null)return;setCity(items[n]);close()}
+  inp.addEventListener("focus",function(){inp.select();open("")});
+  inp.addEventListener("input",function(){open(inp.value)});
+  inp.addEventListener("keydown",function(e){
+    if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();if(list.hidden)open(inp.value);var n=act+(e.key==="ArrowDown"?1:-1);mark(Math.max(0,Math.min(items.length-1,n)))}
+    else if(e.key==="Enter"&&!list.hidden){e.preventDefault();pick(act>=0?act:0)}
+    else if(e.key==="Escape"&&!list.hidden){e.preventDefault();close();setCity(+$("city").value)}
+  });
+  list.addEventListener("mousedown",function(e){e.preventDefault();var li=e.target.closest("li[data-i]");if(li)pick([].indexOf.call(list.children,li))});
+  // 離開欄位時沒有選擇新地點，就恢復成目前選定的出生地
+  inp.addEventListener("blur",function(){close();setCity(+$("city").value)});
+}
 function applyParams(){
   var p=new URLSearchParams(location.search);if(!p.get("b"))return false;
   $("bd").value=p.get("b");
   var t=p.get("t");if(t&&/^\d{4}$/.test(t)){$("bt").value=t.slice(0,2)+":"+t.slice(2);$("noTime").checked=false;$("bt").disabled=false}else{$("noTime").checked=true;$("bt").disabled=true}
   (p.get("g")==="M"?$("gM"):$("gF")).checked=true;
-  if(p.get("c")&&CITY_NAMES[+p.get("c")])$("city").value=p.get("c");
+  if(p.get("c")&&CITY_LIST[+p.get("c")])setCity(+p.get("c"));
   if(p.get("q"))$("q").value=p.get("q");
   if(p.get("y"))$("yrs").value=p.get("y");
   $("sampleNote").hidden=true;return true;
