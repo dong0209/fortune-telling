@@ -1,0 +1,9 @@
+{
+  "name": "build-cities",
+  "private": true,
+  "type": "module",
+  "description": "產生出生地清單，用法見 build.mjs 開頭說明",
+  "dependencies": {
+    "opencc-js": "1.0.5"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "fortune-telling-tests",
+  "private": true,
+  "type": "module",
+  "description": "排盤引擎測試：cd tests && npm install && npm test",
+  "scripts": {
+    "test": "node --test",
+    "update-snapshots": "UPDATE_SNAPSHOTS=1 node --test"
+  },
+  "dependencies": {
+    "astronomy-engine": "2.1.19",
+    "iztro": "2.5.8",
+    "lunar-javascript": "1.7.3"
+  }
+}
