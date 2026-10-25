@@ -1,18 +1,14 @@
 /* 職運羅盤 排盤與評分引擎（只在伺服器端執行）
- * 用法：createEngine({Solar, LunarUtil, iztro, Astronomy}) → {CITIES, runAction}
+ * 用法：先載入 cities.js，再 createEngine({Solar, LunarUtil, iztro, Astronomy}) → {CITIES, runAction}
  * 檔案以「設定全域函式」的方式撰寫，Deno 以 import 執行、Node 以 require 執行皆可。 */
 (function(root){
 "use strict";
 root.createEngine=function(deps){
 var Solar=deps.Solar, LunarUtil=deps.LunarUtil, iztro=deps.iztro, Astronomy=deps.Astronomy, STROKES=deps.strokes||{};
 /* ============ 共用 ============ */
-var CITIES=[
-  ["台北",25.03,121.56,8,"Asia/Taipei"],["新北",25.01,121.46,8,"Asia/Taipei"],["桃園",24.99,121.30,8,"Asia/Taipei"],["新竹",24.80,120.97,8,"Asia/Taipei"],["台中",24.15,120.67,8,"Asia/Taipei"],
-  ["彰化",24.08,120.54,8,"Asia/Taipei"],["嘉義",23.48,120.45,8,"Asia/Taipei"],["台南",22.99,120.21,8,"Asia/Taipei"],["高雄",22.63,120.30,8,"Asia/Taipei"],["屏東",22.67,120.49,8,"Asia/Taipei"],
-  ["宜蘭",24.75,121.75,8,"Asia/Taipei"],["花蓮",23.99,121.60,8,"Asia/Taipei"],["台東",22.76,121.14,8,"Asia/Taipei"],["澎湖",23.57,119.58,8,"Asia/Taipei"],["金門",24.43,118.32,8,"Asia/Taipei"],
-  ["香港",22.32,114.17,8,"Asia/Hong_Kong"],["澳門",22.20,113.55,8,"Asia/Macau"],["上海",31.23,121.47,8,"Asia/Shanghai"],["北京",39.90,116.40,8,"Asia/Shanghai"],["新加坡",1.35,103.82,8,"Asia/Singapore"],
-  ["吉隆坡",3.14,101.69,8,"Asia/Kuala_Lumpur"],["東京",35.68,139.69,9,"Asia/Tokyo"],["首爾",37.57,126.98,9,"Asia/Seoul"],["雪梨",-33.87,151.21,10,"Australia/Sydney"],["倫敦",51.51,-0.13,0,"Europe/London"],
-  ["紐約",40.71,-74.01,-5,"America/New_York"],["洛杉磯",34.05,-118.24,-8,"America/Los_Angeles"],["溫哥華",49.28,-123.12,-8,"America/Vancouver"]];
+/* 出生地清單在 cities.js（由 scripts/cities/build.mjs 產生）：[報告顯示名稱, 緯度, 經度, 標準時區偏移, IANA 時區] */
+var CITIES=deps.cities||root.CITY_DATA;
+if(!CITIES||!CITIES.length)throw new Error("缺少出生地清單：請先載入 cities.js");
 var GAN="甲乙丙丁戊己庚辛壬癸", ZHI="子丑寅卯辰巳午未申酉戌亥";
 var WX=["木","火","土","金","水"];
 var GAN_WX={甲:0,乙:0,丙:1,丁:1,戊:2,己:2,庚:3,辛:3,壬:4,癸:4};

@@ -40,6 +40,7 @@ docs/                       前端（Cloudflare Pages 從這個資料夾發布�
   assets/config.js          網站設定：Supabase 金鑰、收款帳號
   assets/api.js             與 Supabase 溝通
   assets/render.js          依伺服器報告繪製畫面與鎖定卡
+  assets/cities.js          出生地清單（網頁搜尋用，由 scripts/cities 產生）
   assets/tools.js           工具箱、IG 圖卡、分享連結、登入與升級
   assets/sky.js             星空背景與星宿羅盤
 supabase/                   後端
@@ -47,6 +48,9 @@ supabase/                   後端
   functions/analyze/        排盤 API：查會員等級，只回傳該等級能看的內容
   functions/newebpay/       藍新金流信用卡每月贊助：建立委託、接收每期扣款通知、取消
   functions/_shared/engine.js  排盤與評分引擎
+  functions/_shared/cities.js  出生地清單（伺服器排盤用，由 scripts/cities 產生）
+scripts/cities/             從 GeoNames 產生出生地清單
+tests/                      排盤引擎與出生地清單的測試
 ```
 
 - **排盤計算全部在伺服器端**。網頁拿不到超出會員等級的資料，也沒辦法在前端偷改等級。
@@ -69,10 +73,23 @@ supabase/                   後端
 - 納入八字流年與流月、紫微流年四化，以及星盤的木星、土星、天王星、冥王星行運。
 - 三者加權後，換算成 0–100 的相對動能。
 
+## 測試
+
+```bash
+cd tests && npm install && npm test
+```
+
+- 八字四柱以獨立的曆法公式驗證（日柱以 1900-01-01 甲戌日推算、五虎遁、五鼠遁），不依賴排盤函式庫本身。
+- 真太陽時、夏令時間、南北半球時區都挑時辰交界的案例。
+- 出生地清單：舊版 28 筆編號不變（分享連結靠編號記錄出生地）、前後端一致、台灣 368 個鄉鎮市區。
+- 會員等級與回歸快照（`tests/fixtures/reports.json`）。排盤或評分邏輯有預期內的變動時，執行 `npm run update-snapshots` 更新快照。
+
+推送到 main 或開 PR 時，GitHub Actions 會自動執行測試。
+
 ## 已知限制
 
 - 真太陽時的均時差採近似公式，誤差約 1 分鐘；出生時間剛好落在時辰交界時，建議兩種排法都看看（表單可關閉真太陽時）。
-- 出生地只提供清單內的城市，經度以該城市為準。
+- 出生地收錄台灣 368 個鄉鎮市區與約 2,400 個海外城市（資料來源 GeoNames，CC BY 4.0），經度以該地點為準；清單外的地點請選鄰近城市。
 - 奇門遁甲為簡化版，不含九星、八神與天盤格局。
 - 人類圖的月交點採平均交點，不是真實交點。
 

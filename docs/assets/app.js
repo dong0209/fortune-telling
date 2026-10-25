@@ -25,7 +25,11 @@ async function refreshAccount(){
   renderAccount();
 }
 $("f").addEventListener("submit",function(e){e.preventDefault();$("sampleNote").hidden=true;run().then(function(){if(window.innerWidth<880)$("verdictBlock").scrollIntoView({behavior:"smooth"})})});
-var rzT;window.addEventListener("resize",function(){clearTimeout(rzT);rzT=setTimeout(renderChart,120)});
+// 側欄放得進視窗才固定在畫面上；放不下（例如勾選選項讓欄位變長、視窗縮小）就跟著頁面捲動
+function fitForm(){var a=document.querySelector("aside.form");a.classList.toggle("tall",a.offsetHeight>window.innerHeight-32)}
+if(window.ResizeObserver)new ResizeObserver(fitForm).observe(document.querySelector("aside.form"));
+fitForm();
+var rzT;window.addEventListener("resize",function(){fitForm();clearTimeout(rzT);rzT=setTimeout(renderChart,120)});
 bindTools();
 applyParams();
 // 回呼裡不能直接呼叫 Supabase（官方說明會造成死結），延後到下一輪事件迴圈

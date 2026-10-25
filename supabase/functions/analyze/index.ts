@@ -5,6 +5,7 @@ import { astro } from "npm:iztro@2.5.8";
 import * as Astronomy from "npm:astronomy-engine@2.1.19";
 import { createClient } from "npm:@supabase/supabase-js@2.112.4";
 import "../_shared/strokes.js";
+import "../_shared/cities.js";
 import "../_shared/engine.js";
 
 // deno-lint-ignore no-explicit-any

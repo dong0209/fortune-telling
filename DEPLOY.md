@@ -48,6 +48,17 @@ npx supabase secrets set ALLOWED_ORIGINS=https://fortune-telling-dss.pages.dev
 
 網址要跟瀏覽器網址列的開頭完全一樣（不含結尾的 `/`）。有多個網址時用逗號分隔，例如搬家期間新舊網址並存：`ALLOWED_ORIGINS=https://fortune-telling-dss.pages.dev,https://dong0209.github.io`。
 
+### 更新排盤程式時
+
+`supabase/functions/` 底下的檔案有變動（例如出生地清單 `_shared/cities.js`），要在自己的電腦重新部署：
+
+```bash
+git pull
+npx supabase functions deploy analyze --no-verify-jwt
+```
+
+⚠️ **先部署函式，再合併前端。** 網頁送出的出生地是清單編號；如果網頁已經換成新清單、伺服器還是舊清單，新加入的地點會被當成台北排盤。新版函式仍然認得舊編號，所以先部署函式不會影響目前的網站。
+
 ## 4. 設定登入信
 
 1. 到 **Authentication → URL Configuration**：
