@@ -10,5 +10,7 @@ window.APP_CONFIG = {
     bank:    { label: "銀行轉帳", bank: "396 街口電子支付", account: "900726891", name: "" },
     linepay: { label: "LINE Pay", account: "", qr: "" }
   },
+  // 信用卡每月贊助（藍新金流定期定額）：依 DEPLOY.md 設定好藍新金鑰並部署 newebpay 函式後改成 true
+  cardPayment: false,
   contactEmail: "dongdong0935@gmail.com"   // 客服信箱，留空則不顯示
 };
