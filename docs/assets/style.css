@@ -380,4 +380,6 @@ footer nav{display:flex;gap:16px}
 .sample-veil .veil-cta{position:absolute;left:0;right:0;bottom:18px;text-align:center;padding:0 16px}
 .sample-veil .veil-cta p{margin:0 0 8px;font-size:13px;color:var(--gold-bright)}
 .lock .sample-link{display:block;margin-top:10px;font-size:12.5px;color:var(--muted)}
-
+.lock .lock-hint{color:var(--ink);font-size:14px;margin:6px 0 2px}
+.lock .lock-hint b,.teaser p b{color:var(--gold-bright)}
+.cmp-teaser{margin:0 0 14px}

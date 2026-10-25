@@ -65,9 +65,9 @@ async function runSynastry(){
   }catch(e){showError("synOut",e)}
 }
 function applyTierUI(tier){
-  var paid=tier==="paid"||tier==="vip", vip=tier==="vip";
-  $("toolArea").hidden=!paid;$("toolLock").hidden=paid;
-  $("toolLock").innerHTML=paid?"":lockHTML("paid",LOCK_DESC.tools);
+  var vip=tier==="vip";
+  $("toolArea").hidden=!vip;$("toolLock").hidden=vip;
+  $("toolLock").innerHTML=vip?"":lockHTML("vip",LOCK_DESC.tools);
   $("synForm").hidden=!vip;$("synLock").hidden=vip;
   $("synLock").innerHTML=vip?"":lockHTML("vip",LOCK_DESC.syn);
   ["offerOut","fitOut","synOut"].forEach(function(id){$(id).innerHTML=""});
