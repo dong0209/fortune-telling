@@ -1,5 +1,7 @@
 // 以 Node 載入伺服器端的排盤引擎，套件版本與 supabase/functions/analyze/index.ts 相同
 import { createRequire } from "node:module";
+// 伺服器以 UTC 運作；在其他時區的電腦上跑測試也要得到一樣的結果
+process.env.TZ = "UTC";
 const require = createRequire(import.meta.url);
 const lunar = require("lunar-javascript");
 const { astro } = require("iztro");

@@ -41,6 +41,8 @@ docs/                       前端（Cloudflare Pages 從這個資料夾發布�
   assets/api.js             與 Supabase 溝通
   assets/render.js          依伺服器報告繪製畫面與鎖定卡
   assets/cities.js          出生地清單（網頁搜尋用，由 scripts/cities 產生）
+  assets/sample.js          範例報告模式（?sample=free|paid|vip）
+  assets/sample/            範例報告資料（由 tests/build-sample.mjs 產生）
   assets/tools.js           工具箱、IG 圖卡、分享連結、登入與升級
   assets/sky.js             星空背景與星宿羅盤
 supabase/                   後端
@@ -85,6 +87,14 @@ cd tests && npm install && npm test
 - 會員等級與回歸快照（`tests/fixtures/reports.json`）。排盤或評分邏輯有預期內的變動時，執行 `npm run update-snapshots` 更新快照。
 
 推送到 main 或開 PR 時，GitHub Actions 會自動執行測試。
+
+## 範例報告
+
+網址加上 `?sample=free`、`?sample=paid` 或 `?sample=vip`，會顯示虛構人物「張三豐」在各等級實際看到的報告，讓訪客在贊助前知道會拿到什麼。鎖定卡與贊助視窗都有「看範例報告」的連結。
+
+- 資料事先算好放在 `docs/assets/sample/`，範例模式不會呼叫伺服器。交叉比對（預設學派組合）、月份詳解、奇門擇時都能操作；offer 比較、合盤等需要自行輸入的功能會提示先用自己的生日排盤。
+- VIP 範例中，梅花易數、九宮飛星、奇門遁甲、人類圖只露出上半部，下方模糊處理。
+- 排盤或評分邏輯改變後，執行 `cd tests && npm run build-sample` 重新產生；範例過期時測試會失敗提醒。
 
 ## 已知限制
 

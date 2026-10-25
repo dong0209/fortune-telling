@@ -257,7 +257,7 @@ async function openUpgrade(need){
   var methods=payMethods();if(methods.indexOf(UP.method)<0)UP.method=methods[0];
   if(!methods.length&&!card){body.innerHTML='<p class="notice">尚未設定贊助方式。</p>';return}
   var price=function(x){return Number(x.price).toLocaleString('en-US')};
-  body.innerHTML='<p style="margin-top:0">職運羅盤目前在測試階段，你的贊助會用來支持網站開發與維運。贊助後可以提前使用並協助測試對應版本的功能。</p><p class="small muted">目前權限：'+TIER_NAME[p.expired?"free":p.tier]+(p.tier!=="free"&&p.tier_expires_at?"（"+(p.expired?"已於 ":"有效至 ")+fmtDate(p.tier_expires_at)+"）":"")+'</p>'+
+  body.innerHTML='<p style="margin-top:0">職運羅盤目前在測試階段，你的贊助會用來支持網站開發與維運。贊助後可以提前使用並協助測試對應版本的功能。</p><p class="small">不確定各版本差在哪？<a href="?sample=paid" data-sample="paid">看虛構人物張三豐的範例報告</a></p><p class="small muted">目前權限：'+TIER_NAME[p.expired?"free":p.tier]+(p.tier!=="free"&&p.tier_expires_at?"（"+(p.expired?"已於 ":"有效至 ")+fmtDate(p.tier_expires_at)+"）":"")+'</p>'+
     subs.map(function(x){return '<div class="sub-box"><div><b>每月贊助中：'+TIER_NAME[x.plan]+'</b><span class="small muted">NT$ '+Number(x.amount).toLocaleString('en-US')+'／月'+(x.next_auth_date?'・下次扣款 '+fmtDate(x.next_auth_date):'')+'</span></div><button type="button" class="btn-line" data-cancel="'+x.id+'">取消每月贊助</button><p class="small" role="status"></p></div>'}).join("")+
     '<div class="plans">'+UP.plans.map(function(x){var dis=isVip&&x.id==="paid";return '<button type="button" class="plan" data-plan="'+x.id+'" aria-pressed="'+(x.id===UP.plan)+'"'+(dis?" disabled":"")+'><b>'+esc(x.name)+'</b><span class="price">每月 NT$ '+price(x)+'</span><p>'+esc(x.description)+'</p></button>'}).join("")+'</div>'+
     (card?'<section class="pay-sec"><span class="lab">信用卡每月贊助</span><p class="small" style="margin-top:4px">透過藍新金流刷卡，卡號由藍新處理，不會經過本站。每月自動扣款，可以隨時在這裡取消；取消後已付款的期間照常可以使用。付費版升級 VIP 時，VIP 首期扣款成功後會自動停止付費版的扣款，付費版剩餘天數不退費。</p>'+
@@ -346,6 +346,9 @@ function bindTools(){
   $("loginForm").addEventListener("submit",doLogin);
   document.querySelectorAll("dialog [data-close]").forEach(function(b){b.addEventListener("click",function(){b.closest("dialog").close()})});
   document.addEventListener("click",function(e){var b=e.target.closest("[data-upgrade]");if(b)openUpgrade(b.dataset.upgrade)});
+  // 「看範例報告」連結：在同一頁切換到範例模式，不重新載入
+  document.addEventListener("click",function(e){var a=e.target.closest("a[data-sample]");if(!a)return;e.preventDefault();
+    var d=a.closest("dialog");if(d)d.close();loadSample(a.dataset.sample).then(function(){$("sampleBar").scrollIntoView({behavior:"smooth"})})});
   [["#tabs","p-"],["#ttabs","p-"]].forEach(function(t){
     document.querySelectorAll(t[0]+" button").forEach(function(b){b.addEventListener("click",function(){
       document.querySelectorAll(t[0]+" button").forEach(function(x){x.setAttribute("aria-selected",x===b?"true":"false");$(t[1]+x.dataset.p).hidden=x!==b});

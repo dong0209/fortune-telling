@@ -24,7 +24,7 @@ async function refreshAccount(){
   try{STATE.user=await API.user();STATE.profile=STATE.user?await API.profile():null}catch(e){STATE.profile=null}
   renderAccount();
 }
-$("f").addEventListener("submit",function(e){e.preventDefault();$("sampleNote").hidden=true;run().then(function(){if(window.innerWidth<880)$("verdictBlock").scrollIntoView({behavior:"smooth"})})});
+$("f").addEventListener("submit",function(e){e.preventDefault();$("sampleNote").hidden=true;exitSample();run().then(function(){if(window.innerWidth<880)$("verdictBlock").scrollIntoView({behavior:"smooth"})})});
 // 側欄放得進視窗才固定在畫面上；放不下（例如勾選選項讓欄位變長、視窗縮小）就跟著頁面捲動
 function fitForm(){var a=document.querySelector("aside.form");a.classList.toggle("tall",a.offsetHeight>window.innerHeight-32)}
 if(window.ResizeObserver)new ResizeObserver(fitForm).observe(document.querySelector("aside.form"));
@@ -33,5 +33,7 @@ var rzT;window.addEventListener("resize",function(){fitForm();clearTimeout(rzT);
 bindTools();
 applyParams();
 // 回呼裡不能直接呼叫 Supabase（官方說明會造成死結），延後到下一輪事件迴圈
-API.onAuth(function(ev){if(ev==="SIGNED_IN"||ev==="SIGNED_OUT"||ev==="USER_UPDATED")setTimeout(function(){if($("loginDlg").open)$("loginDlg").close();refreshAccount().then(run)},0)});
-refreshAccount().then(run);
+// 範例報告模式不向伺服器排盤；登入狀態改變時也只更新帳號資訊
+API.onAuth(function(ev){if(ev==="SIGNED_IN"||ev==="SIGNED_OUT"||ev==="USER_UPDATED")setTimeout(function(){if($("loginDlg").open)$("loginDlg").close();refreshAccount().then(function(){if(!SAMPLE)run()})},0)});
+if(sampleTierFromURL()){refreshAccount();loadSample(sampleTierFromURL())}
+else refreshAccount().then(run);
