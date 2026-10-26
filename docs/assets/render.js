@@ -349,8 +349,42 @@ function renderCompare(r){
   $("cmpOut").innerHTML=html;
 }
 
+/* ---------- 解鎖完整報告：免費版把今日運勢、時機曲線、公司類型、決策工具合成一區，不再連排鎖卡 ---------- */
+var UNLOCK_PREVIEW={
+  today:'<div class="pv-today"><b>78</b><div>'+["宜","宜","平","忌","宜","平"].map(function(x){return '<i class="'+x+'">'+x+'</i>'}).join("")+'</div></div>',
+  chart:'<svg viewBox="0 0 200 70" preserveAspectRatio="none"><path d="M0 50 L20 38 L40 44 L60 20 L80 30 L100 26 L120 48 L140 14 L160 30 L180 22 L200 36" stroke="var(--s-move)"/><path d="M0 30 L20 26 L40 14 L60 22 L80 12 L100 30 L120 24 L140 34 L160 18 L180 26 L200 20" stroke="var(--s-stay)"/></svg>',
+  fit:'<div class="pv-bars">'+[88,63,61,52].map(function(v){return '<i style="width:'+v+'%"></i>'}).join("")+'</div>',
+  tools:'<div class="pv-vs"><span>A</span><b>VS</b><span>B</span></div>'
+};
+function renderUnlock(rep){
+  var locked=!rep.months;
+  $("unlockBlock").hidden=!locked;
+  ["todayBlock","chartBlock","fitBlock","toolbox"].forEach(function(id){$(id).hidden=locked});
+  if(!locked){$("unlockArea").innerHTML="";return}
+  var tiles=[["today","今天的職場指數","paid"],["chart","36 個月時機曲線","paid"],["fit","適合的公司類型","paid"],["tools","決策工具","vip"]];
+  $("unlockArea").innerHTML='<div class="unlock-grid">'+tiles.map(function(t){
+    return '<div class="unlock-tile"><div class="pv" aria-hidden="true">'+UNLOCK_PREVIEW[t[0]]+'</div><h3>'+t[1]+(t[2]==="vip"?' <span class="lk">VIP</span>':'')+'</h3><p>'+LOCK_DESC[t[0]]+'</p></div>'}).join("")+'</div>'+
+    '<div class="unlock-cta"><p>付費版一次解鎖前三項，以及八字、紫微斗數、星盤等學派的完整解讀。</p><div><button type="button" class="btn-gold" data-upgrade="paid">贊助解鎖付費版</button><a class="sample-link" href="?sample=paid" data-sample="paid">先看張三豐的付費版範例報告</a></div></div>';
+}
+
+/* ---------- 手機版：有結果後把生辰表單收成一行摘要 ---------- */
+function renderFormSum(){
+  var example=!!window.SAMPLE||!$("sampleNote").hidden, t=$("noTime").checked||!$("bt").value?"時辰不詳":$("bt").value;
+  var who=window.SAMPLE?"範例・"+esc($("nm").value):example?"範例命盤":"你的命盤";
+  $("formSum").innerHTML='<div><span class="lab">'+who+'</span><b>'+esc($("bd").value.replace(/-/g,"/"))+'　'+t+'</b><span class="small muted">'+esc($("cityInput").value)+'・'+($("gM").checked?"男":"女")+'</span></div>'+
+    '<button type="button" class="btn-line" id="formEdit">'+(example?"換成我的生辰":"修改生辰")+'</button>';
+  $("formEdit").addEventListener("click",function(){expandForm(true)});
+  $("formSum").hidden=false;
+  document.querySelector("aside.form").classList.add("collapsed");
+}
+function expandForm(focus){
+  document.querySelector("aside.form").classList.remove("collapsed");
+  if(focus){$("bd").focus();$("bd").scrollIntoView({behavior:"smooth",block:"center"})}
+}
+
 function renderAll(rep){
   todaySel=0;chartSel=null;
+  renderUnlock(rep);renderFormSum();
   renderVerdict(rep);renderToday(rep);renderChartArea(rep);renderFit(rep);
   renderBazi(rep);renderZiwei(rep);renderAstro(rep);renderQimen(rep);renderHD(rep);
   renderIching(rep);renderMeihua(rep);renderNumerology(rep);renderNineStar(rep);renderName(rep);renderChips(rep);

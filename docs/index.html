@@ -30,6 +30,7 @@
 
 <div class="layout wrap">
   <aside class="form panel-box">
+    <div class="form-sum" id="formSum" hidden></div>
     <h2>輸入生辰</h2>
     <p class="hint">生辰只用來排盤，不會被儲存。</p>
     <div class="sample" id="sampleNote">目前顯示的是範例命盤，換成你的生辰即可重新推演。</div>
@@ -68,23 +69,6 @@
     <section class="block panel-box sample-bar" id="sampleBar" hidden></section>
     <section class="block panel-box" id="verdictBlock"><p class="loading">正在推演命盤…</p></section>
 
-    <section class="block panel-box" id="compareBlock">
-      <p class="eyebrow"><span>交叉比對</span>East × West</p>
-      <h2>東西方學派交叉比對</h2>
-      <p class="muted small" style="margin:0 0 12px">一術見其一面，眾術方見全貌。擇數派同觀，看諸家之言是相互印證，還是各有所見。免費版可看 1 種，同時比對 2 種需要付費版，3 種以上需要 VIP。</p>
-      <div id="cmpTeaser"></div>
-      <div class="chips" id="sysChips" role="group" aria-label="選擇命理系統"></div>
-      <div class="cmp-bar"><span class="small muted" id="cmpCount"></span><button type="button" class="btn-gold" id="cmpGo">開始比對</button></div>
-      <div id="cmpHint"></div>
-      <div id="cmpOut" aria-live="polite"></div>
-    </section>
-
-    <section class="block panel-box">
-      <p class="eyebrow"><span>流日</span>Daily</p>
-      <h2 id="todayTitle">今天適合做什麼</h2>
-      <div id="today"></div>
-    </section>
-
     <section class="block panel-box" id="divineBlock">
       <p class="eyebrow"><span>問卦</span>Daily Oracle</p>
       <h2>每日職場一卦</h2>
@@ -96,13 +80,37 @@
       <div id="dvOut" aria-live="polite"></div>
     </section>
 
-    <section class="block panel-box">
+    <section class="block panel-box" id="compareBlock">
+      <p class="eyebrow"><span>交叉比對</span>East × West</p>
+      <h2>東西方學派交叉比對</h2>
+      <p class="muted small" style="margin:0 0 12px">一術見其一面，眾術方見全貌。擇數派同觀，看諸家之言是相互印證，還是各有所見。免費版可看 1 種，同時比對 2 種需要付費版，3 種以上需要 VIP。</p>
+      <div id="cmpTeaser"></div>
+      <div class="chips" id="sysChips" role="group" aria-label="選擇命理系統"></div>
+      <div class="cmp-bar"><span class="small muted" id="cmpCount"></span><button type="button" class="btn-gold" id="cmpGo">開始比對</button></div>
+      <div id="cmpHint"></div>
+      <div id="cmpOut" aria-live="polite"></div>
+    </section>
+
+    <section class="block panel-box" id="unlockBlock" hidden>
+      <p class="eyebrow"><span>完整報告</span>Full Reading</p>
+      <h2>完整命盤還會看到什麼</h2>
+      <div id="unlockArea"></div>
+    </section>
+
+    <section class="block panel-box" id="todayBlock">
+      <p class="eyebrow"><span>流日</span>Daily</p>
+      <h2 id="todayTitle">今天適合做什麼</h2>
+      <div id="today"></div>
+    </section>
+
+
+    <section class="block panel-box" id="chartBlock">
       <p class="eyebrow"><span>天時</span>36 Months</p>
       <h2>轉職與升遷的時機曲線</h2>
       <div id="chartArea"></div>
     </section>
 
-    <section class="block panel-box">
+    <section class="block panel-box" id="fitBlock">
       <p class="eyebrow"><span>地利</span>Where You Shine</p>
       <h2>什麼樣的公司適合你</h2>
       <div id="fitArea"></div>

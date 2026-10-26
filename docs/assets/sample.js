@@ -37,7 +37,7 @@ function renderSampleBar(){
     '<div class="sample-actions">'+(S.tier==="free"?"":'<button type="button" class="btn-gold" data-upgrade="'+S.tier+'">贊助解鎖'+TIER_NAME[S.tier]+'</button>')+
     '<button type="button" class="btn-line" id="sampleExit">用我的生日排盤</button></div>';
   $("sampleBar").querySelectorAll("[data-tier]").forEach(function(b){b.addEventListener("click",function(){loadSample(b.dataset.tier)})});
-  $("sampleExit").addEventListener("click",function(){exitSample();$("bd").focus();$("bd").scrollIntoView({behavior:"smooth",block:"center"})});
+  $("sampleExit").addEventListener("click",function(){exitSample();expandForm(true)});
 }
 
 // VIP 專屬區塊只露出上半部，下方模糊並放上解鎖按鈕
