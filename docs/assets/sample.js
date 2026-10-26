@@ -44,7 +44,7 @@ function renderSampleBar(){
 function veil(el,text){
   if(!el||el.querySelector(":scope > .veil"))return;
   el.classList.add("sample-veil");
-  el.insertAdjacentHTML("beforeend",'<div class="veil" aria-hidden="true"></div><div class="veil-cta"><p>'+text+'</p><button type="button" class="btn-gold" data-upgrade="vip">贊助解鎖 VIP 版</button></div>');
+  el.insertAdjacentHTML("beforeend",'<div class="veil" aria-hidden="true"></div><div class="veil-cta"><p>'+text+'</p><button type="button" class="btn-upsell" data-upgrade="vip">贊助解鎖 VIP 版</button></div>');
 }
 function veilVip(){
   if(SAMPLE.tier!=="vip")return;

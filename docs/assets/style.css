@@ -46,6 +46,9 @@ button,.btn{font:inherit;cursor:pointer}
 .btn-gold:hover{filter:brightness(1.07)}
 .btn-line{border:1px solid var(--line-gold);border-radius:3px;background:transparent;color:var(--gold-bright);padding:7px 14px;font-size:13px;letter-spacing:.06em}
 .btn-line:hover{border-color:var(--gold);background:var(--gold-soft)}
+/* 贊助按鈕：描邊樣式，不跟各區的主要動作（金色實心）搶；只有合併解鎖區與範例列用金色實心 */
+.btn-upsell{display:inline-block;border:1px solid var(--gold);border-radius:3px;padding:10px 20px;background:var(--gold-soft);color:var(--gold-bright);font-weight:700;letter-spacing:.14em;text-decoration:none;text-align:center}
+.btn-upsell:hover{background:rgba(217,181,106,.24)}
 .btn-text{border:0;background:none;color:var(--muted);font-size:13px;padding:6px}
 .btn-text:hover{color:var(--ink)}
 button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
@@ -237,6 +240,13 @@ tr.hl-row td{background:var(--gold-soft)}
 
 /* 分頁 */
 .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:18px;overflow-x:auto}
+/* 寬螢幕上分頁換行全部顯示；窄螢幕橫向捲動，左右用漸層提示還有分頁（tools.js 依捲動位置切換 fade-l／fade-r） */
+@media (min-width:881px){#tabs{flex-wrap:wrap;overflow:visible}}
+.tabs{scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs.fade-r{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent)}
+.tabs.fade-l{-webkit-mask-image:linear-gradient(90deg,transparent,#000 40px);mask-image:linear-gradient(90deg,transparent,#000 40px)}
+.tabs.fade-l.fade-r{-webkit-mask-image:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent)}
 .tabs button{font-size:15px;background:none;border:0;padding:9px 14px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;font-family:var(--f-display);font-weight:600;display:flex;align-items:center;gap:6px}
 .tabs button[aria-selected="true"]{color:var(--gold-bright);border-bottom-color:var(--gold)}
 .tabs button .lk{font-family:var(--f-latin);font-size:9.5px;letter-spacing:.12em;color:var(--gold);border:1px solid var(--line-gold);padding:0 5px;border-radius:2px}

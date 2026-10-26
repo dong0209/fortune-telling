@@ -318,6 +318,12 @@ function bindTools(){
   [["#tabs","p-"],["#ttabs","p-"]].forEach(function(t){
     document.querySelectorAll(t[0]+" button").forEach(function(b){b.addEventListener("click",function(){
       document.querySelectorAll(t[0]+" button").forEach(function(x){x.setAttribute("aria-selected",x===b?"true":"false");$(t[1]+x.dataset.p).hidden=x!==b});
+      b.scrollIntoView({block:"nearest",inline:"nearest",behavior:"smooth"});
     })});
+    var bar=document.querySelector(t[0]);
+    function fade(){var max=bar.scrollWidth-bar.clientWidth;bar.classList.toggle("fade-l",bar.scrollLeft>4);bar.classList.toggle("fade-r",max-bar.scrollLeft>4)}
+    bar.addEventListener("scroll",fade,{passive:true});
+    // 區塊從隱藏變顯示（例如切換會員等級）時寬度才算得出來，用 ResizeObserver 一併處理
+    if(window.ResizeObserver)new ResizeObserver(fade).observe(bar);else window.addEventListener("resize",fade);fade();
   });
 }
