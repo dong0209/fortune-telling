@@ -180,6 +180,7 @@ section.block{padding:24px 26px;min-width:0}
 /* 今日 */
 .today{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,360px);gap:24px;align-items:start}
 @media (max-width:760px){.today{grid-template-columns:minmax(0,1fr)}}
+.today.one{grid-template-columns:minmax(0,1fr)}
 .today-head{display:flex;gap:16px;align-items:center;margin-bottom:12px}
 .today-score{display:flex;flex-direction:column;align-items:center;justify-content:center;width:84px;height:84px;border:1.5px solid var(--gold);border-radius:50%;flex:0 0 auto;box-shadow:0 0 30px rgba(217,181,106,.15),inset 0 0 20px rgba(217,181,106,.08)}
 .today-score b{font-size:28px;line-height:1;color:var(--gold-bright)}
@@ -432,3 +433,9 @@ footer nav{display:flex;gap:16px}
 .unlock-cta p{margin:0;color:var(--muted);font-size:14px;max-width:44ch}
 .unlock-cta>div{display:flex;flex-direction:column;align-items:center;gap:8px}
 .unlock-cta .sample-link{font-size:12.5px;color:var(--muted)}
+.pv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.pv-grid i{font-style:normal;font-family:var(--f-display);font-size:12px;text-align:center;border:1px solid var(--line-gold);border-radius:2px;padding:3px 0;color:var(--gold)}
+/* 免費版天機總斷：最適合的環境 */
+.top-fit{margin-top:10px}
+.top-fit>b{font-family:var(--f-display);font-size:18px;color:var(--gold-bright)}
+.verdict-more{margin:14px 0 0;border-top:1px solid var(--line);padding-top:12px}

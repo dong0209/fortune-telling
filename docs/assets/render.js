@@ -26,6 +26,7 @@ var LOCK_DESC={
   today:"今天的職場指數，以及提案／談薪／面試／遞辭呈的宜忌。VIP 再加上未來 7 天的走勢。",
   chart:"未來 36 個月的轉職與升遷動能曲線，點選任一月份就能看詳解與建議。當月吉日為 VIP 專屬。",
   fit:"六種公司類型的契合排名、判斷依據，以及依喜用五行推薦的產業。",
+  schools:"八字、紫微斗數、星盤、易經、生命靈數、姓名學各自怎麼看你的職涯，並可兩兩並排比對。",
   tools:"兩家 offer 比較、現職適配度檢查、主管／同事合盤，把命盤用在手上真實的選擇。",
   syn:"輸入主管或同事的生日，分析五行生剋與人類圖互動，給你相處與升遷策略。",
   bazi:"身強身弱、用神、十神職場能量、大運與流年喜忌。",
@@ -54,12 +55,17 @@ function renderVerdict(rep){
     left+='<p class="muted small" style="margin:0">'+esc(v.summary)+'</p><div class="windows">'+
       '<div class="win"><div class="k"><span class="dot" style="background:var(--s-move)"></span>轉職窗口</div>'+v.windows.move.map(function(x){return '<div><b>'+ym(x)+'</b> <span class="muted small">'+x.move+'</span></div>'}).join("")+'</div>'+
       '<div class="win"><div class="k"><span class="dot" style="background:var(--s-stay)"></span>升遷窗口</div>'+v.windows.stay.map(function(x){return '<div><b>'+ym(x)+'</b> <span class="muted small">'+x.stay+'</span></div>'}).join("")+'</div></div>';
+  }else if(v.next){
+    left+='<div class="lab" style="margin-top:14px">未來 12 個月的最佳月份</div><div class="windows" style="margin-top:6px">'+
+      '<div class="win"><div class="k"><span class="dot" style="background:var(--s-move)"></span>轉職窗口</div><div><b>'+ym(v.next.move)+'</b> <span class="muted small">'+v.next.move.v+'</span></div></div>'+
+      '<div class="win"><div class="k"><span class="dot" style="background:var(--s-stay)"></span>升遷窗口</div><div><b>'+ym(v.next.stay)+'</b> <span class="muted small">'+v.next.stay.v+'</span></div></div></div>'+
+      '<div class="win top-fit"><div class="k">最適合你的環境</div><b>'+esc(v.topFit.name)+'</b><p class="small muted" style="margin:2px 0 0">'+esc(v.topFit.desc)+'</p></div>';
   }
   var inp=rep.input;
   $("verdictBlock").innerHTML='<p class="eyebrow"><span>天機總斷</span>'+esc(inp.date+(inp.time?" "+inp.time:"")+" · "+inp.city+" · "+inp.gender)+'</p>'+
     (inp.timeNote?'<p class="small muted" style="margin:-2px 0 6px">'+esc(inp.timeNote)+'</p>':"")+
     '<div class="verdict"><div style="min-width:0">'+left+'</div><div style="min-width:0">'+right+'</div></div>'+
-    (paid?"":'<div class="teaser"><p>完整判讀會列出未來 36 個月的轉職與升遷窗口月份、你的喜用神、紫微官祿宮與星盤天頂解讀。</p><button type="button" class="btn-upsell" data-upgrade="paid">贊助解鎖完整判讀</button></div>');
+    (paid?"":'<p class="verdict-more small muted">想知道為什麼是這幾個月、這類公司？付費版會攤開 36 個月的完整曲線，以及八字、紫微、星盤各自的理由。</p>');
 }
 
 /* ---------- 每日職場運勢 ---------- */
@@ -68,13 +74,14 @@ function renderToday(rep){
   if(!rep.today){$("todayTitle").textContent="今天適合做什麼";$("today").innerHTML=lockHTML("paid",LOCK_DESC.today);return}
   var days=rep.today, t=days[todaySel]||days[0], first=parseDate(days[0].date);
   $("todayTitle").textContent=todaySel===0?"今天適合做什麼":md(t.date)+"適合做什麼";
-  $("today").innerHTML='<div class="today"><div style="min-width:0">'+
+  $("today").innerHTML='<div class="today'+(days.length<2?" one":"")+'"><div style="min-width:0">'+
     '<div class="today-head"><div class="today-score"><b class="num">'+t.score+'</b><span>職場指數</span></div>'+
     '<div><div class="today-date">'+md(t.date)+'　'+t.gz+'日</div><div class="muted small">流日'+t.god+(t.door?'・巳時值使'+t.door+'門・開門在'+t.openDir+'方':'')+(t.weekend?'・週末':'')+'</div></div></div>'+
     '<div class="acts">'+ACTS.map(function(a){var s=t.acts[a];return '<div class="act '+s+'"><span>'+a+'</span><b>'+ACT_LABEL[s]+'</b></div>'}).join("")+'</div>'+
     listHTML(t.notes)+'</div>'+
-    '<div class="strip" role="group" aria-label="未來 7 天">'+days.map(function(d,i){var dt=parseDate(d.date);
-      return '<button type="button" class="sday'+(i===todaySel?" on":"")+'" data-i="'+i+'" aria-pressed="'+(i===todaySel)+'"><span>'+(i===0?"今天":"週"+WEEK[dt.getDay()])+'</span><span class="num small">'+(dt.getMonth()+1)+'/'+dt.getDate()+'</span><span class="sbar"><i style="height:'+d.score+'%"></i></span><b class="num">'+d.score+'</b></button>'}).join("")+'</div></div>';
+    // 只有今天一天（免費版、付費版）時不畫走勢條
+    (days.length<2?'':'<div class="strip" role="group" aria-label="未來 7 天">'+days.map(function(d,i){var dt=parseDate(d.date);
+      return '<button type="button" class="sday'+(i===todaySel?" on":"")+'" data-i="'+i+'" aria-pressed="'+(i===todaySel)+'"><span>'+(i===0?"今天":"週"+WEEK[dt.getDay()])+'</span><span class="num small">'+(dt.getMonth()+1)+'/'+dt.getDate()+'</span><span class="sbar"><i style="height:'+d.score+'%"></i></span><b class="num">'+d.score+'</b></button>'}).join("")+'</div>')+'</div>';
   $("today").querySelectorAll(".sday").forEach(function(b){b.addEventListener("click",function(){todaySel=+b.dataset.i;renderToday(rep)})});
   var w=rep.hints&&rep.hints.week;
   if(w)$("today").insertAdjacentHTML("beforeend",'<div class="teaser"><p>'+(w.better?"未來 6 天中，有 <b>"+w.better+" 天</b>職場指數比今天高，最高 <b>"+w.max+" 分</b>。":"未來 6 天的職場指數都沒有比今天高，重要的事把握今天。")+'哪一天適合面試、談薪或遞辭呈，VIP 可以看完整 7 天。</p><button type="button" class="btn-upsell" data-upgrade="vip">贊助解鎖 VIP 版</button></div>');
@@ -301,7 +308,7 @@ function renderDivine(d,note){
 
 /* ---------- 綜合比對 ---------- */
 var CMP={sel:[],tier:"free"};
-function cmpLimit(){return CMP.tier==="vip"?99:CMP.tier==="paid"?2:1}
+function cmpLimit(){return CMP.tier==="vip"?99:2}
 var STANCE_ADVICE={move:"建議你轉職",stay:"建議你留任",wait:"建議你先觀望"};
 function renderCmpTeaser(rep){
   var c=rep.hints&&rep.hints.consensus;
@@ -311,9 +318,22 @@ function renderCmpTeaser(rep){
     :"我們已經用 "+c.systems+" 種學派排過你的命盤，<b>各派意見分歧</b>（"+tally+"）。")+"各學派的理由、時機交集與綜合建議，VIP 才能完整比對。</p>"+
     '<button type="button" class="btn-upsell" data-upgrade="vip">贊助解鎖 VIP 版</button></div>';
 }
+function renderCmpFree(rep){
+  var c=rep.hints.consensus, v=c.votes, tot=v.move+v.stay+v.wait;
+  $("cmpTeaser").innerHTML='<div class="consensus"><div><span class="lab">'+c.systems+' 種學派的投票結果</span><div class="cons-call">'+(c.lead?'傾向<em>'+STANCE_NAME[c.lead]+'</em>':'<em>意見分歧</em>')+'</div>'+
+    '<p style="margin:0">'+(c.lead?v[c.lead]+" 種學派"+STANCE_ADVICE[c.lead]+"。":"各學派看法不一，這個決定沒有一面倒的答案，請以現實條件為主。")+'</p></div>'+
+    '<div style="min-width:0"><span class="lab">票數</span><div class="vote-bar">'+["move","stay","wait"].map(function(k){return v[k]?'<i class="st-'+k+'" style="width:'+(v[k]/tot*100)+'%"></i>':""}).join("")+'</div>'+
+    '<div class="vote-legend small">'+["move","stay","wait"].map(function(k){return '<span><i class="dot st-'+k+'"></i>'+STANCE_NAME[k]+' '+v[k]+'</span>'}).join("")+'</div></div></div>'+
+    '<p class="small muted" style="margin:0">付費版可以並排比對各學派的理由、轉職與升遷時機，看它們在哪裡印證、在哪裡分歧。</p>';
+}
 function renderChips(rep){
-  CMP.tier=rep.tier;renderCmpTeaser(rep);
-  if(!CMP.sel.length)CMP.sel=CMP.tier==="vip"?["bazi","ziwei","astro","iching","meihua"]:CMP.tier==="paid"?["bazi","ziwei"]:["bazi"];
+  CMP.tier=rep.tier;
+  var free=rep.tier==="free";
+  ["sysChips","cmpHint","cmpOut"].forEach(function(id){$(id).hidden=free});
+  document.querySelector("#compareBlock .cmp-bar").hidden=free;
+  if(free){renderCmpFree(rep);return}
+  renderCmpTeaser(rep);
+  if(!CMP.sel.length)CMP.sel=CMP.tier==="vip"?["bazi","ziwei","astro","iching","meihua"]:["bazi","ziwei"];
   $("sysChips").innerHTML=["東方","西方"].map(function(sc){return '<div class="chip-row"><span class="school">'+sc+'學派</span>'+rep.systems.filter(function(x){return x.school===sc}).map(function(x){var on=CMP.sel.indexOf(x.key)>=0;return '<button type="button" class="chip" data-k="'+x.key+'" aria-pressed="'+on+'">'+x.name+(x.vipOnly?' <span class="lk">VIP</span>':'')+'</button>'}).join("")+'</div>'}).join("");
   $("sysChips").querySelectorAll(".chip").forEach(function(b){b.addEventListener("click",function(){
     var k=b.dataset.k,i=CMP.sel.indexOf(k);if(i>=0)CMP.sel.splice(i,1);else CMP.sel.push(k);
@@ -323,7 +343,6 @@ function renderChips(rep){
 function cmpNeed(rep){
   var vipSys=CMP.sel.some(function(k){return rep.systems.some(function(x){return x.key===k&&x.vipOnly})});
   if((vipSys||CMP.sel.length>=3)&&CMP.tier!=="vip")return "vip";
-  if(CMP.sel.length===2&&CMP.tier==="free")return "paid";
   return null;
 }
 function cmpStatus(rep){
@@ -349,9 +368,9 @@ function renderCompare(r){
   $("cmpOut").innerHTML=html;
 }
 
-/* ---------- 解鎖完整報告：免費版把今日運勢、時機曲線、公司類型、決策工具合成一區，不再連排鎖卡 ---------- */
+/* ---------- 解鎖完整報告：免費版把時機曲線、公司類型排名、學派解讀、決策工具合成一區，不再連排鎖卡 ---------- */
 var UNLOCK_PREVIEW={
-  today:'<div class="pv-today"><b>78</b><div>'+["宜","宜","平","忌","宜","平"].map(function(x){return '<i class="'+x+'">'+x+'</i>'}).join("")+'</div></div>',
+  schools:'<div class="pv-grid">'+["八字","紫微","星盤","易經","靈數","姓名"].map(function(x){return '<i>'+x+'</i>'}).join("")+'</div>',
   chart:'<svg viewBox="0 0 200 70" preserveAspectRatio="none"><path d="M0 50 L20 38 L40 44 L60 20 L80 30 L100 26 L120 48 L140 14 L160 30 L180 22 L200 36" stroke="var(--s-move)"/><path d="M0 30 L20 26 L40 14 L60 22 L80 12 L100 30 L120 24 L140 34 L160 18 L180 26 L200 20" stroke="var(--s-stay)"/></svg>',
   fit:'<div class="pv-bars">'+[88,63,61,52].map(function(v){return '<i style="width:'+v+'%"></i>'}).join("")+'</div>',
   tools:'<div class="pv-vs"><span>A</span><b>VS</b><span>B</span></div>'
@@ -359,12 +378,12 @@ var UNLOCK_PREVIEW={
 function renderUnlock(rep){
   var locked=!rep.months;
   $("unlockBlock").hidden=!locked;
-  ["todayBlock","chartBlock","fitBlock","toolbox"].forEach(function(id){$(id).hidden=locked});
+  ["chartBlock","fitBlock","toolbox"].forEach(function(id){$(id).hidden=locked});
   if(!locked){$("unlockArea").innerHTML="";return}
-  var tiles=[["today","今天的職場指數","paid"],["chart","36 個月時機曲線","paid"],["fit","適合的公司類型","paid"],["tools","決策工具","vip"]];
+  var tiles=[["chart","36 個月時機曲線","paid"],["fit","六類公司完整排名","paid"],["schools","六種學派完整解讀","paid"],["tools","決策工具","vip"]];
   $("unlockArea").innerHTML='<div class="unlock-grid">'+tiles.map(function(t){
     return '<div class="unlock-tile"><div class="pv" aria-hidden="true">'+UNLOCK_PREVIEW[t[0]]+'</div><h3>'+t[1]+(t[2]==="vip"?' <span class="lk">VIP</span>':'')+'</h3><p>'+LOCK_DESC[t[0]]+'</p></div>'}).join("")+'</div>'+
-    '<div class="unlock-cta"><p>付費版一次解鎖前三項，以及八字、紫微斗數、星盤等學派的完整解讀。</p><div><button type="button" class="btn-gold" data-upgrade="paid">贊助解鎖付費版</button><a class="sample-link" href="?sample=paid" data-sample="paid">先看張三豐的付費版範例報告</a></div></div>';
+    '<div class="unlock-cta"><p>付費版一次解鎖前三項，看懂這些答案背後的理由與完整時間軸。決策工具為 VIP 專屬。</p><div><button type="button" class="btn-gold" data-upgrade="paid">贊助解鎖付費版</button><a class="sample-link" href="?sample=paid" data-sample="paid">先看張三豐的付費版範例報告</a></div></div>';
 }
 
 /* ---------- 手機版：有結果後把生辰表單收成一行摘要 ---------- */

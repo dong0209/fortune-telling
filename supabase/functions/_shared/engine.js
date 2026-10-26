@@ -493,7 +493,19 @@ function buildReport(inp,tier,now){
     name:X.name?{title:X.name.chars.map(function(c){return c.c}).join("")+"・總格 "+X.name.grids[4].n,line:X.name.sancaiFlow}:null};
   rep.systems=SYSTEMS.map(function(x){return {key:x[0],name:x[1],school:x[2],vipOnly:VIP_ONLY.indexOf(x[0])>=0}});
   if(!vip)rep.hints=vipHints(R);
-  if(rk<1)return rep;
+  // 免費版也要回答首頁承諾的三個問題（走或留、何時、什麼公司），只是簡短版；理由與全貌留給付費版
+  var days=[];for(var i=0;i<7;i++)days.push(slimDay(dailyFortune(B,new Date(now.getFullYear(),now.getMonth(),now.getDate()+i)),vip));
+  rep.today=vip?days:days.slice(0,1);
+  if(!vip){
+    var later=days.slice(1);
+    rep.hints.week={better:later.filter(function(d){return d.score>days[0].score}).length,max:Math.max.apply(null,later.map(function(d){return d.score}))};
+  }
+  if(rk<1){
+    var year=R.months.slice(0,12), best=function(k){var m=bestWindows(year,k,1)[0];return {y:m.y,m:m.m,v:m[k]}};
+    rep.verdict.next={move:best("move"),stay:best("stay")};
+    rep.verdict.topFit={name:FIT_NAME[R.fitList[0].k],desc:FIT_DESC[R.fitList[0].k]};
+    return rep;
+  }
   rep.iching=X.iching;rep.numerology=X.numerology;rep.name=X.name;
   var top=R.fitList[0], mcSign=R.A.mc!=null?"天頂"+SIGNS[Math.floor(R.A.mc/30)]:"太陽"+SIGNS[Math.floor(R.A.pl.太陽/30)];
   rep.verdict.summary="日主 "+B.dmG+WX[B.dm]+"，"+(B.strong?"身強":"身弱")+"，喜用 "+B.favEl.map(function(e){return WX[e]}).join("、")+"。紫微官祿宮 "+R.Z.careerStars.join("、")+(R.Z.borrowed?"（借對宮）":"")+"；"+(vip?"人類圖 "+R.H.type+" "+R.H.profile+"；":"")+mcSign+"。最適合的環境是"+FIT_NAME[top.k]+"。";
@@ -522,13 +534,7 @@ function buildReport(inp,tier,now){
     in10:A.hasTime?BODIES.filter(function(b){return A.house(A.pl[b[0]])===10}).map(function(b){return {p:b[0],text:PL_10[b[0]]}}):[],
     saturn:{sign:SIGNS[Math.floor(sa/30)],house:A.hasTime?A.house(sa):null},
     jupiterNow:{sign:SIGNS[Math.floor(ju/30)],house:jh,text:JUP_TEXT[jh]||"事業宮位暫無木星加持，曲線中的其他訊號更值得參考。"}};
-  var days=[];for(var i=0;i<7;i++)days.push(slimDay(dailyFortune(B,new Date(now.getFullYear(),now.getMonth(),now.getDate()+i)),vip));
-  rep.today=vip?days:days.slice(0,1);
-  if(!vip){
-    var later=days.slice(1);
-    rep.hints.week={better:later.filter(function(d){return d.score>days[0].score}).length,max:Math.max.apply(null,later.map(function(d){return d.score}))};
-    return rep;
-  }
+  if(!vip)return rep;
   rep.meihua=X.meihua;rep.ninestar=X.ninestar;
   var q=qimen(now.getFullYear(),now.getMonth()+1,now.getDate(),10);
   rep.qimen={today:{dgz:q.dgz,term:TERM_TW[q.term]||q.term,yuan:q.yuan,yang:q.yang,ju:q.ju,zhiShi:q.zhiShi,zhiShiAt:q.zhiShiAt,doors:q.doors,openDir:q.openDir},
@@ -849,8 +855,10 @@ function schoolCompare(voted){
 function actCompare(R,p,tier){
   var keys=[];(Array.isArray(p.systems)?p.systems:[]).forEach(function(k){if(keys.indexOf(k)<0&&SYSTEMS.some(function(s){return s[0]===k}))keys.push(k)});
   if(!keys.length)throw bad("請至少選擇一種命理系統。");
+  // 免費版從報告的投票結果就能看到各學派傾向；逐一並排比對理由與時機從付費版開始
+  needTier(tier,"paid");
   if(keys.some(function(k){return VIP_ONLY.indexOf(k)>=0}))needTier(tier,"vip");
-  if(keys.length>=3)needTier(tier,"vip");else if(keys.length===2)needTier(tier,"paid");
+  if(keys.length>=3)needTier(tier,"vip");
   var cards=keys.map(function(k){return buildCard(R,k)}), voted=cards.filter(function(c){return c.stance});
   var votes={move:0,stay:0,wait:0};voted.forEach(function(c){votes[c.stance]++});
   var lead=Object.keys(votes).sort(function(a,b){return votes[b]-votes[a]})[0], n=voted.length;

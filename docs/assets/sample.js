@@ -31,8 +31,8 @@ function renderSampleBar(){
     '<h2>'+esc(S.person.name)+'<span class="muted small">（'+esc(S.person.note)+'）</span></h2>'+
     '<p class="small muted">'+esc(inp.date.replace(/-/g,"/")+" "+(inp.time||"")+" 生於"+cityLabel(inp.city)+"・"+inp.gender)+'。以 '+S.today.replace(/-/g,"/")+' 為「今天」計算每日運勢與時機曲線。</p></div>'+
     '<div class="seg sample-tabs" role="tablist" aria-label="切換會員等級">'+SAMPLE_TIERS.map(function(t){return '<button type="button" role="tab" data-tier="'+t+'" aria-selected="'+(t===S.tier)+'">'+TIER_NAME[t]+'</button>'}).join("")+'</div></div>'+
-    '<p class="small">'+({free:"基礎版可以看到天機總斷、八字四柱、每日一卦，以及各學派的一句話預覽。切換到付費版、VIP，看看多解鎖了哪些內容。",
-      paid:"付費版解鎖八字、紫微斗數、西洋星盤等六種學派的完整解讀、36 個月時機曲線與月份詳解、今天的職場運勢與公司類型排名，交叉比對可同時比對 2 種學派。鎖定區塊會顯示跟你命盤有關的線索。",
+    '<p class="small">'+({free:"基礎版就能回答三個問題：該走還是留、12 個月內最佳的轉職與升遷月份、最適合的公司類型，另外有十種學派的投票結果、今天的職場運勢與每日一卦。切換到付費版、VIP，看看還多了哪些內容。",
+      paid:"付費版解鎖八字、紫微斗數、西洋星盤等六種學派的完整解讀、36 個月時機曲線與月份詳解、六種公司類型完整排名，交叉比對可同時比對 2 種學派。鎖定區塊會顯示跟你命盤有關的線索。",
       vip:"VIP 再加上梅花易數、九宮飛星、奇門遁甲、人類圖，未來 7 天運勢與每月吉日，以及 offer 比較、現職適配度、主管合盤等決策工具，交叉比對不限種類。VIP 專屬區塊在範例中只露出一部分。"}[S.tier])+'</p>'+
     '<div class="sample-actions">'+(S.tier==="free"?"":'<button type="button" class="btn-gold" data-upgrade="'+S.tier+'">贊助解鎖'+TIER_NAME[S.tier]+'</button>')+
     '<button type="button" class="btn-line" id="sampleExit">用我的生日排盤</button></div>';
