@@ -23,13 +23,14 @@
     <p class="eyebrow">East × West · Career Oracle</p>
     <h1>觀東方之命，問西方之星，<br>解你的<em>職涯之惑</em></h1>
     <p class="lede">命盤、星圖、卦象、靈數，各自藏著一部分答案。職運羅盤將東西方十種術數合於一盤，讓它們彼此印證，為你的去留、時機與方向，給出更完整的指引。</p>
-    <div class="arts" aria-label="命理系統"><div class="arts-row"><b>東方</b><span>八字</span><span>紫微斗數</span><span>易經</span><span>姓名學</span><span class="vip">梅花易數</span><span class="vip">九宮飛星</span><span class="vip">奇門遁甲</span></div><div class="arts-row"><b>西方</b><span>西洋星盤</span><span>生命靈數</span><span class="vip">人類圖</span></div></div>
+    <div class="arts" aria-label="命理系統"><div class="arts-row"><b>東方</b><span>八字</span><span>紫微斗數</span><span>易經</span><span>姓名學</span><span>梅花易數</span><span>九宮飛星</span><span>奇門遁甲</span></div><div class="arts-row"><b>西方</b><span>西洋星盤</span><span>生命靈數</span><span>人類圖</span></div></div>
   </div>
   <div class="hero-ring" id="ring" aria-hidden="true"></div>
 </section>
 
 <div class="layout wrap">
   <aside class="form panel-box">
+    <div class="form-sum" id="formSum" hidden></div>
     <h2>輸入生辰</h2>
     <p class="hint">生辰只用來排盤，不會被儲存。</p>
     <div class="sample" id="sampleNote">目前顯示的是範例命盤，換成你的生辰即可重新推演。</div>
@@ -68,23 +69,6 @@
     <section class="block panel-box sample-bar" id="sampleBar" hidden></section>
     <section class="block panel-box" id="verdictBlock"><p class="loading">正在推演命盤…</p></section>
 
-    <section class="block panel-box" id="compareBlock">
-      <p class="eyebrow"><span>交叉比對</span>East × West</p>
-      <h2>東西方學派交叉比對</h2>
-      <p class="muted small" style="margin:0 0 12px">一術見其一面，眾術方見全貌。擇數派同觀，看諸家之言是相互印證，還是各有所見。免費版可看 1 種，同時比對 2 種需要付費版，3 種以上需要 VIP。</p>
-      <div id="cmpTeaser"></div>
-      <div class="chips" id="sysChips" role="group" aria-label="選擇命理系統"></div>
-      <div class="cmp-bar"><span class="small muted" id="cmpCount"></span><button type="button" class="btn-gold" id="cmpGo">開始比對</button></div>
-      <div id="cmpHint"></div>
-      <div id="cmpOut" aria-live="polite"></div>
-    </section>
-
-    <section class="block panel-box">
-      <p class="eyebrow"><span>流日</span>Daily</p>
-      <h2 id="todayTitle">今天適合做什麼</h2>
-      <div id="today"></div>
-    </section>
-
     <section class="block panel-box" id="divineBlock">
       <p class="eyebrow"><span>問卦</span>Daily Oracle</p>
       <h2>每日職場一卦</h2>
@@ -96,13 +80,38 @@
       <div id="dvOut" aria-live="polite"></div>
     </section>
 
-    <section class="block panel-box">
+    <section class="block panel-box" id="compareBlock">
+      <p class="eyebrow"><span>交叉比對</span>East × West</p>
+      <h2>東西方學派交叉比對</h2>
+      <p class="muted small" style="margin:0 0 12px">一術見其一面，眾術方見全貌。擇數派同觀，看諸家之言是相互印證，還是各有所見。</p>
+      <div id="cmpTeaser"></div>
+      <div class="chips" id="sysChips" role="group" aria-label="選擇命理系統"></div>
+      <div class="cmp-bar"><span class="small muted" id="cmpCount"></span><button type="button" class="btn-gold" id="cmpGo">開始比對</button></div>
+      <div id="cmpHint"></div>
+      <div id="cmpOut" aria-live="polite"></div>
+    </section>
+
+    <section class="block panel-box" id="todayBlock">
+      <p class="eyebrow"><span>流日</span>Daily</p>
+      <h2 id="todayTitle">今天適合做什麼</h2>
+      <div id="today"></div>
+    </section>
+
+    <section class="block panel-box" id="unlockBlock" hidden>
+      <p class="eyebrow"><span>完整報告</span>Full Reading</p>
+      <h2>完整命盤還會看到什麼</h2>
+      <div id="unlockArea"></div>
+    </section>
+
+
+
+    <section class="block panel-box" id="chartBlock">
       <p class="eyebrow"><span>天時</span>36 Months</p>
       <h2>轉職與升遷的時機曲線</h2>
       <div id="chartArea"></div>
     </section>
 
-    <section class="block panel-box">
+    <section class="block panel-box" id="fitBlock">
       <p class="eyebrow"><span>地利</span>Where You Shine</p>
       <h2>什麼樣的公司適合你</h2>
       <div id="fitArea"></div>
@@ -110,7 +119,7 @@
 
     <section class="block panel-box" id="toolbox">
       <p class="eyebrow"><span>人和</span>Toolbox</p>
-      <h2>把命盤用在真實的選擇上 <span class="lk">VIP</span></h2>
+      <h2>把命盤用在真實的選擇上</h2>
       <div id="toolLock" hidden></div>
       <div id="toolArea">
         <div class="tabs" role="tablist" id="ttabs">
@@ -180,12 +189,12 @@
         <button role="tab" aria-selected="false" data-p="ziwei" id="t-ziwei">紫微斗數</button>
         <button role="tab" aria-selected="false" data-p="astro" id="t-astro">星盤</button>
         <button role="tab" aria-selected="false" data-p="iching" id="t-iching">易經</button>
-        <button role="tab" aria-selected="false" data-p="meihua" id="t-meihua">梅花易數 <span class="lk">VIP</span></button>
+        <button role="tab" aria-selected="false" data-p="meihua" id="t-meihua">梅花易數</button>
         <button role="tab" aria-selected="false" data-p="numerology" id="t-numerology">生命靈數</button>
-        <button role="tab" aria-selected="false" data-p="ninestar" id="t-ninestar">九宮飛星 <span class="lk">VIP</span></button>
+        <button role="tab" aria-selected="false" data-p="ninestar" id="t-ninestar">九宮飛星</button>
         <button role="tab" aria-selected="false" data-p="name" id="t-name">姓名學</button>
-        <button role="tab" aria-selected="false" data-p="qimen" id="t-qimen">奇門遁甲 <span class="lk">VIP</span></button>
-        <button role="tab" aria-selected="false" data-p="hd" id="t-hd">人類圖 <span class="lk">VIP</span></button>
+        <button role="tab" aria-selected="false" data-p="qimen" id="t-qimen">奇門遁甲</button>
+        <button role="tab" aria-selected="false" data-p="hd" id="t-hd">人類圖</button>
       </div>
       <div class="panel" role="tabpanel" id="p-bazi"></div>
       <div class="panel" role="tabpanel" id="p-ziwei" hidden></div>

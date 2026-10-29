@@ -7,7 +7,7 @@ export const SAMPLE = {
   // 「今天」固定為這個日期（台灣時間正午），每日運勢、時機曲線都以此為準
   today: "2026-10-25",
 };
-const DEFAULT_SYSTEMS = { free: ["bazi"], paid: ["bazi", "ziwei"], vip: ["bazi", "ziwei", "astro", "iching", "meihua"] };
+const DEFAULT_SYSTEMS = { paid: ["bazi", "ziwei"], vip: ["bazi", "ziwei", "astro", "iching", "meihua"] };
 
 // 伺服器傳給引擎的「現在」是台灣時間的鐘錶時刻（見 analyze/index.ts 的 taipeiNow）
 export function sampleNow() {
@@ -17,8 +17,12 @@ export function sampleNow() {
 
 export function buildSample(tier) {
   const now = sampleNow(), run = (action, params) => engine.runAction(action, SAMPLE.input, tier, params, now);
-  const out = { person: SAMPLE.person, input: SAMPLE.input, today: SAMPLE.today, tier, report: run("report", {}), compare: run("compare", { systems: DEFAULT_SYSTEMS[tier] }) };
-  if (tier !== "free") out.month = out.report.months.map((_, i) => run("month", { i }));
+  const out = { person: SAMPLE.person, input: SAMPLE.input, today: SAMPLE.today, tier, report: run("report", {}) };
+  // 交叉比對從付費版開始；免費版只看報告裡的學派投票結果
+  if (tier !== "free") {
+    out.compare = run("compare", { systems: DEFAULT_SYSTEMS[tier] });
+    out.month = out.report.months.map((_, i) => run("month", { i }));
+  }
   if (tier === "vip") out.qimenDay = run("qimenDay", { date: SAMPLE.today });
   return out;
 }

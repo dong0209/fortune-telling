@@ -15,6 +15,7 @@ test("免費版範例沒有付費內容，付費版範例沒有 VIP 內容", () 
   const free = buildSample("free"), paid = buildSample("paid"), vip = buildSample("vip");
   assert.equal(free.report.bazi, undefined);
   assert.equal(free.month, undefined);
+  assert.equal(free.compare, undefined);
   assert.equal(paid.report.qimen, undefined);
   assert.equal(paid.report.hd, undefined);
   assert.equal(paid.qimenDay, undefined);
