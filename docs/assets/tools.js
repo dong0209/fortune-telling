@@ -283,7 +283,7 @@ function divKey(){return "dv-"+ymd(new Date())}
 function loadDivine(){try{var v=localStorage.getItem(divKey());return v?JSON.parse(v):null}catch(e){return null}}
 async function runDivine(){
   var tier=STATE.rep?STATE.rep.tier:"free", saved=loadDivine();
-  if(tier==="free"&&saved){renderDivine(saved,'今天已經起過一卦，這是今天的卦。明天再來，或<button type="button" class="btn-text" data-upgrade="paid" style="color:var(--gold-bright);padding:0">贊助解鎖不限次數</button>。');return}
+  if(tier==="free"&&saved){renderDivine(saved,'今天已經起過一卦，這是今天的卦。明天再來，或付費版不限次數（'+upLink("paid","了解付費版")+'）。');return}
   loading("dvOut","起卦中…");
   try{var d=(await API.analyze("divine",STATE.input,{question:$("dvQ").value})).result;renderDivine(d);
     try{localStorage.setItem(divKey(),JSON.stringify(d))}catch(e){}}

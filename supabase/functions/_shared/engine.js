@@ -552,7 +552,7 @@ function vipHints(R){
   var good=R.qdays.filter(function(d){return DOOR_Q[d.door]>=0.5}).sort(function(a,b){return a.date-b.date});
   return {consensus:{systems:SYSTEMS.length,voted:tot,lead:c.lead,votes:v},
     qimen:{count:good.length,next:good.length?iso(good[0].date):null},
-    hd:{type:R.H.type}};
+    hd:{type:R.H.type,strat:HD_TYPE[R.H.type].strat}};
 }
 
 /* ---------- 互動功能 ---------- */

@@ -78,7 +78,8 @@ test("非 VIP 會拿到個人化線索，但拿不到 VIP 的完整內容", () =
     for (const k of ["qimen", "hd", "meihua", "ninestar"]) assert.equal(r[k], undefined, `${tier} 不應有 ${k}`);
     // 線索只有摘要：奇門只給吉日數與最近一天，不含方位、值使門
     assert.deepEqual(Object.keys(h.qimen).sort(), ["count", "next"]);
-    assert.deepEqual(Object.keys(h.hd), ["type"]);
+    // 人類圖只給類型與一句策略，不含轉職訊號、內在權威等完整解讀
+    assert.deepEqual(Object.keys(h.hd), ["type", "strat"]);
   }
   for (const tier of ["free", "paid"]) assert.equal(report(INPUT, tier).hints.week.max >= 0, true);
   assert.equal(report(INPUT, "vip").hints, undefined);

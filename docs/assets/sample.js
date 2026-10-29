@@ -34,7 +34,7 @@ function renderSampleBar(){
     '<p class="small">'+({free:"基礎版就能回答三個問題：該走還是留、12 個月內最佳的轉職與升遷月份、最適合的公司類型，另外有十種學派的投票結果、今天的職場運勢與每日一卦。切換到付費版、VIP，看看還多了哪些內容。",
       paid:"付費版解鎖八字、紫微斗數、西洋星盤等六種學派的完整解讀、36 個月時機曲線與月份詳解、六種公司類型完整排名，交叉比對可同時比對 2 種學派。鎖定區塊會顯示跟你命盤有關的線索。",
       vip:"VIP 再加上梅花易數、九宮飛星、奇門遁甲、人類圖，未來 7 天運勢與每月吉日，以及 offer 比較、現職適配度、主管合盤等決策工具，交叉比對不限種類。VIP 專屬區塊在範例中只露出一部分。"}[S.tier])+'</p>'+
-    '<div class="sample-actions">'+(S.tier==="free"?"":'<button type="button" class="btn-gold" data-upgrade="'+S.tier+'">贊助解鎖'+TIER_NAME[S.tier]+'</button>')+
+    '<div class="sample-actions">'+(S.tier==="free"?"":'<button type="button" class="btn-gold" data-upgrade="'+S.tier+'">支持測試，開通'+TIER_NAME[S.tier]+'</button>')+
     '<button type="button" class="btn-line" id="sampleExit">用我的生日排盤</button></div>';
   $("sampleBar").querySelectorAll("[data-tier]").forEach(function(b){b.addEventListener("click",function(){loadSample(b.dataset.tier)})});
   $("sampleExit").addEventListener("click",function(){exitSample();expandForm(true)});
@@ -44,7 +44,7 @@ function renderSampleBar(){
 function veil(el,text){
   if(!el||el.querySelector(":scope > .veil"))return;
   el.classList.add("sample-veil");
-  el.insertAdjacentHTML("beforeend",'<div class="veil" aria-hidden="true"></div><div class="veil-cta"><p>'+text+'</p><button type="button" class="btn-upsell" data-upgrade="vip">贊助解鎖 VIP 版</button></div>');
+  el.insertAdjacentHTML("beforeend",'<div class="veil" aria-hidden="true"></div><div class="veil-cta"><p>'+text+'　'+upLink("vip")+'</p></div>');
 }
 function veilVip(){
   if(SAMPLE.tier!=="vip")return;
