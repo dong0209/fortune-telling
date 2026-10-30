@@ -29,6 +29,7 @@
 </section>
 
 <div class="layout wrap">
+  <div class="side" id="side">
   <aside class="form panel-box">
     <div class="form-sum" id="formSum" hidden></div>
     <h2>輸入生辰</h2>
@@ -64,12 +65,16 @@
       <p class="small muted" id="shareMsg" role="status"></p>
     </form>
   </aside>
+  <nav class="qian panel-box" id="qian" aria-label="本頁目錄" hidden><div class="qian-tube" id="qianTube"></div><p class="qian-cap" id="qianCap" aria-live="polite"></p></nav>
+  </div>
 
-  <main>
+  <main id="main" data-mode="report">
     <section class="block panel-box sample-bar" id="sampleBar" hidden></section>
-    <section class="block panel-box" id="verdictBlock"><p class="loading">正在推演命盤…</p></section>
+    <div class="mode-tabs" role="tablist" aria-label="檢視模式" id="modeTabs" hidden></div>
+    <nav class="chip-nav" id="chipNav" aria-label="本頁目錄" hidden></nav>
+    <section class="block panel-box" id="verdictBlock" data-sec="report" data-gua="乾"><p class="loading">正在推演命盤…</p></section>
 
-    <section class="block panel-box" id="divineBlock">
+    <section class="block panel-box" id="divineBlock" data-sec="today" data-gua="艮">
       <p class="eyebrow"><span>問卦</span>Daily Oracle</p>
       <h2>每日職場一卦</h2>
       <p class="muted small" style="margin:0 0 12px">寫下今天最想問的一件職場事，用梅花易數「字占」起卦：問題前半與後半的康熙筆畫分別起上卦、下卦，再加上此刻的時辰得動爻。免費版每天一卦，贊助會員不限次數。</p>
@@ -80,7 +85,7 @@
       <div id="dvOut" aria-live="polite"></div>
     </section>
 
-    <section class="block panel-box" id="compareBlock">
+    <section class="block panel-box" id="compareBlock" data-sec="report" data-gua="離">
       <p class="eyebrow"><span>交叉比對</span>East × West</p>
       <h2>東西方學派交叉比對</h2>
       <p class="muted small" style="margin:0 0 12px">一術見其一面，眾術方見全貌。擇數派同觀，看諸家之言是相互印證，還是各有所見。</p>
@@ -91,13 +96,13 @@
       <div id="cmpOut" aria-live="polite"></div>
     </section>
 
-    <section class="block panel-box" id="todayBlock">
+    <section class="block panel-box" id="todayBlock" data-sec="today" data-gua="巽">
       <p class="eyebrow"><span>流日</span>Daily</p>
       <h2 id="todayTitle">今天適合做什麼</h2>
       <div id="today"></div>
     </section>
 
-    <section class="block panel-box" id="unlockBlock" hidden>
+    <section class="block panel-box" id="unlockBlock" data-sec="report" data-gua="震" hidden>
       <p class="eyebrow"><span>完整報告</span>Full Reading</p>
       <h2>完整命盤還會看到什麼</h2>
       <div id="unlockArea"></div>
@@ -105,19 +110,19 @@
 
 
 
-    <section class="block panel-box" id="chartBlock">
+    <section class="block panel-box" id="chartBlock" data-sec="report" data-gua="震">
       <p class="eyebrow"><span>天時</span>36 Months</p>
       <h2>轉職與升遷的時機曲線</h2>
       <div id="chartArea"></div>
     </section>
 
-    <section class="block panel-box" id="fitBlock">
+    <section class="block panel-box" id="fitBlock" data-sec="report" data-gua="坤">
       <p class="eyebrow"><span>地利</span>Where You Shine</p>
       <h2>什麼樣的公司適合你</h2>
       <div id="fitArea"></div>
     </section>
 
-    <section class="block panel-box" id="toolbox">
+    <section class="block panel-box" id="toolbox" data-sec="report" data-gua="兌">
       <p class="eyebrow"><span>人和</span>Toolbox</p>
       <h2>把命盤用在真實的選擇上</h2>
       <div id="toolLock" hidden></div>
@@ -181,7 +186,7 @@
       </div>
     </section>
 
-    <section class="block panel-box">
+    <section class="block panel-box" id="chartsBlock" data-sec="report" data-gua="坎">
       <p class="eyebrow"><span>命盤</span>Charts</p>
       <h2>各系統怎麼說</h2>
       <div class="tabs" role="tablist" id="tabs">
@@ -243,6 +248,7 @@
 <script src="assets/sky.js"></script>
 <script src="assets/cities.js"></script>
 <script src="assets/render.js"></script>
+<script src="assets/nav.js"></script>
 <script src="assets/tools.js"></script>
 <script src="assets/sample.js"></script>
 <script src="assets/app.js"></script>

@@ -94,19 +94,18 @@ button:disabled{opacity:.55;cursor:default}
 .panel-box::before,.panel-box::after{content:"";position:absolute;width:14px;height:14px;border-color:var(--gold);border-style:solid;pointer-events:none}
 .panel-box::before{top:-1px;left:-1px;border-width:1.5px 0 0 1.5px}
 .panel-box::after{bottom:-1px;right:-1px;border-width:0 1.5px 1.5px 0}
-aside.form{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);padding:20px}
-/* 側欄比視窗高時（筆電、縮小的視窗）改為跟著頁面捲動，否則下方的「推演命盤」按鈕會捲不到；由 app.js 依實際高度切換 */
-aside.form.tall{position:static}
-@media (max-width:880px){aside.form{position:static}}
-/* 手機版有結果後，表單收成一行摘要（render.js 的 renderFormSum）；桌機一律完整顯示 */
+aside.form{padding:20px}
+/* 左欄（生辰＋籤筒目錄）固定在畫面上；比視窗高時（例如展開表單的筆電）改為跟著頁面捲動，否則下方按鈕會捲不到。由 app.js 依實際高度切換 */
+.side{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;min-width:0}
+.side.tall{position:static}
+@media (max-width:880px){.side{position:static}}
+/* 有結果後，表單收成一行摘要（render.js 的 renderFormSum），按「修改生辰」再展開 */
 .form-sum{display:none}
-@media (max-width:880px){
-  aside.form.collapsed .form-sum{display:flex;align-items:center;justify-content:space-between;gap:12px}
-  aside.form.collapsed>h2,aside.form.collapsed>.hint,aside.form.collapsed>.sample,aside.form.collapsed #f>:not(.share-row):not(#shareMsg){display:none}
-  aside.form.collapsed{padding:14px 16px}
-}
+aside.form.collapsed .form-sum{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 12px}
+aside.form.collapsed>h2,aside.form.collapsed>.hint,aside.form.collapsed>.sample,aside.form.collapsed #f>:not(.share-row):not(#shareMsg){display:none}
+aside.form.collapsed{padding:14px 16px}
 .form-sum>div{display:flex;flex-direction:column;min-width:0}
-.form-sum b{font-family:var(--f-display);font-size:17px;letter-spacing:.04em}
+.form-sum b{font-family:var(--f-display);font-size:16px;letter-spacing:.04em;white-space:nowrap}
 .form-sum .btn-line{flex:none}
 aside h2{font-size:18px;margin-bottom:4px;letter-spacing:.08em}
 aside .hint{font-size:12.5px;color:var(--muted);margin:0 0 14px}
@@ -441,3 +440,55 @@ footer nav{display:flex;gap:16px}
 .link-up:hover{color:var(--ink)}
 .lock-body .lock-links{font-size:12.5px;margin-top:4px}
 .lock-links a{color:var(--muted)}
+
+/* ---------- 模式頁籤、籤筒目錄、卦象（nav.js） ---------- */
+main[data-mode="today"]>[data-sec="report"],main[data-mode="report"]>[data-sec="today"]{display:none}
+main[data-mode="today"]>#divineBlock{order:1}
+main>section{scroll-margin-top:16px}
+.gua{width:16px;height:16px;stroke:currentColor;stroke-width:2.6;flex:none}
+.eyebrow .gua{width:15px;height:15px;color:var(--gold);vertical-align:-2px;margin-right:8px}
+/* 令牌式模式頁籤 */
+.mode-tabs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mode-tabs button{position:relative;display:flex;gap:14px;align-items:center;text-align:left;padding:14px 18px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--muted);overflow:hidden;min-width:0}
+.mode-tabs button::before{content:"";position:absolute;inset:4px;border:1px solid rgba(217,181,106,.12);border-radius:2px;pointer-events:none}
+.mode-tabs .emb{width:58px;height:58px;flex:none;overflow:visible}
+.emb .o,.emb .i{fill:none;stroke:var(--line-gold);stroke-width:.8}.emb line{stroke:var(--line-gold);stroke-width:.8}
+.emb .dip polyline{fill:none;stroke:var(--gold);stroke-width:.8;opacity:.6}.emb .dip circle,.emb .sun{fill:var(--gold-bright)}
+.emb text{fill:var(--gold-bright);font-family:var(--f-display);font-weight:900;font-size:13px;text-anchor:middle}
+.mode-tabs b{display:block;font-family:var(--f-display);font-size:19px;letter-spacing:.18em;color:var(--ink)}
+.mode-tabs small{display:block;font-size:12px;letter-spacing:.06em;margin-top:2px}
+.mode-tabs small i{font-style:normal;font-family:var(--f-mono);color:var(--gold-bright)}
+.mode-tabs button:hover{border-color:var(--line-gold)}
+.mode-tabs button[aria-selected="true"]{border-color:var(--gold);background:radial-gradient(120px 90px at 46px 50%,rgba(241,213,142,.16),transparent 70%),var(--panel);box-shadow:0 0 24px rgba(217,181,106,.12),inset 0 0 0 1px rgba(217,181,106,.25)}
+.mode-tabs button[aria-selected="true"] b{color:var(--gold-bright);text-shadow:0 0 14px rgba(241,213,142,.35)}
+.mode-tabs button[aria-selected="true"] .o{stroke:var(--gold)}
+@media (prefers-reduced-motion:no-preference){.mode-tabs button[aria-selected="true"] .emb-ring{transform-origin:30px 30px;animation:spin 60s linear infinite}}
+/* 籤筒目錄：桌機左欄 */
+.qian{margin-top:16px;padding:18px 16px 16px}
+.qian-tube{position:relative;display:flex;justify-content:center;gap:7px;height:240px;align-items:flex-end;padding:0 14px;overflow:hidden;overflow:clip}
+/* 用 clip：hidden 的容器在籤取得焦點時會被瀏覽器捲動，連筒身一起往上跑 */
+.qian-tube::after{content:"";position:absolute;left:4px;right:4px;bottom:0;height:64px;z-index:2;border:1px solid var(--line-gold);border-top:2px solid var(--gold);border-radius:3px 3px 12px 12px;
+  background:repeating-linear-gradient(90deg,transparent 0 22px,rgba(217,181,106,.06) 22px 23px),linear-gradient(180deg,#1a2142,#0a0e20);box-shadow:inset 0 10px 18px rgba(0,0,0,.45);pointer-events:none}
+.qian-tube .seal-txt{position:absolute;z-index:3;bottom:20px;left:0;right:0;text-align:center;font-family:var(--f-display);font-weight:900;font-size:18px;letter-spacing:.5em;color:var(--gold);opacity:.85;pointer-events:none}
+.qian-tube a{position:relative;z-index:1;width:34px;height:200px;display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:12px;text-decoration:none;
+  border:1px solid rgba(217,181,106,.28);border-radius:16px 16px 2px 2px;background:linear-gradient(90deg,#2b2413,#3a301a 45%,#241d0f);color:#bfa76f;
+  transform:translateY(44px);transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s}
+.qian-tube a span{writing-mode:vertical-rl;font-family:var(--f-display);font-weight:900;font-size:15px;letter-spacing:.32em}
+.qian-tube a:hover{transform:translateY(30px)}
+.qian-tube a.on{transform:translateY(0);border-color:var(--gold-bright);color:#1A1408;background:linear-gradient(90deg,#c9a55a,#f1d58e 45%,#b8954c);box-shadow:0 0 18px rgba(241,213,142,.45)}
+.qian-tube a:focus-visible{outline-offset:-3px}
+@media (prefers-reduced-motion:reduce){.qian-tube a{transition:none}}
+.qian-cap{margin:14px 0 0;text-align:center;font-size:13px;color:var(--muted);min-height:1.5em}
+.qian-cap b{font-family:var(--f-display);color:var(--gold-bright);letter-spacing:.2em;margin-right:6px}
+/* 手機：籤筒改成頂端的令牌標籤列 */
+.chip-nav{display:none}
+@media (max-width:880px){
+  .qian{display:none}
+  .mode-tabs{gap:8px}.mode-tabs button{padding:10px;gap:8px}.mode-tabs .emb{width:42px;height:42px}.mode-tabs b{font-size:16px;letter-spacing:.1em}.mode-tabs small{font-size:11px;letter-spacing:0}
+  .chip-nav:not([hidden]){display:flex;gap:6px;overflow-x:auto;position:sticky;top:0;z-index:5;margin:0 -16px;padding:10px 16px;background:rgba(5,7,15,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line-gold);scrollbar-width:none}
+  .chip-nav::-webkit-scrollbar{display:none}
+  .chip-nav a{flex:none;display:flex;align-items:center;gap:6px;font-family:var(--f-display);font-weight:700;font-size:14px;letter-spacing:.12em;padding:5px 12px;border:1px solid var(--line);border-radius:2px;color:var(--muted);text-decoration:none}
+  .chip-nav a .gua{width:13px;height:13px}
+  .chip-nav a.on{border-color:var(--gold);color:var(--gold-bright);background:var(--gold-soft);box-shadow:0 0 12px rgba(217,181,106,.25)}
+  main>section{scroll-margin-top:68px}
+}
