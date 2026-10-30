@@ -616,11 +616,12 @@ var STRAT={
 STRAT.老闆=STRAT.主管;
 var HD_COMM={生產者:"用是非題問他，讓他回應，不要一次丟一大包任務。",顯示生產者:"給他幾個選項讓他快速回應，容忍他跳步。",投射者:"先詢問他的意見，被邀請的建議他才聽得進去。",顯示者:"他習慣先做再說，請他事前告知，你自己也主動同步進度。",反映者:"重要決定給他時間，不要當場逼他表態。"};
 var WX_STYLE=["重理念與成長，跟他談願景與發展","重熱情與速度，簡報要有亮點","重穩定與信用，說到做到最重要","重規則與效率，先給結論和數據","重彈性與資訊，先給全貌再談細節"];
-function actSynastry(R,p,me){
+function actSynastry(R,p,raw){
   var bd=parseISO(p.date);if(!bd||bd.getFullYear()<1920||bd>new Date())throw bad("請輸入對方 1920 年以後的出生日期。");
   var noTime=!!p.noTime||!p.time, t=String(p.time||"12:00").split(":").map(Number);
   if(!noTime&&!(t[0]>=0&&t[0]<=23&&t[1]>=0&&t[1]<=59))throw bad("對方出生時間格式錯誤");
-  var other={y:bd.getFullYear(),m:bd.getMonth()+1,d:bd.getDate(),hh:noTime?12:t[0],mm:noTime?0:t[1],noTime:noTime,gender:p.gender==="男"?"男":"女",lat:me.lat,lon:me.lon,tz:me.tz};
+  // 對方也走 normInput，才會有 utcMs、真太陽時與夏令時間換算；出生地不知道，沿用本人的出生地
+  var other=normInput({date:iso(bd),time:noTime?null:pad2(t[0])+":"+pad2(t[1]),noTime:noTime,gender:p.gender,city:raw.city,solar:raw.solar});
   var rel_=STRAT[p.rel]?p.rel:"主管", nm=String(p.name||"").slice(0,12)||"對方", S=synastry(R,other), notes=S.notes.slice();
   if(S.em.length)notes.push("人類圖電磁通道 "+S.em.map(function(c){return c[0]+"–"+c[1]}).join("、")+"：你們各持一半，湊在一起會互相吸引、激出火花");
   if(S.comp.length)notes.push("人類圖共有通道 "+S.comp.map(function(c){return c[0]+"–"+c[1]}).join("、")+"：做事方式相近，合作安心");
@@ -651,7 +652,7 @@ function runAction(name,rawInput,tier,params,now){
   if(name==="month")return actMonth(R,params||{},vip,now);
   if(name==="offer")return actOffer(R,params||{},vip);
   if(name==="fitnow")return actFitNow(R,params||{});
-  if(name==="synastry")return actSynastry(R,params||{},inp);
+  if(name==="synastry")return actSynastry(R,params||{},rawInput||{});
   return actQimenDay(R,params||{});
 }
 

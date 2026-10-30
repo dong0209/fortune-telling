@@ -91,3 +91,18 @@ test("線索的投票結果與 VIP 實際比對 10 種學派的結果一致", ()
   assert.deepEqual(h.votes, all.votes);
   assert.equal(h.lead, all.lead);
 });
+
+test("VIP 主管／同事合盤可以算出結果（對方時間不詳、有時間、出生於夏令時間期間）", () => {
+  const syn = (p) => engine.runAction("synastry", INPUT, "vip", { rel: "主管", ...p }, NOW);
+  for (const p of [
+    { date: "1974-05-03", noTime: true, gender: "女" },
+    { date: "1974-05-03", time: "08:15", gender: "男" }, // 台灣 1974 年實施夏令時間
+    { date: "1990-11-20", time: "23:40", gender: "女", name: "王經理" },
+  ]) {
+    const r = syn(p);
+    assert.ok(r.score >= 8 && r.score <= 96, "分數應在 8–96");
+    assert.ok(r.otherType && r.otherDm && r.relText && r.strategy.length === 3);
+    assert.equal(r.noTime, !p.time);
+  }
+  assert.throws(() => syn({ date: "1900-01-01", noTime: true }), (e) => e.code === "bad_request");
+});
