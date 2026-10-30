@@ -24,10 +24,10 @@ async function refreshAccount(){
   try{STATE.user=await API.user();STATE.profile=STATE.user?await API.profile():null}catch(e){STATE.profile=null}
   renderAccount();
 }
-$("f").addEventListener("submit",function(e){e.preventDefault();$("sampleNote").hidden=true;exitSample();run().then(function(){if(window.innerWidth<880)$("verdictBlock").scrollIntoView({behavior:"smooth"})})});
-// 側欄放得進視窗才固定在畫面上；放不下（例如勾選選項讓欄位變長、視窗縮小）就跟著頁面捲動
-function fitForm(){var a=document.querySelector("aside.form");a.classList.toggle("tall",a.offsetHeight>window.innerHeight-32)}
-if(window.ResizeObserver)new ResizeObserver(fitForm).observe(document.querySelector("aside.form"));
+$("f").addEventListener("submit",function(e){e.preventDefault();$("sampleNote").hidden=true;exitSample();setMode("report");run().then(function(){if(window.innerWidth<880)$("verdictBlock").scrollIntoView({behavior:"smooth"})})});
+// 左欄放得進視窗才固定在畫面上；放不下（例如展開表單、視窗縮小）就跟著頁面捲動
+function fitForm(){var a=$("side");a.classList.toggle("tall",a.offsetHeight>window.innerHeight-32)}
+if(window.ResizeObserver)new ResizeObserver(fitForm).observe($("side"));
 fitForm();
 var rzT;window.addEventListener("resize",function(){fitForm();clearTimeout(rzT);rzT=setTimeout(renderChart,120)});
 bindTools();

@@ -42,6 +42,7 @@ docs/                       前端（GitHub Pages 從這個資料夾發布）
   assets/config.js          網站設定：Supabase 金鑰、收款帳號
   assets/api.js             與 Supabase 溝通
   assets/render.js          依伺服器報告繪製畫面與鎖定卡
+  assets/nav.js             「我的命盤／今日」模式頁籤、籤筒目錄與區塊卦象
   assets/cities.js          出生地清單（網頁搜尋用，由 scripts/cities 產生）
   assets/sample.js          範例報告模式（?sample=free|paid|vip）
   assets/sample/            範例報告資料（由 tests/build-sample.mjs 產生）

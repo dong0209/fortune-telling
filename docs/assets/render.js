@@ -393,7 +393,7 @@ function renderUnlock(rep){
     '<div class="unlock-cta"><p>職運羅盤還在測試階段，你的贊助會用來把排盤做得更準，同時為你開通付費版的前三項：看懂這些答案背後的理由與完整時間軸。決策工具為 VIP 專屬。</p><div><button type="button" class="btn-gold" data-upgrade="paid">支持測試，開通付費版</button><a class="sample-link" href="?sample=paid" data-sample="paid">先看張三豐的付費版範例報告</a></div></div>';
 }
 
-/* ---------- 手機版：有結果後把生辰表單收成一行摘要 ---------- */
+/* ---------- 有結果後把生辰表單收成一行摘要 ---------- */
 function renderFormSum(){
   var example=!!window.SAMPLE||!$("sampleNote").hidden, t=$("noTime").checked||!$("bt").value?"時辰不詳":$("bt").value;
   var who=window.SAMPLE?"範例・"+esc($("nm").value):example?"範例命盤":"你的命盤";
@@ -414,4 +414,5 @@ function renderAll(rep){
   renderVerdict(rep);renderToday(rep);renderChartArea(rep);renderFit(rep);
   renderBazi(rep);renderZiwei(rep);renderAstro(rep);renderQimen(rep);renderHD(rep);
   renderIching(rep);renderMeihua(rep);renderNumerology(rep);renderNineStar(rep);renderName(rep);renderChips(rep);
+  renderNav(rep);
 }
