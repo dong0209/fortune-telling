@@ -32,6 +32,21 @@ var API=(function(){
       var p=r.data;if(p.tier!=="free"&&p.tier_expires_at&&new Date(p.tier_expires_at)<=new Date())p.expired=true;
       return p;
     },
+    // 記住的生辰：只有本人讀得到（birth_profiles 的資料列權限），欄位名稱跟表單的 readInput 對應
+    async birth(){
+      var u=await this.user();if(!u)return null;
+      var r=await sb.from("birth_profiles").select("*").eq("user_id",u.id).maybeSingle();fail(r.error);
+      var b=r.data;if(!b)return null;
+      return {date:b.birth_date,time:b.no_time||!b.birth_time?null:b.birth_time.slice(0,5),noTime:b.no_time,gender:b.gender,city:b.city,name:b.name||"",q:b.question,yrs:b.years,solar:b.solar};
+    },
+    async saveBirth(inp){
+      var u=await this.user();if(!u)throw new Error("請先登入");
+      var r=await sb.from("birth_profiles").upsert({user_id:u.id,birth_date:inp.date,birth_time:inp.noTime?null:inp.time,no_time:inp.noTime,gender:inp.gender,city:inp.city,name:inp.name||null,question:inp.q,years:inp.yrs,solar:inp.solar,updated_at:new Date().toISOString()});fail(r.error);
+    },
+    async deleteBirth(){
+      var u=await this.user();if(!u)return;
+      var r=await sb.from("birth_profiles").delete().eq("user_id",u.id);fail(r.error);
+    },
     async plans(){need();var r=await sb.from("plans").select("*").order("sort");fail(r.error);return r.data},
     async submitPayment(o){
       var u=await this.user();if(!u)throw new Error("請先登入");

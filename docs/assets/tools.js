@@ -1,5 +1,5 @@
 /* 互動功能：工具箱、月份詳解、奇門擇時、分享連結、IG 圖卡、登入與贊助 */
-var STATE={rep:null,input:null,user:null,profile:null};
+var STATE={rep:null,input:null,user:null,profile:null,birth:null};
 var METHOD_NAME={linepay:"LINE Pay",jkopay:"街口支付",bank:"銀行轉帳"};
 var STATUS_NAME={pending:"待審核",approved:"已開通",rejected:"已退回"};
 function loading(id,text){$(id).innerHTML='<p class="loading">'+(text||"推演中…")+'</p>'}
@@ -222,8 +222,10 @@ function renderAccount(){
     '<span class="muted small" title="'+esc(STATE.user.email)+'">'+esc((STATE.user.email||"").replace(/@.*/,""))+'</span>'+
     (tier!=="vip"?'<button type="button" class="btn-line" data-upgrade="'+(tier==="paid"?"vip":"paid")+'">贊助支持</button>':'<button type="button" class="btn-line" data-upgrade="vip">再次贊助</button>')+
     (p.is_admin?'<a class="btn-line" href="admin.html" style="text-decoration:none">管理後台</a>':"")+
+    (STATE.birth?'<button type="button" class="btn-text" id="btnForget">刪除我的生辰</button>':"")+
     '<button type="button" class="btn-text" id="btnLogout">登出</button>';
   $("btnLogout").addEventListener("click",function(){API.signOut()});
+  if($("btnForget"))$("btnForget").addEventListener("click",forgetBirth);
 }
 function openLogin(){$("loginMsg").textContent="";$("loginDlg").showModal();$("loginEmail").focus()}
 async function doLogin(e){
