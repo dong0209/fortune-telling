@@ -53,7 +53,8 @@ function renderVerdict(rep){
   var right='<div class="pillars">'+pill+'</div>';
   if(paid)right+='<div style="margin-top:16px"><div class="lab" style="margin-bottom:6px">未來 12 個月平均動能</div>'+meterRow("轉職",v.avg.move,"var(--s-move)")+meterRow("升遷",v.avg.stay,"var(--s-stay)")+'</div>'+
     '<div class="tags" style="margin-top:10px"><span class="tag gold">'+esc(v.tags[0])+'</span><span class="tag">'+esc(v.tags[1])+'</span></div>';
-  var left='<div class="verdict-call">'+v.call+'</div><p style="margin:0 0 8px">'+esc(v.sub)+'</p>';
+  var ask=Q_LABEL[rep.input.q]?'<p class="verdict-ask">你問：'+Q_LABEL[rep.input.q]+'</p>':"";
+  var left=ask+'<div class="verdict-call">'+v.call+'</div><p style="margin:0 0 8px">'+esc(v.sub)+'</p>';
   if(paid){
     left+='<p class="muted small" style="margin:0">'+esc(v.summary)+'</p><div class="windows">'+
       '<div class="win"><div class="k"><span class="dot" style="background:var(--s-move)"></span>轉職窗口</div>'+v.windows.move.map(function(x){return '<div><b>'+ym(x)+'</b> <span class="muted small">'+x.move+'</span></div>'}).join("")+'</div>'+
@@ -115,8 +116,9 @@ function renderChart(){
   function path(key){return ms.map(function(m,i){return (i?"L":"M")+x(i).toFixed(1)+" "+y(m[key]).toFixed(1)}).join("")}
   function area(key){return path(key)+"L"+x(n-1)+" "+(T+ih)+"L"+x(0)+" "+(T+ih)+"Z"}
   s+='<path d="'+area("move")+'" fill="var(--s-move)" fill-opacity=".08"/><path d="'+area("stay")+'" fill="var(--s-stay)" fill-opacity=".08"/>';
-  s+='<path d="'+path("stay")+'" fill="none" stroke="var(--s-stay)" stroke-width="2" stroke-linejoin="round"/>';
-  s+='<path d="'+path("move")+'" fill="none" stroke="var(--s-move)" stroke-width="2" stroke-linejoin="round"/>';
+  function line(key){var w=chartFocus===key?3.2:2, o=chartFocus&&chartFocus!==key?' stroke-opacity=".45"':'';return '<path d="'+path(key)+'" fill="none" stroke="var(--s-'+key+')" stroke-width="'+w+'"'+o+' stroke-linejoin="round"/>'}
+  // 被強調的線畫在上層
+  s+=chartFocus==="stay"?line("move")+line("stay"):line("stay")+line("move");
   if(W>=500){var lm=ms[n-1];var ya=y(lm.move),yb=y(lm.stay);if(Math.abs(ya-yb)<14){if(ya<yb){ya-=7;yb+=7}else{ya+=7;yb-=7}}
     s+='<text x="'+(x(n-1)+8)+'" y="'+(ya+4)+'" font-size="12" fill="var(--ink)">轉職</text><text x="'+(x(n-1)+8)+'" y="'+(yb+4)+'" font-size="12" fill="var(--ink)">升遷</text>'}
   s+='<line id="selLine" x1="0" x2="0" y1="'+T+'" y2="'+(T+ih)+'" stroke="var(--gold)" stroke-width="2" visibility="hidden"/>';
@@ -408,9 +410,19 @@ function expandForm(focus){
   if(focus){$("bd").focus();$("bd").scrollIntoView({behavior:"smooth",block:"center"})}
 }
 
+/* ---------- 依「你現在最想問的」調整重點：排盤數據不變，只改區塊順序與曲線強調 ---------- */
+var Q_LABEL={move:"該不該轉職、何時走",stay:"留在原公司能不能升遷",fit:"什麼類型的公司適合我",biz:"要不要出來接案或創業"};
+var chartFocus=null;
+function applyQuestion(rep){
+  var q=rep.input.q||"move", fit=$("fitBlock");
+  // 問公司類型時，「什麼樣的公司適合你」排到總斷正下方；其他問題放回原位（工具箱之前）
+  if(q==="fit")$("verdictBlock").after(fit);else $("toolbox").before(fit);
+  chartFocus=q==="stay"?"stay":q==="move"?"move":null;
+}
+
 function renderAll(rep){
   todaySel=0;chartSel=null;
-  renderUnlock(rep);renderFormSum();
+  applyQuestion(rep);renderUnlock(rep);renderFormSum();
   renderVerdict(rep);renderToday(rep);renderChartArea(rep);renderFit(rep);
   renderBazi(rep);renderZiwei(rep);renderAstro(rep);renderQimen(rep);renderHD(rep);
   renderIching(rep);renderMeihua(rep);renderNumerology(rep);renderNineStar(rep);renderName(rep);renderChips(rep);

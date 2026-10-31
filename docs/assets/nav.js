@@ -49,7 +49,11 @@ function setMode(m){
   buildNav();
 }
 
-function navItems(){return NAV_ITEMS.filter(function(x){var el=$(x[0]);return el&&!el.hidden&&el.dataset.sec===NAV.mode})}
+// 依畫面上的實際順序排列（例如問公司類型時，「地利」會排到總斷後面）
+function navItems(){
+  return NAV_ITEMS.filter(function(x){var el=$(x[0]);return el&&!el.hidden&&el.dataset.sec===NAV.mode})
+    .sort(function(a,b){return $(a[0]).compareDocumentPosition($(b[0]))&Node.DOCUMENT_POSITION_FOLLOWING?-1:1});
+}
 function buildNav(){
   var items=NAV.mode==="report"?navItems():[];
   $("qian").hidden=$("chipNav").hidden=!items.length;

@@ -466,14 +466,32 @@ function normName(v){
   if(!/^[\u3400-\u9fff\uf900-\ufaff]{2,5}$/.test(n))throw bad("姓名請輸入 2 到 5 個中文字");
   return n;
 }
+/* 天機總斷：排盤數據不分問題，依使用者最想問的（inp.q）改變回答的重點與措辭。
+ * 只用到各等級本來就拿得到的結論（最佳月份、最適合的公司類型、轉職或留任的傾向），不在措辭裡透露付費版的數字。 */
 function verdictOf(R,inp){
-  var B=R.B, diff=R.mvAvg-R.stAvg, call, sub;
-  if(inp.yrs===-1){call="未來一年，<em>主動出擊</em>找下一份工作";sub="你目前待業，曲線看的是哪幾個月出手命中率最高。"}
-  else if(diff>6){call="未來一年偏向<em>轉職</em>";sub="外部機會的動能明顯高於內部升遷，與其等升，不如準備換。"}
-  else if(diff<-6){call="未來一年偏向<em>留任升遷</em>";sub="組織內的晉升與授權訊號較強，先把這一階拿到手再談跳槽。"}
-  else {call="未來一年<em>邊做邊看</em>";sub="內外動能接近，建議爭取內部轉調或新專案，同時低調接觸外部機會。"}
-  if(inp.q==="biz")sub+=(B.cats.食傷+B.cats.比劫)/B.total>0.38?" 你的八字食傷與比劫有力，接案或創業的體質是有的，先從副業試水溫。":" 你的八字偏重官印，比較適合在組織裡當專家，創業建議先找合夥人互補。";
-  if(inp.yrs===0&&diff>6)sub+=" 你年資未滿一年，若要走，最好等到窗口期。";
+  var B=R.B, diff=R.mvAvg-R.stAvg, call, sub, q=inp.q;
+  var best=function(k){var m=bestWindows(R.months.slice(0,12),k,1)[0];return m.y+" 年 "+m.m+" 月"};
+  var top=FIT_NAME[R.fitList[0].k], bizFit=(B.cats.食傷+B.cats.比劫)/B.total>0.38;
+  if(q==="fit"){
+    call="最適合你的是<em>"+top+"</em>";
+    sub=FIT_DESC[R.fitList[0].k]+(inp.yrs===-1?" 你目前待業，可以優先投這類公司，"+best("move")+"出手最有利。":
+      diff>6?" 時機上偏向轉職，可以朝這類公司找機會。":diff<-6?" 時機上偏向留任；現職若不是這類公司，可以爭取性質相近的部門或專案。":" 內外動能接近，可以先低調接觸這類公司的機會。");
+  }else if(q==="biz"){
+    call=bizFit?"你有<em>接案創業</em>的體質":"你比較適合<em>在組織裡當專家</em>";
+    sub=bizFit?"八字食傷與比劫有力，能靠作品與自主拿到報酬。先從副業試水溫，"+best("move")+"是往外走的好時機。":
+      "八字偏重官印，在組織裡被賦予權責時最有力量。真要創業，先找能互補的合夥人，或從內部新事業、副業開始。";
+  }else if(q==="stay"&&inp.yrs!==-1){
+    call=diff<-6?"留下來<em>有機會升遷</em>":diff>6?"內部升遷<em>空間有限</em>":"升遷<em>要靠主動爭取</em>";
+    sub="未來 12 個月升遷動能最強的是 "+best("stay")+"，提前一季整理成果、跟主管談下一階的目標。"+
+      (diff>6?" 外部機會比內部多，留下來的話要有轉調部門或換主管的打算。":"");
+  }else{
+    if(inp.yrs===-1){call="未來一年，<em>主動出擊</em>找下一份工作";sub="你目前待業，曲線看的是哪幾個月出手命中率最高。"}
+    else if(diff>6){call="未來一年偏向<em>轉職</em>";sub="外部機會的動能明顯高於內部升遷，與其等升，不如準備換。"}
+    else if(diff<-6){call="未來一年偏向<em>留任升遷</em>";sub="組織內的晉升與授權訊號較強，先把這一階拿到手再談跳槽。"}
+    else {call="未來一年<em>邊做邊看</em>";sub="內外動能接近，建議爭取內部轉調或新專案，同時低調接觸外部機會。"}
+    sub+=" 未來 12 個月最適合轉職的是 "+best("move")+"。";
+    if(inp.yrs===0&&diff>6)sub+=" 你年資未滿一年，若要走，最好等到窗口期。";
+  }
   return {call:call,sub:sub};
 }
 function slimDay(d,vip){
@@ -485,7 +503,7 @@ function slimMonth(m){return {y:m.y,m:m.m,ygz:m.ygz,mgz:m.mgz,move:m.move,stay:m
 
 function buildReport(inp,tier,now){
   var R=compute(inp,now), rk=RANK[tier], vip=rk>=2, B=R.B, v=verdictOf(R,inp);
-  var rep={tier:tier,generatedAt:now.toISOString(),input:{date:inp.civil.y+"/"+inp.civil.m+"/"+inp.civil.d,time:inp.noTime?null:pad2(inp.civil.hh)+":"+pad2(inp.civil.mm),city:inp.city,gender:inp.gender,timeNote:inp.timeNote},
+  var rep={tier:tier,generatedAt:now.toISOString(),input:{date:inp.civil.y+"/"+inp.civil.m+"/"+inp.civil.d,time:inp.noTime?null:pad2(inp.civil.hh)+":"+pad2(inp.civil.mm),city:inp.city,gender:inp.gender,timeNote:inp.timeNote,q:inp.q},
     verdict:{call:v.call,sub:v.sub,pillars:B.pillars,gods:B.gods,noTime:inp.noTime}};
   var X=R.X;
   rep.teasers={iching:{title:X.iching.hex.name,line:X.iching.hex.text},meihua:{title:X.meihua.ben.name+" → "+X.meihua.bian.name,line:X.meihua.relName+"："+X.meihua.relText},
