@@ -25,7 +25,7 @@
 1. 打開 Supabase 後台的 **SQL Editor → New query**。
 2. 把 `supabase/migrations/20261024000000_membership.sql` 的內容整份貼上，按 **Run**。
 3. 接著再貼上 `supabase/migrations/20261024120000_sponsorship.sql` 執行，把方案改成贊助名義：贊助 NT$899 協助測試付費版、贊助 NT$2,399 協助測試 VIP 版，測試權限 365 天。
-4. 再依檔名順序執行 `supabase/migrations/` 裡其餘的檔案。`20261027000000_vip_decision_tools.sql` 會更新方案說明：offer 比較、現職適配度、每月吉日、未來 7 天運勢改列 VIP。`20261028000000_free_answers.sql` 配合免費版開放今天的職場運勢，更新付費版說明。
+4. 再依檔名順序執行 `supabase/migrations/` 裡其餘的檔案。`20261027000000_vip_decision_tools.sql` 會更新方案說明：offer 比較、現職適配度、每月吉日、未來 7 天運勢改列 VIP。`20261028000000_free_answers.sql` 配合免費版開放今天的職場運勢，更新付費版說明。`20261031000000_birth_profiles.sql` 建立「記住我的生辰」用的資料表與權限。
 5. 之後要調整金額或天數，到 **Table Editor → plans** 直接改 `price`、`days`、`description` 即可，網站會即時讀取。
 
 ## 3. 部署排盤函式

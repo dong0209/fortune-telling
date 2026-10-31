@@ -19,8 +19,9 @@ async function sampleAnalyze(action,input,params){
   throw new Error("這是範例報告，這項查詢要用自己的生日排盤後才能使用。");
 }
 
-function fillSampleForm(inp){
-  $("bd").value=inp.date;$("bt").value=inp.time||"";$("noTime").checked=!!inp.noTime;$("bt").disabled=!!inp.noTime;
+// 把一筆生辰填回表單：範例報告與「記住我的生辰」共用
+function fillForm(inp){
+  $("bd").value=inp.date;$("bt").value=inp.time||"";$("noTime").checked=!!inp.noTime;$("bt").disabled=!!inp.noTime;$("solar").disabled=!!inp.noTime;
   (inp.gender==="男"?$("gM"):$("gF")).checked=true;setCity(inp.city);
   $("q").value=inp.q;$("yrs").value=String(inp.yrs);$("nm").value=inp.name||"";$("solar").checked=inp.solar!==false;
 }
@@ -66,7 +67,7 @@ async function loadSample(tier){
   API.analyze=sampleAnalyze;
   var q=new URLSearchParams(location.search);q.set("sample",tier);history.replaceState(null,"","?"+q+location.hash);
   $("sampleNote").hidden=true;$("sampleBar").hidden=false;
-  fillSampleForm(S.input);renderSampleBar();
+  fillForm(S.input);renderSampleBar();
   VIP_PANELS.forEach(function(id){$(id).classList.remove("sample-veil")});
   CMP.sel=[];STATE.rep=S.report;STATE.input=S.input;
   renderAll(S.report);applyTierUI(tier);

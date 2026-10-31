@@ -33,7 +33,7 @@
   <aside class="form panel-box">
     <div class="form-sum" id="formSum" hidden></div>
     <h2>輸入生辰</h2>
-    <p class="hint">生辰只用來排盤，不會被儲存。</p>
+    <p class="hint">生辰只用來排盤；除非你登入並勾選「記住我的生辰」，否則不會被儲存。</p>
     <div class="sample" id="sampleNote">目前顯示的是範例命盤，換成你的生辰即可重新推演。</div>
     <form id="f">
       <div class="field"><span class="lab">性別（影響大運與大限順逆）</span>
@@ -59,10 +59,12 @@
       <div class="field"><label for="yrs">目前工作年資</label>
         <select id="yrs"><option value="0">未滿 1 年</option><option value="1" selected>1–3 年</option><option value="3">3–5 年</option><option value="5">5 年以上</option><option value="-1">目前待業中</option></select>
       </div>
+      <label class="check" id="rememberRow" hidden><input type="checkbox" id="remember">記住我的生辰（存在帳號裡，可隨時刪除）</label>
       <button class="btn-gold" type="submit" id="go">推演命盤</button>
       <p class="err" id="err" role="alert" hidden></p>
       <div class="share-row"><button type="button" class="btn-line" id="btnShare">複製分享連結</button><button type="button" class="btn-line" id="btnCard">產生 IG 圖卡</button></div>
       <p class="small muted" id="shareMsg" role="status"></p>
+      <p class="small muted" id="rememberMsg" role="status" hidden></p>
     </form>
   </aside>
   <nav class="qian panel-box" id="qian" aria-label="本頁目錄" hidden><div class="qian-tube" id="qianTube"></div><p class="qian-cap" id="qianCap" aria-live="polite"></p></nav>
